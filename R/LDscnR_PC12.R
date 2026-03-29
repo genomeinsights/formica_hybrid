@@ -30,7 +30,7 @@ gds <- create_gds_from_geno(geno=GTs, map, "gds_formicia")
 
 ld_ws <- precalculate_ld_w(c(seq(0.75,1,by=0.05),0.99),ld_decay)
 
-draws_075_03_2_30 <- ld_rho_draws(gds,
+draws_075_03_4_30 <- ld_rho_draws(gds,
                                         ld_decay  = ld_decay,
                                         F_vals     = map[,.(F_BF_PC1,F_BF_PC2)],
                                         q_vals     = NULL,
@@ -41,15 +41,14 @@ draws_075_03_2_30 <- ld_rho_draws(gds,
                                         ld_ws      = ld_ws,
                                         rho_d_lim  = list(min=0.9,max=0.99),
                                         rho_ld_lim = list(min=0.9,max=0.99),
-                                        alpha_lim  = list(min=0.3,max=2),
+                                        alpha_lim  = list(min=0.3,max=4),
                                         lmin_lim   = list(min=1,max=30),
-                                        C_lim      = NULL,
                                         cores      = 10,
                                         mode       = c("per_method")
 )
 
-map[,C_PC1:= add_consistency_to_map(map, consistency_obj = consistency_score(draws_075_03_2_30$draws[method=="F_BF_PC1_prime"]))$F_BF_PC1_prime_C]
-map[,C_PC2:= add_consistency_to_map(map, consistency_obj = consistency_score(draws_075_03_2_30$draws[method=="F_BF_PC2_prime"]))$F_BF_PC2_prime_C]
+map[,C_PC1:= add_consistency_to_map(map, consistency_obj = consistency_score(draws_075_03_4_30$draws[method=="F_BF_PC1_prime"]))$F_BF_PC1_prime_C]
+map[,C_PC2:= add_consistency_to_map(map, consistency_obj = consistency_score(draws_075_03_4_30$draws[method=="F_BF_PC2_prime"]))$F_BF_PC2_prime_C]
 
 map[,C_joint := pmax(C_PC1,C_PC2,na.rm = TRUE)]
 
@@ -63,16 +62,17 @@ layout <- prep_manhattan(map_manh[,])
 p_PC1 <- plot_manhattan_gg(layout, y_vars = c("C_joint","C_PC1","C_PC2"), y_labels = c("C_joint","C_PC1","C_PC2"),
                          thresholds = c(0.2,0.2,0.2), col_var = "OR_id",
                          point_size = 1, ncol = 1)
-
-map_manh <- add_ORs(gds, ld_decay, map, stat = "C_PC2",
-                    sign_th = 0.2, sign_if = "greater", mode = "joint", rho_d = 0.995,
-                    rho_ld = 0.995)
-
-setnames(map_manh,"Pos","bp")
-layout <- prep_manhattan(map_manh[,])
-
-p_PC2 <- plot_manhattan_gg(layout, y_vars = c("C_PC2"), y_labels = c("C_PC2"),
-                           thresholds = 0.2, col_var = "OR_id",
-                           point_size = 1, ncol = 1)
-p_PC1 / p_PC2
-
+p_PC1
+#
+# map_manh <- add_ORs(gds, ld_decay, map, stat = "C_PC2",
+#                     sign_th = 0.2, sign_if = "greater", mode = "joint", rho_d = 0.995,
+#                     rho_ld = 0.995)
+#
+# setnames(map_manh,"Pos","bp")
+# layout <- prep_manhattan(map_manh[,])
+#
+# p_PC2 <- plot_manhattan_gg(layout, y_vars = c("C_PC2"), y_labels = c("C_PC2"),
+#                            thresholds = 0.2, col_var = "OR_id",
+#                            point_size = 1, ncol = 1)
+# p_PC1 / p_PC2
+#
