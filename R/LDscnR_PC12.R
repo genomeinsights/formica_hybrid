@@ -1,4 +1,4 @@
-pak::pak("genomeinsights/LDscnR")
+#pak::pak("genomeinsights/LDscnR")
 
 library(ggplot2)
 library(data.table)
