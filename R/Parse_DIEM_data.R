@@ -75,7 +75,8 @@ DIEM_data <- rbindlist(lapply(idx_chunks,function(idx){
 
 map_DIEM <- DIEM_data[,.(Chr,Pos,marker,SNV,Qual,DiagnosticIndex,Support)]
 GTs_DIEM <- do.call(cbind,DIEM_data$track)
-
+rownames(GTs_DIEM) <- sample_info$Sample_ID
+colnames(GTs_DIEM) <- map_DIEM$marker
 ## save data ordered by chromosme and SNP
 new_order <- map_DIEM[,order(as.numeric(gsub("Chr","",Chr)),Pos)]
 saveRDS(list(GTs=GTs_DIEM[,new_order],map=map_DIEM[new_order],sample_info=sample_info),"./data/filtered_DIEM_1mb.rds")

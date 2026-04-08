@@ -57,6 +57,7 @@ ld_decay_corr <- compute_LD_decay(
 )
 saveRDS(ld_decay_corr,"./data/ld_decay_corr.rds")
 gc()
+
 #get_el
 ## check that ld_w works fine
 if(FALSE){
