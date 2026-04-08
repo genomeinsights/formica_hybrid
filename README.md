@@ -7,8 +7,11 @@ Analyses of climate adaptation in hybrid populations of F. polyctena and F. aqui
 ## Estimate LD-decay
 ./R/LD_decay.R
 
-## baypass analyses
+## BayPass analyses
 ./R/baypass.R
 
 ## LDscnR of PC1 and PC2
 ./R/LDscnR_PC12.R
+
+## Haplotype blocks and LD-circular plots
+./R/hap_blocks.R

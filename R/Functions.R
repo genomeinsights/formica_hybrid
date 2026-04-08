@@ -649,3 +649,53 @@ plot_ld_outlier_circos <- function(
     manhattan = manh_list
   ))
 }
+
+find_hapl_blocks <- function(ld_decay,map,SNPs,rho_ld=0.95,rho_d=0.95,ld_th=NULL,d_th=NULL,col_vector=NULL){
+  #ch = "Chr10"
+  if(is.null(col_vector)){
+    col_vector <- c("#B2DF8A", "#FFD92F", "firebrick", "#33A02C", "#7FC97F", "#CAB2D6",
+                    "#FB8072", "grey30", "#E6AB02", "#FDC086", "steelblue", "#1F78B4",
+                    "#FB9A99", "#1B9E77", "#BC80BD", "#E31A1C", "#7570B3", "#A6761D",
+                    "#A6CEE3", "salmon", "#FFFF33", "forestgreen", "#FDCDAC", "#BF5B17",
+                    "#A6761D", "#FBB4AE", "#4DAF4A", "#B3E2CD", "#FDDAEC", "#BEBADA",
+                    "#FFF2AE", "#1F78B4", "#66C2A5", "#F0027F", "#E6AB02", "#E78AC3",
+                    "#FF7F00", "#8DA0CB", "#6A3D9A", "#B15928", "#E41A1C")
+  }
+
+  map_with_hb <- rbindlist(lapply(names(ld_decay$by_chr), function(ch){
+    message(ch)
+    mp <- copy(map[Chr==ch])
+
+    chr_obj <- ld_decay$by_chr[[ch]]
+    chr_obj$el <- fread(chr_obj$el,showProgress = FALSE)
+
+    if(is.null(ld_th) & is.null(d_th)){
+      a_chr <- ld_decay$decay_sum[Chr==ch,a_pred]
+      b_chr <- ld_decay$decay_sum[Chr==ch,b]
+      c_chr <- ld_decay$decay_sum[Chr==ch,c_pred]
+
+      d_th  <- d_from_rho(a_chr, rho = rho_d)
+      ld_th <- ld_from_rho(b_chr, c_chr, rho = rho_ld)
+      ed <- chr_obj$el[r2>ld_th & d<d_th & (SNP1 %in% SNPs | SNP2 %in% SNPs),.(SNP1,SNP2)]
+    }else{
+      ed <- chr_obj$el[r2>ld_th & d<d_th & (SNP1 %in% SNPs | SNP2 %in% SNPs),.(SNP1,SNP2)]
+    }
+
+
+
+    #print(dim(ed))
+    g     <- igraph::graph_from_data_frame(ed, directed = FALSE)
+    comps <- igraph::components(g)
+
+    ors_chr <- split(names(comps$membership), comps$membership)
+    ors_chr <- ors_chr[vapply(ors_chr, length, integer(1)) >= 10]
+
+    hap_bl <- data.table(HB_id=rep(paste0(ch,"_",1:length(ors_chr)),sapply(ors_chr,length)),marker=unlist(ors_chr),col=rep(rep(sample(col_vector),100)[1:length(ors_chr)],sapply(ors_chr,length)))
+    mp[,HB_id:=hap_bl$HB_id[match(marker,hap_bl$marker)]]
+    mp[,HB_col:=hap_bl$col[match(marker,hap_bl$marker)]]
+    mp[is.na(HB_id),HB_col:="grey"]
+
+    return(mp)
+  }))
+  return(map_with_hb)
+}
