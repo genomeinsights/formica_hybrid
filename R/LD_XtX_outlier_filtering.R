@@ -6,6 +6,7 @@ library(LDscnR)
 # ----------------------------
 # LD edge precomputation
 # ----------------------------
+
 precompute_LD_edges <- function(
     GTs,
     map,
@@ -465,7 +466,7 @@ el_potential <- precompute_LD_edges(
   map = map_1mb[marker %in% potential_outliers],
   r2_min = 0.1,
   max_bp = 1e6,
-  cores = cores
+  cores = 4
 )
 
 param_grid <- CJ(
