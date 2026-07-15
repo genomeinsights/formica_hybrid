@@ -2,9 +2,9 @@ library(data.table)
 library(LDscnR)
 
 ## LD-pruning/complexity-reduction for this simulated-data/EMMAX pipeline now
-## lives in the package itself: LDscnR::ld_complexity_reduction(GTs, map,
-## LD_decay, rho, cores, ld_w_col, ld_w_threshold). It also feeds CL_id/n_loci
-## columns compatible with make_eMLGs(map_cl = ...).
+## lives in the package itself: LDscnR::ld_complexity_reduction(map,
+## LD_decay, rho, cores, idx). It also feeds CL_id/n_loci columns compatible
+## with make_eMLGs(map_cl = ...).
 
 files <- list.files("./data/diem_outs/",full.names = TRUE)
 n_files <- 1

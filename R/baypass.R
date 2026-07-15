@@ -1,10 +1,9 @@
 library(ggplot2)
 library(igraph)
 library(data.table)
-library(LDscnR)
 library(SNPRelate)
 library(parallel)
-
+devtools::load_all("~/gitlab/LDscnR/")
 # ------------------------------------------------------------
 # Permutation functions not currently used
 # ------------------------------------------------------------
@@ -137,9 +136,64 @@ map_hyb_005[is.na(ld_w_05),ld_w_05:=0]
 map_hyb_005[,plot(ld_w_05,ld_w_095)]
 
 message("=== Pruning SNPs ======")
-pruned_res <- ld_complexity_reduction(GTs=GTs_hybrids_005, map=map_hyb_005, LD_decay=ld_decay, rho = 0.5, cores = 1)
+pruned_res <- ld_complexity_reduction(map=map_hyb_005, LD_decay=ld_decay, rho = 0.5, cores = 1)
 pruned_markers <- pruned_res$pruned
-message("Keeping ",length(pruned_markers),"/",map_hyb_005[,.N], "SNPs")
+message("Keeping ",length(pruned_markers),"/",map_hyb_005[,.N], " (",round(length(pruned_markers)/map_hyb_005[,.N],2),"%) SNPs")
+
+# ------------------------------------------------------------
+# Chr26 diagnostic: visualise clusters after each pruning stage
+# (Stage 1: ld_complexity_reduction, Stage 2: merge_ld_clusters), for the
+# ld_w>0.2 markers -- where fragmented centromeric/inversion blocks are
+# most likely.
+# ------------------------------------------------------------
+library(patchwork)
+
+## cycle a modest, visually-distinct palette across CL_id -- with hundreds
+## of clusters no palette gives every one a unique color, but neighbouring
+## clusters (what we care about here) will very likely differ
+pal_cluster <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33",
+                  "#A65628","#F781BF","#1B9E77","#D95F02","#7570B3","#66A61E")
+
+plot_clusters_chr26 <- function(map_snp, title) {
+  dt <- copy(map_snp)
+  dt[, cl_rank := match(CL_id, unique(CL_id))]
+  dt[, col := pal_cluster[(cl_rank - 1) %% length(pal_cluster) + 1]]
+  ggplot(dt, aes(Pos / 1e6, ld_w_095, color = col)) +
+    geom_point(size = 1.2, alpha = 0.85) +
+    scale_color_identity() +
+    theme_bw(base_size = 13) +
+    labs(x = "Chr26 position (Mbp)", y = expression(ld["w,"*rho*"=0.95"]), title = title)
+}
+
+idx_chr26 <- map_hyb_005[, which(Chr == "Chr26" & ld_w_095 > 0.2)]
+
+message("=== Chr26 diagnostic, Stage 1: ld_complexity_reduction ===")
+res_chr26_stage1 <- ld_complexity_reduction(
+  map = map_hyb_005, LD_decay = ld_decay, rho = 0.5, cores = 1, idx = idx_chr26
+)
+message("Stage 1: ", nrow(res_chr26_stage1$clusters), " clusters")
+
+p_chr26_stage1 <- plot_clusters_chr26(
+  res_chr26_stage1$map_snp,
+  sprintf("Stage 1: ld_complexity_reduction() -- %d clusters", nrow(res_chr26_stage1$clusters))
+)
+ggsave("./Figures/chr26_stage1_ld_complexity_reduction.png", p_chr26_stage1, width = 10, height = 5)
+
+message("=== Chr26 diagnostic, Stage 2: merge_ld_clusters ===")
+res_chr26_stage2 <- merge_ld_clusters(
+  GTs = GTs_hybrids_005, ld_result = res_chr26_stage1, LD_decay = ld_decay, rho = 0.5, cores = 1
+)
+message("Stage 2: ", nrow(res_chr26_stage2$clusters), " clusters")
+
+p_chr26_stage2 <- plot_clusters_chr26(
+  res_chr26_stage2$map_snp,
+  sprintf("Stage 2: merge_ld_clusters() -- %d clusters", nrow(res_chr26_stage2$clusters))
+)
+ggsave("./Figures/chr26_stage2_merge_ld_clusters.png", p_chr26_stage2, width = 10, height = 5)
+
+p_chr26_compare <- p_chr26_stage1 / p_chr26_stage2
+ggsave("./Figures/chr26_stage1_vs_stage2.png", p_chr26_compare, width = 10, height = 9)
+p_chr26_compare
 
 message("=== Estimating Omega ===")
 baypass_pruned <- do.call(cbind, lapply(unique(pop), function(y){
