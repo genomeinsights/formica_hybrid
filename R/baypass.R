@@ -118,33 +118,90 @@ GTs_hybrids_005 <- GTs_hybrids[,map_hyb_005$marker]
 gds_hyb <- create_gds_from_geno(geno=GTs_hybrids_005, map_hyb_005, "gds_hybrids.gds")
 #showfile.gds(closeall = TRUE)
 #
-ld_decay_light <- compute_LD_decay(
-  gds_hyb,n_win_decay = 100,
-  el_data_folder = NULL, # too large to keep in memory
-  keep_el = TRUE,
-  slide=100,
-  ld_method = "corr"
-)
+# ld_decay_light <- compute_LD_decay(
+#   gds_hyb,n_win_decay = 100,
+#   el_data_folder = NULL, # too large to keep in memory
+#   keep_el = TRUE,
+#   slide=100,
+#   ld_method = "corr"
+# )
 
 
 message("=== Estimating ld_w ===")
 map_hyb_005[,ld_w_095:=compute_ld_w(ld_decay,rho = 0.95)]
 map_hyb_005[is.na(ld_w_095),ld_w_095:=0]
-map_hyb_005[,ld_w_05:=compute_ld_w(ld_decay,rho = 0.5)]
-map_hyb_005[is.na(ld_w_05),ld_w_05:=0]
-
-map_hyb_005[,plot(ld_w_05,ld_w_095)]
+# map_hyb_005[,ld_w_05:=compute_ld_w(ld_decay,rho = 0.5)]
+# map_hyb_005[is.na(ld_w_05),ld_w_05:=0]
+# 
+# map_hyb_005[,plot(ld_w_05,ld_w_095)]
 
 message("=== Pruning SNPs ======")
-pruned_res <- ld_complexity_reduction(map=map_hyb_005, LD_decay=ld_decay, rho = 0.5, cores = 1)
-pruned_markers <- pruned_res$pruned
-message("Keeping ",length(pruned_markers),"/",map_hyb_005[,.N], " (",round(length(pruned_markers)/map_hyb_005[,.N],2),"%) SNPs")
 
+## Stage 1 on the WHOLE marker set together -- cheap regardless of scale
+## (full Chr26: 8.3s for 26,846 markers), and crucially uses LD_decay$el's
+## real window-covered edges to group markers correctly. Splitting markers
+## by ld_w BEFORE clustering (an earlier version of this) artificially
+## severs real blocks right at the threshold boundary: checked on Chr26
+## alone, 226 of 15,524 Stage-1 clusters (formed from a combined run) mixed
+## low- and high-ld_w members, together 4,595 markers of which 975 were
+## low-ld_w members that a pre-split would have cut loose from their real
+## cluster.
+ld_w_threshold <- 0.2
+pruned_stage1 <- ld_complexity_reduction(
+  map = map_hyb_005, LD_decay = ld_decay, rho = 0.5, cores = 1
+)
+
+## Classify CLUSTERS, not markers: a cluster needs the expensive
+## all-pairwise merge step if ANY of its members individually reads above
+## the ld_w threshold -- i.e. sits in a denser-than-average local LD
+## neighbourhood, which is where the sliding window is most likely to have
+## further fragmented the true block into more than one Stage-1 cluster
+## (see ld_complexity_reduction()'s "Known limitation", and
+## merge_ld_clusters()'s documented example for this exact pattern). This
+## reuses Stage 1's already-correct cluster boundaries instead of
+## re-deriving them from a threshold, so no real block gets split by the
+## classification itself -- only ~6% of markers genome-wide exceed 0.2, so
+## the flagged subset stays small and merge_ld_clusters() stays cheap
+## (even the largest single-chromosome high-ld_w subset, Chr10 at 8,875
+## markers, finishes both stages in ~7s).
+## classified via a separate vector, not a mutated column on clusters --
+## merge_ld_clusters() expects ld_result$clusters to be exactly the
+## canonical ld_complexity_reduction() shape, and a stray extra column
+## carried through ends up on some but not all of its internal branches
+## (merged clusters get freshly built rows without it; passed-through ones
+## keep it), producing inconsistent column counts and a rbindlist() error
+marker_ldw <- setNames(map_hyb_005$ld_w_095, map_hyb_005$marker)
+needs_merge <- vapply(
+  pruned_stage1$clusters$members, function(mk) any(marker_ldw[mk] > ld_w_threshold), logical(1)
+)
+
+flagged   <- pruned_stage1$clusters[needs_merge]
+unflagged <- pruned_stage1$clusters[!needs_merge]
+
+ld_result_flagged <- list(
+  map_snp  = pruned_stage1$map_snp[marker %in% unlist(flagged$members)],
+  clusters = flagged,
+  pruned   = flagged$core_snp
+)
+
+pruned_merged <- merge_ld_clusters(
+  GTs = GTs_hybrids_005[, unlist(flagged$members)],
+  ld_result = ld_result_flagged, LD_decay = ld_decay, rho = 0.5, cores = 1
+)
+
+pruned_markers <- c(unflagged$core_snp, pruned_merged$pruned)
+
+message(
+  "Keeping ", length(pruned_markers), "/", map_hyb_005[,.N], " (",
+  round(100 * length(pruned_markers) / map_hyb_005[,.N], 2), "%) SNPs"
+)
+saveRDS(pruned_markers,"./data/pruned_markers.rds")
 # ------------------------------------------------------------
 # Chr26 diagnostic: visualise clusters after each pruning stage
 # (Stage 1: ld_complexity_reduction, Stage 2: merge_ld_clusters), for the
 # ld_w>0.2 markers -- where fragmented centromeric/inversion blocks are
-# most likely.
+# most likely. This is the same split used above, worked through for one
+# chromosome so the effect of merging is visible.
 # ------------------------------------------------------------
 library(patchwork)
 
@@ -165,7 +222,7 @@ plot_clusters_chr26 <- function(map_snp, title) {
     labs(x = "Chr26 position (Mbp)", y = expression(ld["w,"*rho*"=0.95"]), title = title)
 }
 
-idx_chr26 <- map_hyb_005[, which(Chr == "Chr26" & ld_w_095 > 0.2)]
+idx_chr26 <- map_hyb_005[, which(Chr == "Chr26" & ld_w_095 > ld_w_threshold)]
 
 message("=== Chr26 diagnostic, Stage 1: ld_complexity_reduction ===")
 res_chr26_stage1 <- ld_complexity_reduction(
@@ -226,16 +283,19 @@ write.table(baypass, file=paste0(baypass_folder,"u_DIEM.geno"), quote = FALSE, r
 
 pc1_env <- sample_data[!duplicated(Population),PC1]
 write.table(t(as.matrix(pc1_env)), file=paste0(baypass_folder,"u.PC1"), quote = FALSE, row.names = FALSE, col.names = FALSE)
-paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno -efile ", baypass_folder, "u.PC1 -poolsizefile ",baypass_folder,"u_DIEM.size -nthreads ",cores," -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ", baypass_folder, "PC1_DIEM")
 
 pc2_env <- sample_data[!duplicated(Population),PC2]
 write.table(t(as.matrix(pc2_env)), file=paste0(baypass_folder,"u.PC2"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+
+## no pruning
+paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno -efile ", baypass_folder, "u.PC1 -poolsizefile ",baypass_folder,"u_DIEM.size -nthreads ",cores," -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ", baypass_folder, "PC1_DIEM")
 paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno -efile ", baypass_folder, "u.PC2 -poolsizefile ",baypass_folder,"u_DIEM.size -nthreads ",cores," -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ", baypass_folder, "PC2_DIEM")
 
 
-# ~/gitlab/baypass_public-master/sources/g_baypass -countdatafile ./out_baypass/u_DIEM.geno -efile ./out_baypass/u.PC1 -poolsizefile ./out_baypass/u_DIEM.size -nthreads 1 -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ./out_baypass/PC1_DIEM
-# ~/gitlab/baypass_public-master/sources/g_baypass -countdatafile ./out_baypass/u_DIEM.geno -efile ./out_baypass/u.PC2 -poolsizefile ./out_baypass/u_DIEM.size -nthreads 1 -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ./out_baypass/PC2_DIEM
-
+## wit omega on pruned data
+paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno -omegafile ./out_baypass/omega_mat_omega.out -efile ", baypass_folder, "u.PC2 -poolsizefile ",baypass_folder,"u_DIEM.size -nthreads ",cores," -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ", baypass_folder, "PC2_DIEM")
+paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno -omegafile ./out_baypass/omega_mat_omega.out -efile ", baypass_folder, "u.PC1 -poolsizefile ",baypass_folder,"u_DIEM.size -nthreads ",cores," -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ", baypass_folder, "PC1_DIEM")
 
 #message("=== Writing baypass ===")
 
