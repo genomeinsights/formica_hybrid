@@ -85,55 +85,27 @@ simulate_null_continuous <- function(K, h2 = 0.5, scale_y = TRUE, seed = NULL) {
 # Read in data (generated in LD_decay_from_DIEM.R)
 # ------------------------------------------------------------
 
-message("=== Reading in data ===")
+message("=== Loading data and Creating gds ======")
+# loads GTs_hybrids_005,map_hyb_005, ld_decay and sample_data from LD_decay_from_DIEM.R
+# includes maf and ld_w_095
+load("./data/hybrids_only_maf005.Rdata")
 
-path_to_baypass = "~/gitlab/baypass_public-master/sources/g_baypass" ## wherever your baypass is located
-baypass_folder <- "./out_baypass/"
+## TEMPORARY safeguard, not a real fix: GTs_hybrids_005 contains 1,811 of
+## 3,557,980 non-NA values (0.05%) outside {0,1,2} -- specifically -5 (517),
+## -2 (105), -1 (206), 3 (308), 4 (85), 7 (590), presumably DIEM-specific
+## sentinel/state codes from the parsing step in LD_decay_from_DIEM.R, not
+## valid genotype dosages. Left untreated, these silently corrupt anything
+## downstream that assumes hard 0/1/2 calls (expected_gt_dosage()'s
+## consensus signals ended up as high as 7 instead of the valid [0,2]
+## range). What these codes actually mean (missing calls? valid states
+## needing remapping instead of NA?) is still an open question -- this
+## line is a stopgap (treat them as missing) so downstream eMLG work isn't
+## silently wrong in the meantime; the real fix belongs in
+## LD_decay_from_DIEM.R's DIEM-parsing step once that's resolved.
+GTs_hybrids_005[!(GTs_hybrids_005 %in% c(0, 1, 2))] <- NA
 
-tmp <- readRDS("./data/diem_parsed.rds")
-GTs <- tmp$GTs
-map <- tmp$map
-sample_data <- fread("data/Sample_covariate_info_outlier_analysis_20.txt")
-rm(tmp)
-gc()
-
-
-pop <- sample_data$Population
-
-ld_decay <- readRDS("./data/ld_decay_DIEM_100w.rds")
-
-## get GRM
-
-message("=== Keeping hybrids and Creating gds ======")
-GTs_hybrids <- GTs[sample_data$Sample_ID,]
-
-## filter by maf easies through SNP relate
-#showfile.gds(closeall = TRUE)
-gds_hyb <- create_gds_from_geno(geno=GTs_hybrids, map, "gds_hybrids.gds")
-map[,maf_hyb:= snpgdsSNPRateFreq(gds_hyb)$MinorFreq]
-map_hyb_005 <- map[maf_hyb>=0.05]
-GTs_hybrids_005 <- GTs_hybrids[,map_hyb_005$marker]
-
-## Redo with maf>0.05
 gds_hyb <- create_gds_from_geno(geno=GTs_hybrids_005, map_hyb_005, "gds_hybrids.gds")
-#showfile.gds(closeall = TRUE)
-#
-# ld_decay_light <- compute_LD_decay(
-#   gds_hyb,n_win_decay = 100,
-#   el_data_folder = NULL, # too large to keep in memory
-#   keep_el = TRUE,
-#   slide=100,
-#   ld_method = "corr"
-# )
 
-
-message("=== Estimating ld_w ===")
-map_hyb_005[,ld_w_095:=compute_ld_w(ld_decay,rho = 0.95)]
-map_hyb_005[is.na(ld_w_095),ld_w_095:=0]
-# map_hyb_005[,ld_w_05:=compute_ld_w(ld_decay,rho = 0.5)]
-# map_hyb_005[is.na(ld_w_05),ld_w_05:=0]
-# 
-# map_hyb_005[,plot(ld_w_05,ld_w_095)]
 
 message("=== Pruning SNPs ======")
 
@@ -164,19 +136,26 @@ pruned_stage1 <- ld_complexity_reduction(
 ## the flagged subset stays small and merge_ld_clusters() stays cheap
 ## (even the largest single-chromosome high-ld_w subset, Chr10 at 8,875
 ## markers, finishes both stages in ~7s).
-## classified via a separate vector, not a mutated column on clusters --
-## merge_ld_clusters() expects ld_result$clusters to be exactly the
-## canonical ld_complexity_reduction() shape, and a stray extra column
-## carried through ends up on some but not all of its internal branches
-## (merged clusters get freshly built rows without it; passed-through ones
-## keep it), producing inconsistent column counts and a rbindlist() error
-marker_ldw <- setNames(map_hyb_005$ld_w_095, map_hyb_005$marker)
-needs_merge <- vapply(
-  pruned_stage1$clusters$members, function(mk) any(marker_ldw[mk] > ld_w_threshold), logical(1)
-)
+## Filtering map_snp directly (one vectorized column comparison) instead
+## of vapply-ing over every cluster's members is ~1,600x faster in
+## practice (3.15s -> 0.002s on a 15,524-cluster chromosome, checked
+## directly) -- map_snp already has ld_w_095 and CL_id on the same
+## per-marker row, so no per-cluster R-level loop or named-vector lookup
+## is needed at all.
+##
+## Matching on CL_id with %in% (not positional/negative indexing like
+## clusters[needs_merge] / clusters[-needs_merge]) is deliberate: CL_id is
+## a value (ld_complexity_reduction()'s .GRP, assigned once across the
+## whole call), and while it currently happens to equal row position in
+## this specific (fresh, unfiltered) clusters table, that's an
+## implementation detail, not a documented guarantee -- relying on it is
+## exactly the kind of silent, no-error-thrown bug already hit once this
+## session (merge_ld_clusters()'s R2[sub$CL_id,...] indexing). %in% costs
+## nothing extra here and doesn't depend on that coincidence holding.
+needs_merge_ids <- pruned_stage1$map_snp[ld_w_095 > ld_w_threshold, unique(CL_id)]
 
-flagged   <- pruned_stage1$clusters[needs_merge]
-unflagged <- pruned_stage1$clusters[!needs_merge]
+flagged   <- pruned_stage1$clusters[CL_id %in% needs_merge_ids]
+unflagged <- pruned_stage1$clusters[!CL_id %in% needs_merge_ids]
 
 ld_result_flagged <- list(
   map_snp  = pruned_stage1$map_snp[marker %in% unlist(flagged$members)],
@@ -185,15 +164,15 @@ ld_result_flagged <- list(
 )
 
 pruned_merged <- merge_ld_clusters(
-  GTs = GTs_hybrids_005[, unlist(flagged$members)],
+  GTs = GTs_hybrids_005[TRUE, unlist(flagged$members)],
   ld_result = ld_result_flagged, LD_decay = ld_decay, rho = 0.5, cores = 1
 )
 
 pruned_markers <- c(unflagged$core_snp, pruned_merged$pruned)
 
 message(
-  "Keeping ", length(pruned_markers), "/", map_hyb_005[,.N], " (",
-  round(100 * length(pruned_markers) / map_hyb_005[,.N], 2), "%) SNPs"
+  "Keeping ", length(pruned_markers), "/", map_hyb_005[TRUE,.N], " (",
+  round(100 * length(pruned_markers) / map_hyb_005[TRUE,.N], 2), "%) SNPs"
 )
 saveRDS(pruned_markers,"./data/pruned_markers.rds")
 # ------------------------------------------------------------
@@ -222,29 +201,38 @@ plot_clusters_chr26 <- function(map_snp, title) {
     labs(x = "Chr26 position (Mbp)", y = expression(ld["w,"*rho*"=0.95"]), title = title)
 }
 
-idx_chr26 <- map_hyb_005[, which(Chr == "Chr26" & ld_w_095 > ld_w_threshold)]
+## Pulled straight from the whole-genome objects the main pipeline already
+## computed above (pruned_stage1, flagged, pruned_merged) instead of an
+## independent idx-filtered recomputation. The previous version called
+## ld_complexity_reduction(idx = idx_chr26) on markers pre-filtered to
+## ld_w_095 > ld_w_threshold -- exactly the "filter markers before
+## clustering" approach shown above to sever real blocks at the threshold
+## boundary (226 of 15,524 Chr26 clusters straddled it in a combined run,
+## cutting 975 low-ld_w markers loose). Reusing the flagged-cluster
+## results here means the plots show what the pipeline actually does, and
+## costs nothing extra since Stage 1/2 aren't recomputed.
+chr26_stage1_snp <- pruned_stage1$map_snp[Chr == "Chr26" & CL_id %in% flagged$CL_id]
 
-message("=== Chr26 diagnostic, Stage 1: ld_complexity_reduction ===")
-res_chr26_stage1 <- ld_complexity_reduction(
-  map = map_hyb_005, LD_decay = ld_decay, rho = 0.5, cores = 1, idx = idx_chr26
-)
-message("Stage 1: ", nrow(res_chr26_stage1$clusters), " clusters")
+message("=== Chr26 diagnostic, Stage 1: ld_complexity_reduction (flagged clusters only) ===")
+message("Stage 1: ", uniqueN(chr26_stage1_snp$CL_id), " clusters")
 
 p_chr26_stage1 <- plot_clusters_chr26(
-  res_chr26_stage1$map_snp,
-  sprintf("Stage 1: ld_complexity_reduction() -- %d clusters", nrow(res_chr26_stage1$clusters))
+  chr26_stage1_snp,
+  sprintf("Stage 1: ld_complexity_reduction() -- %d clusters", uniqueN(chr26_stage1_snp$CL_id))
 )
 ggsave("./Figures/chr26_stage1_ld_complexity_reduction.png", p_chr26_stage1, width = 10, height = 5)
 
-message("=== Chr26 diagnostic, Stage 2: merge_ld_clusters ===")
-res_chr26_stage2 <- merge_ld_clusters(
-  GTs = GTs_hybrids_005, ld_result = res_chr26_stage1, LD_decay = ld_decay, rho = 0.5, cores = 1
-)
-message("Stage 2: ", nrow(res_chr26_stage2$clusters), " clusters")
+## every flagged cluster's full marker set (including any lower-ld_w
+## members merged in) is already in pruned_merged$map_snp -- no unflagged
+## cluster can contain a Chr26 marker above ld_w_threshold by construction
+chr26_stage2_snp <- pruned_merged$map_snp[Chr == "Chr26"]
+
+message("=== Chr26 diagnostic, Stage 2: merge_ld_clusters (flagged clusters only) ===")
+message("Stage 2: ", uniqueN(chr26_stage2_snp$CL_id), " clusters")
 
 p_chr26_stage2 <- plot_clusters_chr26(
-  res_chr26_stage2$map_snp,
-  sprintf("Stage 2: merge_ld_clusters() -- %d clusters", nrow(res_chr26_stage2$clusters))
+  chr26_stage2_snp,
+  sprintf("Stage 2: merge_ld_clusters() -- %d clusters", uniqueN(chr26_stage2_snp$CL_id))
 )
 ggsave("./Figures/chr26_stage2_merge_ld_clusters.png", p_chr26_stage2, width = 10, height = 5)
 
@@ -252,7 +240,95 @@ p_chr26_compare <- p_chr26_stage1 / p_chr26_stage2
 ggsave("./Figures/chr26_stage1_vs_stage2.png", p_chr26_compare, width = 10, height = 9)
 p_chr26_compare
 
+# ------------------------------------------------------------
+# Chr26 diagnostic: eMLG extraction and correlation heatmap, plus the
+# experimental dynamic tree cut (dev/R/dynamic_cut_eMLG.R) that further
+# consolidates Stage-2 clusters into coherent eMLG groups -- average
+# linkage + a score_eMLG/pair_r2 quality gate walked bottom-up per merge,
+# rather than a single global r2 threshold. See that file for the
+# validated rationale (complete linkage fragments diffuse-but-real blocks;
+# single linkage chains catastrophically, even just as the tree structure
+# feeding the quality gate).
+# ------------------------------------------------------------
+message("=== Chr26 diagnostic, eMLG extraction and correlation heatmap ===")
+
+chr26_clusters <- pruned_merged$clusters[Chr == "Chr26"]
+
+chr26_eMLG <- do.call(cbind, lapply(chr26_clusters$members, function(mk) {
+  expected_gt_dosage(GTs_hybrids_005[, mk, drop = FALSE])
+}))
+colnames(chr26_eMLG) <- chr26_clusters$CL_id
+message("Chr26 eMLG matrix: ", nrow(chr26_eMLG), " individuals x ", ncol(chr26_eMLG), " clusters")
+
+R2_chr26 <- suppressWarnings(cor(chr26_eMLG, use = "pairwise.complete.obs")^2)
+R2_chr26[!is.finite(R2_chr26)] <- 0
+
+plot_eMLG_heatmap <- function(R2_mat, title) {
+  dt <- as.data.table(as.table(R2_mat))
+  setnames(dt, c("Var1", "Var2", "r2"))
+  dt[, Var1 := factor(Var1, levels = colnames(R2_mat))]
+  dt[, Var2 := factor(Var2, levels = colnames(R2_mat))]
+  ggplot(dt, aes(Var1, Var2, fill = r2)) +
+    geom_tile() +
+    scale_fill_viridis_c(name = expression(r^2), limits = c(0, 1)) +
+    theme_minimal(base_size = 12) +
+    theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank()) +
+    labs(x = "Cluster", y = "Cluster", title = title)
+}
+
+## position-ordered heatmap -- shows raw structure before any grouping
+pos_lookup <- setNames(map_hyb_005$Pos, map_hyb_005$marker)
+cluster_pos <- vapply(chr26_clusters$members, function(mk) mean(pos_lookup[mk]), numeric(1))
+ord_pos <- order(cluster_pos)
+
+p_eMLG_pos <- plot_eMLG_heatmap(
+  R2_chr26[ord_pos, ord_pos],
+  sprintf("Chr26 eMLG correlation -- %d clusters, position order", ncol(R2_chr26))
+)
+ggsave("./Figures/chr26_eMLG_heatmap_posorder.png", p_eMLG_pos, width = 8, height = 7, dpi = 150)
+
+message("=== Chr26 diagnostic, dynamic tree cut (experimental) ===")
+source("./dev/R/dynamic_cut_eMLG.R")
+n_loci_chr26 <- setNames(chr26_clusters$n_snps, chr26_clusters$CL_id)
+dyn_score_threshold <- 0.80
+
+dyn_groups <- dynamic_cut_eMLG(chr26_eMLG, n_loci_chr26, threshold = dyn_score_threshold, min_r2 = 0.2)
+message("Dynamic cut (score_eMLG>=", dyn_score_threshold, "): ",
+        ncol(chr26_eMLG), " clusters -> ", length(dyn_groups), " groups")
+
+## heatmap reordered by dynamic-cut group assignment -- should show the
+## soft/diffuse blocks the position-ordered view only hints at as one
+## clean group each, unlike the Stage-2 (complete-linkage) result above
+grp_of <- setNames(
+  rep(seq_along(dyn_groups), vapply(dyn_groups, function(g) length(g$members), integer(1))),
+  unlist(lapply(dyn_groups, `[[`, "members"))
+)
+ord_dyn <- order(grp_of[colnames(chr26_eMLG)])
+
+p_eMLG_dyn <- plot_eMLG_heatmap(
+  R2_chr26[ord_dyn, ord_dyn],
+  sprintf("Chr26 eMLG correlation -- reordered by dynamic cut (%d groups)", length(dyn_groups))
+)
+ggsave("./Figures/chr26_eMLG_heatmap_dynamiccut.png", p_eMLG_dyn, width = 8, height = 7, dpi = 150)
+
+## same ld_w-vs-position view as the Stage 1/Stage 2 plots above, but
+## colored by dynamic-cut group instead of Stage-2 CL_id -- expand each
+## group's Stage-2 members back down to raw markers via chr26_clusters
+chr26_clusters[, dyn_group := grp_of[as.character(CL_id)]]
+chr26_dyn_snp <- chr26_clusters[, .(marker = unlist(members)), by = dyn_group]
+setnames(chr26_dyn_snp, "dyn_group", "CL_id")
+chr26_dyn_snp <- map_hyb_005[Chr == "Chr26", .(marker, Pos, ld_w_095)][chr26_dyn_snp, on = "marker"]
+
+p_chr26_dyn <- plot_clusters_chr26(
+  chr26_dyn_snp,
+  sprintf("Dynamic cut (score_eMLG>=%.2f) -- %d groups", dyn_score_threshold, length(dyn_groups))
+)
+ggsave("./Figures/chr26_dynamiccut_ldw.png", p_chr26_dyn, width = 10, height = 5)
+
 message("=== Estimating Omega ===")
+path_to_baypass = "~/gitlab/baypass_public-master/sources/g_baypass" ## wherever your baypass is located
+baypass_folder <- "./out_baypass/"
+pop <- sample_data$Population
 baypass_pruned <- do.call(cbind, lapply(unique(pop), function(y){
   t(apply(GTs_hybrids_005[pop==y,map_hyb_005$marker %in% pruned_markers], 2, function(x){
     c(length(which(x==0))*2+length(which(x==1)),
@@ -266,10 +342,9 @@ write.table(baypass_pruned, file=paste0(baypass_folder,"u_DIEM.geno_pruned"), qu
 poolsize <- t(as.vector(table(pop)))
 write.table(poolsize, file=paste0(baypass_folder,"u_DIEM.size"), quote = FALSE, row.names = FALSE, col.names = FALSE)
 cores=10
-system(paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno_pruned -nthreads ",cores," -nval 500 -burnin 5000 -thin 10 -poolsizefile ",baypass_folder,"u_DIEM.size -outprefix ", baypass_folder, "omega"))
+#paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno_pruned -nthreads ",cores," -nval 500 -burnin 5000 -thin 10 -poolsizefile ",baypass_folder,"u_DIEM.size -outprefix ", baypass_folder, "omega")
 
 Omega <- as.matrix(read.table("./out_baypass/omega_mat_omega.out"))
-
 
 baypass <- do.call(cbind, lapply(unique(pop), function(y){
   t(apply(GTs_hybrids_005[pop==y,], 2, function(x){
@@ -287,7 +362,7 @@ write.table(t(as.matrix(pc1_env)), file=paste0(baypass_folder,"u.PC1"), quote = 
 pc2_env <- sample_data[!duplicated(Population),PC2]
 write.table(t(as.matrix(pc2_env)), file=paste0(baypass_folder,"u.PC2"), quote = FALSE, row.names = FALSE, col.names = FALSE)
 
-
+## run from command line preferrably
 ## no pruning
 paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno -efile ", baypass_folder, "u.PC1 -poolsizefile ",baypass_folder,"u_DIEM.size -nthreads ",cores," -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ", baypass_folder, "PC1_DIEM")
 paste0(path_to_baypass, " -countdatafile ", baypass_folder, "u_DIEM.geno -efile ", baypass_folder, "u.PC2 -poolsizefile ",baypass_folder,"u_DIEM.size -nthreads ",cores," -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed 74 -outprefix ", baypass_folder, "PC2_DIEM")
