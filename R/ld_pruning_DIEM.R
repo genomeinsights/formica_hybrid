@@ -64,10 +64,14 @@ saveRDS(pruned_markers, "./data/pruned_markers.rds")
 saveRDS(list(eMLG = eMLG, groups = eMLG_groups), "./data/eMLG_groups.rds")
 
 # ------------------------------------------------------------
-# Chr26 diagnostic: Stage 1 (fragmented) vs the combined ld_prune_and_eMLG()
-# result, for the ld_w>0.2 markers -- where fragmented centromeric/
-# inversion blocks are most likely. Reuses the whole-genome objects already
-# computed above, no independent recomputation.
+# Per-chromosome diagnostic: Stage 1 (fragmented) vs the combined
+# ld_prune_and_eMLG() result, for the ld_w>threshold markers -- where
+# fragmented centromeric/inversion blocks are most likely. Reuses the
+# whole-genome objects already computed above, no independent
+# recomputation. plot_pruning_comparison() below works for any chromosome;
+# Chr26 was the original worked example throughout development (it has
+# the most pronounced single low-recombination block of all 26
+# chromosomes, ~23% of markers exceed ld_w_095>0.2).
 # ------------------------------------------------------------
 library(patchwork)
 
@@ -76,93 +80,111 @@ library(patchwork)
 ## clusters (what we care about here) will very likely differ
 
 # test with min_loci>=5
-result_min_loci5 <- ld_prune_and_eMLG(
+
+
+
+result_01_min_loci5 <- ld_prune_and_eMLG(
   GTs = GTs_hybrids_005, stage1 = pruned_stage1, ld_w_col = "ld_w_095",
-  ld_w_threshold = ld_w_threshold, score_threshold = 0.80, min_r2 = 0.2,
+  ld_w_threshold = 0.1, score_threshold = 0.80, min_r2 = 0.2,
   distance_threshold = 5e5,compute_unflagged_eMLG = FALSE,min_n_loci_eMLG = 5
 )
 
-pruned_markers <- result_min_loci5$pruned
-eMLG           <- result_min_loci5$eMLG
-eMLG_groups    <- result_min_loci5$groups
 
-pal_cluster <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33",
-                  "#A65628","#F781BF","#1B9E77","#D95F02","#7570B3","#66A61E")
+pruned_markers <- result_01_min_loci5$pruned
+eMLG           <- result_01_min_loci5$eMLG
+eMLG_groups    <- result_01_min_loci5$groups
 
-plot_clusters_chr26 <- function(map_snp, title) {
-  dt <- copy(map_snp)
-  dt[, cl_rank := match(CL_id, unique(CL_id))]
-  dt[, col := pal_cluster[(cl_rank - 1) %% length(pal_cluster) + 1]]
-  ggplot(dt, aes(Pos / 1e6, ld_w_095, color = col)) +
-    geom_point(size = 1.2, alpha = 0.85) +
-    scale_color_identity() +
-    theme_bw(base_size = 13) +
-    labs(x = "Chr26 position (Mbp)", y = expression(ld["w,"*rho*"=0.95"]), title = title)
+eMLG_groups[,hist(score)]
+
+#' Plot Stage 1 vs combined (ld_prune_and_eMLG) cluster diagnostic for one
+#' chromosome, saving only the stacked comparison figure (p_chrXX_compare).
+#'
+#' @param chr Chromosome name (e.g. "Chr26"), used in plot labels/filename.
+#' @param pruned_stage1 Output of ld_complexity_reduction() (whole-genome).
+#' @param result Output of ld_prune_and_eMLG() (whole-genome).
+#' @param map Map data.table with Chr, Pos, marker, and `ld_w_col`.
+#' @param ld_w_col Name of the ld_w column in `map`/`pruned_stage1$map_snp`.
+#' @param ld_w_threshold Threshold used to flag clusters for the Stage-1
+#'   comparison view -- should match what was used to build `result`.
+#' @param direction "high" (default) shows the FLAGGED clusters/groups
+#'   (ld_w_col > threshold, group_id prefix "F") -- the main diagnostic view.
+#'   "low" shows the UNFLAGGED side (ld_w_col < threshold, group_id prefix
+#'   "U") as a sanity check: this view should never contain markers with
+#'   ld_w_col > threshold, since "unflagged" is defined as no cluster member
+#'   exceeding threshold (verified empirically -- see conversation with
+#'   Claude on 2026-07-16). The "high" view, by contrast, is expected to
+#'   contain some sub-threshold "boundary" markers (cluster-mates of a
+#'   flagged marker) since flagging happens at the cluster level, not the
+#'   marker level.
+#' @param out_folder Folder to write the figure to (created if missing).
+#'
+#' @return The stacked comparison plot, invisibly (also saved to disk as
+#'   `<out_folder>/<chr>_stage1_vs_combined_<direction>.png`).
+plot_pruning_comparison <- function(chr, pruned_stage1, result, map,
+                                     ld_w_col = "ld_w_095", ld_w_threshold = 0.2,
+                                     direction = c("high", "low"),
+                                     out_folder = "./Figures/", width = 10, height = 9) {
+  direction <- match.arg(direction)
+  dir.create(out_folder, showWarnings = FALSE, recursive = TRUE)
+
+  pal_cluster <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33",
+                    "#A65628","#F781BF","#1B9E77","#D95F02","#7570B3","#66A61E")
+
+  ## cycle a modest, visually-distinct palette across CL_id -- with hundreds
+  ## of clusters no palette gives every one a unique color, but neighbouring
+  ## clusters (what we care about here) will very likely differ
+  plot_clusters <- function(map_snp, title) {
+    dt <- data.table::copy(map_snp)
+    dt[, cl_rank := match(CL_id, unique(CL_id))]
+    dt[, col := pal_cluster[(cl_rank - 1) %% length(pal_cluster) + 1]]
+    ggplot(dt, aes(Pos / 1e6, .data[[ld_w_col]], color = col)) +
+      geom_point(size = 1.2, alpha = 0.85) +
+      scale_color_identity() +
+      theme_bw(base_size = 13) +
+      labs(x = paste(chr, "position (Mbp)"), y = expression(ld["w,"*rho*"=0.95"]), title = title)
+  }
+
+  ## "high"/"low" pick the cluster set (Stage 1) and the matching group_id
+  ## prefix (Combined) together, so the two panels always stay in sync --
+  ## see @param direction above. NOTE: "low" must be the COMPLEMENT of the
+  ## "high" (any member > threshold) cluster set, not a separate "any member
+  ## < threshold" condition -- those are not the same thing, since a flagged
+  ## cluster can (and often does) contain sub-threshold "boundary" members
+  ## too. Using "any member < threshold" directly would pull flagged
+  ## clusters right back into the "low" view.
+  group_prefix <- if (direction == "high") "F" else "U"
+  flagged_ids <- pruned_stage1$map_snp[get(ld_w_col) > ld_w_threshold, unique(CL_id)]
+  chr_ids <- pruned_stage1$map_snp[Chr == chr, unique(CL_id)]
+  needs_merge_ids <- if (direction == "high") flagged_ids else setdiff(chr_ids, flagged_ids)
+  stage1_snp <- pruned_stage1$map_snp[Chr == chr & CL_id %in% needs_merge_ids]
+  message(chr, " Stage 1 (", direction, "): ", uniqueN(stage1_snp$CL_id), " clusters")
+  p_stage1 <- plot_clusters(
+    stage1_snp,
+    sprintf("Stage 1: ld_complexity_reduction() -- %d clusters (%s)", uniqueN(stage1_snp$CL_id), direction)
+  )
+
+  ## combined result restricted to this chromosome's matching-direction
+  ## groups only (group_id prefix "F" for flagged/high, "U" for
+  ## unflagged/low) -- matches the Stage 1 scope above; result$groups
+  ## otherwise includes both buckets genome-wide, making the comparison
+  ## apples-to-oranges
+  groups_chr <- result$groups[Chr == chr & startsWith(group_id, group_prefix)]
+  final_snp <- groups_chr[, .(marker = unlist(members)), by = group_id]
+  setnames(final_snp, "group_id", "CL_id")
+  final_snp <- map[Chr == chr, c("marker", "Pos", ld_w_col), with = FALSE][final_snp, on = "marker"]
+  message(chr, " combined (", direction, "): ", uniqueN(final_snp$CL_id), " groups")
+  p_combined <- plot_clusters(
+    final_snp,
+    sprintf("ld_prune_and_eMLG() -- %d groups (%s)", uniqueN(final_snp$CL_id), direction)
+  )
+
+  p_compare <- p_stage1 / p_combined
+  fname <- paste0(out_folder, chr, "_stage1_vs_combined_", direction, ".png")
+  ggsave(fname, p_compare, width = width, height = height)
+  message("Saved: ", fname)
+
+  invisible(p_compare)
 }
 
-needs_merge_ids <- pruned_stage1$map_snp[ld_w_095 > ld_w_threshold, unique(CL_id)]
-chr26_stage1_snp <- pruned_stage1$map_snp[Chr == "Chr26" & CL_id %in% needs_merge_ids]
-
-message("=== Chr26 diagnostic, Stage 1: ld_complexity_reduction (flagged clusters only) ===")
-message("Stage 1: ", uniqueN(chr26_stage1_snp$CL_id), " clusters")
-
-p_chr26_stage1 <- plot_clusters_chr26(
-  chr26_stage1_snp,
-  sprintf("Stage 1: ld_complexity_reduction() -- %d clusters", uniqueN(chr26_stage1_snp$CL_id))
-)
-ggsave("./Figures/chr26_stage1_ld_complexity_reduction.png", p_chr26_stage1, width = 10, height = 5)
-
-## combined result restricted to Chr26's FLAGGED groups only (group_id
-## prefix "F", vs "U" for unflagged pass-through) -- matches the Stage 1
-## diagnostic's scope above (also flagged-clusters-only); eMLG_groups
-## otherwise includes thousands of tiny unflagged low-ld_w singletons
-## genome-wide that would make this comparison apples-to-oranges
-chr26_groups <- eMLG_groups[Chr == "Chr26" & startsWith(group_id, "F")]
-chr26_final_snp <- chr26_groups[TRUE, .(marker = unlist(members)), by = group_id]
-setnames(chr26_final_snp, "group_id", "CL_id")
-chr26_final_snp <- map_hyb_005[Chr == "Chr26", .(marker, Pos, ld_w_095)][chr26_final_snp, on = "marker"]
-
-message("=== Chr26 diagnostic, ld_prune_and_eMLG (combined) ===")
-message("Combined: ", uniqueN(chr26_final_snp$CL_id), " groups")
-
-p_chr26_combined <- plot_clusters_chr26(
-  chr26_final_snp,
-  sprintf("ld_prune_and_eMLG() -- %d groups", uniqueN(chr26_final_snp$CL_id))
-)
-ggsave("./Figures/chr26_combined_ld_prune_and_eMLG.png", p_chr26_combined, width = 10, height = 5)
-
-p_chr26_compare <- p_chr26_stage1 / p_chr26_combined
-ggsave("./Figures/chr26_stage1_vs_combined.png", p_chr26_compare, width = 10, height = 9)
-p_chr26_compare
-
-## eMLG correlation heatmap for Chr26's flagged/merged groups -- subset of
-## the whole-genome eMLG matrix already computed above, no recomputation
-chr26_group_ids <- chr26_groups$group_id
-chr26_eMLG <- eMLG[, chr26_group_ids, drop = FALSE]
-message("Chr26 eMLG matrix: ", nrow(chr26_eMLG), " individuals x ", ncol(chr26_eMLG), " groups")
-
-R2_chr26 <- suppressWarnings(cor(chr26_eMLG, use = "pairwise.complete.obs")^2)
-R2_chr26[!is.finite(R2_chr26)] <- 0
-
-plot_eMLG_heatmap <- function(R2_mat, title) {
-  dt <- as.data.table(as.table(R2_mat))
-  setnames(dt, c("Var1", "Var2", "r2"))
-  dt[, Var1 := factor(Var1, levels = colnames(R2_mat))]
-  dt[, Var2 := factor(Var2, levels = colnames(R2_mat))]
-  ggplot(dt, aes(Var1, Var2, fill = r2)) +
-    geom_tile() +
-    scale_fill_viridis_c(name = expression(r^2), limits = c(0, 1)) +
-    theme_minimal(base_size = 12) +
-    theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank()) +
-    labs(x = "Group", y = "Group", title = title)
-}
-
-pos_lookup <- setNames(map_hyb_005$Pos, map_hyb_005$marker)
-group_pos <- vapply(chr26_groups$members, function(mk) mean(pos_lookup[mk]), numeric(1))
-ord_pos <- order(group_pos)
-
-p_eMLG_pos <- plot_eMLG_heatmap(
-  R2_chr26[ord_pos, ord_pos],
-  sprintf("Chr26 eMLG correlation -- %d groups, position order", ncol(R2_chr26))
-)
-ggsave("./Figures/chr26_eMLG_heatmap_posorder.png", p_eMLG_pos, width = 8, height = 7, dpi = 150)
+plot_pruning_comparison("Chr26", pruned_stage1, result, map_hyb_005, ld_w_threshold = ld_w_threshold)
+plot_pruning_comparison("Chr26", pruned_stage1, result, map_hyb_005, ld_w_threshold = ld_w_threshold, direction = "low")
