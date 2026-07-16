@@ -1,6 +1,10 @@
-
+library(ggplot2)
+library(data.table)
+library(patchwork)
+library(SNPRelate)
+devtools::load_all("~/gitlab/LDscnR/")
 # ------------------------------------------------------------
-# Read in data 
+# Parse diem data to GTs/map 
 # ------------------------------------------------------------
 if(!file.exists("./data/diem_parsed.rds")){
   sample_data <- fread("data/Sample_covariate_info_outlier_analysis_20.txt")
@@ -8,7 +12,7 @@ if(!file.exists("./data/diem_parsed.rds")){
   DIEM_samples <- colnames(DIEM)[10]
   DIEM_samples <- strsplit(DIEM_samples,"|",fixed = TRUE)[[1]]
   
-  
+  DIEM <- DIEM[DIEM$nVNTs==2]
   ## map
   map <- DIEM[,.(Chr=gsub("chromosome_","Chr",`#Chrom`),Pos=End)]
   map[,marker := paste(Chr,Pos,sep=":")]
@@ -18,20 +22,24 @@ if(!file.exists("./data/diem_parsed.rds")){
   # Pre-extract only the column you need so workers do not carry full DIEM
   track_strings <- as.character(DIEM[[10]])
   
+  #track_strings
+  
   # Process a chunk of rows per worker, not one row per future
   idx_chunks <- split(seq_len(nrow(DIEM)),ceiling(seq_len(nrow(DIEM)) / 1000))
   
   pb <- txtProgressBar(min = 0, max = nrow(map)-1, style = 3)
   
-  
+  #idx <- idx_chunks[[1]]
   DIEM_data <- rbindlist(lapply(idx_chunks,function(idx){
     setTxtProgressBar(pb, max(idx))
     out <- vector("list", length(idx))
+    #j <- 1
     for (j in seq_along(idx)) {
       x <- idx[j]
       
       parts <- strsplit(track_strings[x], "|", fixed = FALSE)[[1]]
       track <- suppressWarnings(as.numeric(parts[-1]))
+      
       
       out[[j]] <- cbind(map[x], track=list(track))
     }
@@ -58,7 +66,6 @@ if(!file.exists("./data/diem_parsed.rds")){
   sample_data <- fread("data/Sample_covariate_info_outlier_analysis_20.txt")
   rm(tmp)
   gc()
-  
 }
 
 # ------------------------------------------------------------
@@ -68,20 +75,22 @@ if(!file.exists("./data/diem_parsed.rds")){
 GTs_hybrids <- GTs[sample_data$Sample_ID,]
 
 ## filter by maf easies through SNP relate
-gds_hyb <- create_gds_from_geno(geno=GTs_hybrids, map, "gds_hybrids.gds")
+gds_hyb <- create_gds_from_geno(geno=GTs_hybrids, map, "gds_hybrids.gds") #wrapper from LDscnR
+#maf <- snpgdsSNPRateFreq(gds_hyb)$MinorFreq
 map[,maf_hyb:= snpgdsSNPRateFreq(gds_hyb)$MinorFreq]
 map_hyb_005 <- map[maf_hyb>=0.05]
-GTs_hybrids_005 <- GTs_hybrids[,map_hyb_005$marker]
+GTs_hybrids_005 <- GTs_hybrids[TRUE,map_hyb_005$marker]
 
 snpgdsClose(gds_hyb)
+rm(GTs,GTs_hybrids)
+gc()
 
-## Redo with maf>0.05
-gds_hyb <- create_gds_from_geno(geno=GTs_hybrids_005, map_hyb_005, "gds_hybrids.gds")
-# keep only diagnostic markers
-gds_hyb_DI <- create_gds_from_geno(geno=GTs_hybrids_005[,map_hyb_005[DiagnosticIndex > (-25),marker]], map_hyb_005[DiagnosticIndex > (-25)], "gds_hybrids.gds")
-
+#save(GTs_hybrids_005,map_hyb_005,sample_data,file = "./data/hybrids_only_maf005.Rdata")
 
 if(!file.exists("./data/ld_decay_DIEM_100w.rds")){
+  
+  gds_hyb <- create_gds_from_geno(geno=GTs_hybrids_005, map_hyb_005, "gds_hybrids.gds")
+  
   ld_decay_DIEM_100w <- compute_LD_decay(
     gds_hyb,n_win_decay = 100,
     el_data_folder = "./el_diem/", # too large to keep in memory
@@ -90,6 +99,9 @@ if(!file.exists("./data/ld_decay_DIEM_100w.rds")){
     cores = 10,ld_method = "corr"
   )
   saveRDS(ld_decay_DIEM_100w,"./data/ld_decay_DIEM_100w.rds")
+  
+  # keep only diagnostic markers
+  gds_hyb_DI <- create_gds_from_geno(geno=GTs_hybrids_005[TRUE,map_hyb_005[DiagnosticIndex > (-25),marker]], map_hyb_005[DiagnosticIndex > (-25)], "gds_hybridsID.gds")
   
   ld_decay_DI <- compute_LD_decay(
     gds_hyb_DI,
@@ -101,96 +113,32 @@ if(!file.exists("./data/ld_decay_DIEM_100w.rds")){
   saveRDS(ld_decay_DI,"./data/datald_decay_DI.rds")
   
 }else{
-  ld_decay_DIEM <- readRDS("./data/ld_decay_DIEM_100w.rds")  
+  ld_decay <- readRDS("./data/ld_decay_DIEM_100w.rds")  
   ld_decay_DI <- readRDS("./data/datald_decay_DI.rds")  
 }
 
 ## compare
-plot(ld_decay_DI)
-plot(ld_decay_DI,type="chr",chr="Chr18")
-
-plot(ld_decay_DIEM)
-plot(ld_decay_DIEM,type="chr",chr="Chr18")
-
-ld_w_095_DI <- compute_ld_w(0.95,ld_decay = ld_decay_DI)
-ld_w_095_sim <- compute_ld_w(0.95,ld_decay = ld_decay_sim)
+# plot(ld_decay_DI)
+# plot(ld_decay_DI,type="chr",chr="Chr18")
+# 
+# plot(ld_decay_DIEM)
+# plot(ld_decay_DIEM,type="chr",chr="Chr18")
+# 
+# ld_w_095_DI <- compute_ld_w(0.95,ld_decay = ld_decay_DI)
+# ld_w_095_sim <- compute_ld_w(0.95,ld_decay = ld_decay_sim)
 
 # ------------------------------------------------------------
-# LD-decay for all markers
+# LD-decay and ld_w compared to recombination rate
 # ------------------------------------------------------------
-
 # work on full data set
-ld_decay <- copy(ld_decay_DIEM)
-map <- copy(map_hyb_005)
+ld_decay <- readRDS("./data/ld_decay_DIEM_100w.rds")
+
 
 ld_w_095 <- as.vector(compute_ld_w(0.95,ld_decay = ld_decay))
-map[,ld_w_095:=ld_w_095]
+map_hyb_005[,ld_w_095:=ld_w_095]
+save(GTs_hybrids_005,map_hyb_005,sample_data,ld_decay,file = "./data/hybrids_only_maf005.Rdata")
 
-plot_dt <- rbindlist(
-  lapply(names(ld_decay$by_chr), function(ch) {
-    #print(ch)
-    chr_obj <- ld_decay$by_chr[[ch]]
-    
-    decay <- copy(chr_obj$decay)
-    
-    decay[, mid := rowMeans(.SD, na.rm = TRUE),.SDcols = c("start", "end")]
-    
-    decay[, Chr := ch]
-    
-    decay[, genome_mean := chr_obj$decay_sum$a[1]]
-    
-    decay
-  })
-)
-
-## optional: chromosome ordering
-plot_dt[, Chr := factor(
-  Chr,
-  levels = paste0("Chr", 1:27)
-)]
-
-
-## ld_w_095 is positionally aligned to map (assigned via map[,ld_w_095:=ld_w_095]
-## above); as.vector() strips any names compute_ld_w() may have set, so build
-## ld_dt from map directly rather than round-tripping through names()/tstrsplit.
-ld_dt <- map[, .(snp = marker, ld_w = ld_w_095, Chr, Pos)]
-
-## add local ld_w median to each decay window
-#ch = "Chr1"
-plot_dt <- rbindlist(lapply(names(ld_decay$by_chr), function(ch) {
-  
-  chr_obj <- ld_decay$by_chr[[ch]]
-  decay <- copy(chr_obj$decay)
-  
-  decay[, Chr := ch]
-  decay[, mid := rowMeans(.SD, na.rm = TRUE),.SDcols = c("start", "end")]
-  decay[, chr_mean := chr_obj$decay_sum$a[1]]
-  
-  ld_ch <- ld_dt[Chr == ch]
-  
-  decay[, ld_w_med := sapply(seq_len(.N), function(i) {
-    median(ld_ch[Pos >= start[i] & Pos <= end[i], ld_w],
-           na.rm = TRUE)
-  })]
-  
-  
-  
-}), fill = TRUE)
-
-plot_dt[, Chr := factor(Chr, levels = names(ld_decay$by_chr))]
-
-
-p_ldw_a <- ggplot(plot_dt, aes(a,ld_w_med)) +
-  geom_point() +
-  theme_bw(base_size = 22) +
-  ylab(expression(ld["w,"*rho*"=0.95"]~"(in windows)"))+
-  theme(panel.grid.minor = element_blank()) +
-  ggtitle(expression("Local LD "*(ld["w"])*" vs. decay rate"))
-ggsave("./Figures/p_ldw_a.png",p_ldw_a)
-
-# ------------------------------------------------------------
-# with recombination map
-# ------------------------------------------------------------
+map <- copy(map_hyb_005)
 
 rec_map <- fread("./data/Frufa_DTOL_PR.ref_genome.recmap")
 rec_map[, Chr := paste0("Chr", sub("chromosome_", "", chr))]
@@ -202,7 +150,7 @@ rec_map[, Chr := paste0("Chr", sub("chromosome_", "", chr))]
 ## silently shifts every rec_rate one marker out of register with its true
 ## physical location.
 rec_map[, rec_rate := c(NA_real_, diff(cM) / diff(pos)), by = Chr]
-rec_map[, mid := (pos + shift(pos, type = "lag")) / 2, by = Chr]
+rec_map[TRUE, mid := (pos + shift(pos, type = "lag")) / 2, by = Chr]
 
 plot_ld_decay_tracks <- function(
     ld_decay,
@@ -485,7 +433,7 @@ cor_tbl <- rbindlist(lapply(cor_pairs, function(p) {
   data.table(
     x = p[1], y = p[2],
     rho_pooled     = cor_spearman(comp_dt[[p[1]]], comp_dt[[p[2]]]),
-    rho_within_chr = comp_dt[, cor_spearman(get(p[1]), get(p[2])), by = Chr][, mean(V1, na.rm = TRUE)]
+    rho_within_chr = comp_dt[TRUE, cor_spearman(get(p[1]), get(p[2])), by = Chr][TRUE, mean(V1, na.rm = TRUE)]
   )
 }))
 print(cor_tbl)
