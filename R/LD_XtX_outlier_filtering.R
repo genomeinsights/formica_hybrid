@@ -344,7 +344,7 @@ if(!file.exists("data_1mb.rds")){
   sample_info <- data$sample_info
 
   ## read and transform BF to a pseudo-F scale
-  ## from ./R/baypass.R
+  ## from ./R/ld_pruning_DIEM.R
   BP_PC1 <- fread("./out_baypass/PC1_summary_betai_reg.out")
   map_1mb[, p_BF_PC1 := BP_PC1[,1 - rank(`BF(dB)`, ties.method = "average") / (.N + 1)]]
 

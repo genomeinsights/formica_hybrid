@@ -16,7 +16,7 @@ gc()
 
 
 ## read and transform BF to a pseudo-F scale
-## from ./R/baypass.R
+## from ./R/ld_pruning_DIEM.R
 BP_PC1 <- fread("./out_baypass/PC1_summary_betai_reg.out")
 
 r = BP_PC1[,rank(`BF(dB)`) / (length(`BF(dB)`) + 1)]
