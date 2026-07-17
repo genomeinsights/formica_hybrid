@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# BayPass runs for the Aland-excluded comparison analysis.
+# BayPass runs for the Sielva-excluded comparison analysis (Aland still
+# included) -- Sielva is a very young population with unusually high
+# heterozygosity genome-wide, a similar potential confound to Aland.
 #
 # Expects to live in the same folder as its input files (u_DIEM.geno,
 # u_DIEM.geno_pruned, u_DIEM.size, u.PC1, u.PC2 -- all written by
-# R/prepare_aland_excluded.R). Run from anywhere; it cds into its own
+# R/prepare_sielva_excluded.R). Run from anywhere; it cds into its own
 # directory first.
 #
 # Sequence, matching baypass.R's parameters exactly:
@@ -23,7 +25,7 @@ cd "$(dirname "$0")"
 PATH_TO_BAYPASS=~/baypass_public/sources/g_baypass
 CORES=10
 
-echo "=== 1. Estimating Omega (pruned data, Aland excluded) ==="
+echo "=== 1. Estimating Omega (pruned data, Sielva excluded) ==="
 "${PATH_TO_BAYPASS}" \
   -countdatafile u_DIEM.geno_pruned \
   -poolsizefile u_DIEM.size \
