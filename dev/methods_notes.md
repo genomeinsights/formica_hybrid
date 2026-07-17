@@ -1,9 +1,10 @@
 # Methods notes: two-stage LD-pruning / eMLG complexity reduction
 
 Running notes on the rationale behind `ld_complexity_reduction()` +
-`ld_prune_and_eMLG()` (see `dev/R/ld_prune_and_eMLG.R`,
-`dev/R/dynamic_cut_eMLG.R`, `R/ld_pruning_DIEM.R`). Written for eventual
-reuse in supporting information.
+`ld_prune_and_eMLG()` (both part of the LDscnR package -- see
+`~/gitlab/LDscnR/R/ld_prune_and_eMLG.R`, `~/gitlab/LDscnR/R/dynamic_cut_eMLG.R`
+-- and this repo's `R/ld_pruning_DIEM.R`). Written for eventual reuse in
+supporting information.
 
 ## The unifying idea
 
@@ -156,7 +157,7 @@ on the full marker set, only 23 of 1,114,340 markers (~0.002%) have
 `ld_w_threshold = 0` floods the flagged set to nearly the entire genome on
 its own, defeating the whole point of restricting Stage 2's expensive
 O(n²) all-pairs-correlation dynamic cut to a manageable subset (see
-`dev/R/ld_prune_and_eMLG.R` header comments on why this scaling is
+LDscnR's `R/ld_prune_and_eMLG.R` header comments on why this scaling is
 load-bearing, not a workaround to relax).
 
 ### `min_n_loci_flag`: pulling substantial low-ld_w clusters into merging, cheaply

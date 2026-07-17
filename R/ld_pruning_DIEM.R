@@ -37,15 +37,14 @@ pruned_stage1 <- ld_complexity_reduction(
 ## cluster-flagging -> merge_ld_clusters() -> separate eMLG-extraction ->
 ## separate dynamic-cut sequence (two independent all-pairs correlation
 ## passes over overlapping data) with ONE distance-restricted, quality-
-## gated dynamic cut directly on Stage 1's flagged clusters. See
-## dev/R/ld_prune_and_eMLG.R for the full rationale: average vs single vs
-## complete linkage comparison, the score_eMLG/pair_r2 quality gate (with
-## both bugs it caught along the way), why the distance restriction uses
+## gated dynamic cut directly on Stage 1's flagged clusters. Now part of
+## LDscnR (ld_prune_and_eMLG()/dynamic_cut_eMLG()) -- see their roxygen
+## docs there for the full rationale: average vs single vs complete
+## linkage comparison, the score_eMLG/pair_r2 quality gate (with both bugs
+## it caught along the way), why the distance restriction uses
 ## consecutive-gap (not total-span) semantics, and why this is defensible
 ## for LD-pruning specifically in this young, low-recombination hybrid
 ## population -- not just for eMLG summarization.
-source("./dev/R/ld_prune_and_eMLG.R")
-
 result <- ld_prune_and_eMLG(
   GTs = GTs_hybrids_005, stage1 = pruned_stage1, ld_w_col = "ld_w_095",
   ld_w_threshold = ld_w_threshold, score_threshold = 0.80, min_r2 = 0.2,
@@ -81,21 +80,44 @@ library(patchwork)
 
 # test with min_loci>=5
 
+results_min_loci5 <- lapply(c(0.1,0.15,0.2),function(th){
+  out <- ld_prune_and_eMLG(
+    GTs = GTs_hybrids_005, stage1 = pruned_stage1, ld_w_col = "ld_w_095",
+    ld_w_threshold = th, score_threshold = 0.80, min_r2 = 0.2,
+    distance_threshold = 5e5,compute_unflagged_eMLG = FALSE,min_n_loci_eMLG = 5
+  )
+  out$groups[,th:=th]
+  return(out)
+})
 
+results_min_loci5_2 <- lapply(c(0.05,0.025),function(th){
+  out <- ld_prune_and_eMLG(
+    GTs = GTs_hybrids_005, stage1 = pruned_stage1, ld_w_col = "ld_w_095",
+    ld_w_threshold = th, score_threshold = 0.80, min_r2 = 0.2,
+    distance_threshold = 5e5,compute_unflagged_eMLG = FALSE,min_n_loci_eMLG = 5
+  )
+  out$groups[,th:=th]
+  return(out)
+})
+
+#c(results_min_loci5,results_min_loci5_2)
+saveRDS(c(results_min_loci5,results_min_loci5_2),"./data/results_min_loci5.rds")
+
+results_min_loci5_2[[2]]$groups[TRUE,hist(score)]
 
 result_01_min_loci5 <- ld_prune_and_eMLG(
   GTs = GTs_hybrids_005, stage1 = pruned_stage1, ld_w_col = "ld_w_095",
   ld_w_threshold = 0.1, score_threshold = 0.80, min_r2 = 0.2,
   distance_threshold = 5e5,compute_unflagged_eMLG = FALSE,min_n_loci_eMLG = 5
 )
+#result_01_min_loci5$groups
+
+pruned_markers <- results_min_loci5_2[[2]]$pruned
+eMLG           <- results_min_loci5_2[[2]]$eMLG
+eMLG_groups    <- results_min_loci5_2[[2]]$groups
 
 
-pruned_markers <- result_01_min_loci5$pruned
-eMLG           <- result_01_min_loci5$eMLG
-eMLG_groups    <- result_01_min_loci5$groups
-
-eMLG_groups[,hist(score)]
-
+#result_01_min_loci5$groups[,hist(score)]
 #' Plot Stage 1 vs combined (ld_prune_and_eMLG) cluster diagnostic for one
 #' chromosome, saving only the stacked comparison figure (p_chrXX_compare).
 #'
@@ -186,5 +208,19 @@ plot_pruning_comparison <- function(chr, pruned_stage1, result, map,
   invisible(p_compare)
 }
 
-plot_pruning_comparison("Chr26", pruned_stage1, result, map_hyb_005, ld_w_threshold = ld_w_threshold)
-plot_pruning_comparison("Chr26", pruned_stage1, result, map_hyb_005, ld_w_threshold = ld_w_threshold, direction = "low")
+plot_pruning_comparison("Chr1", pruned_stage1, results_min_loci5_2[[2]], map_hyb_005, ld_w_threshold = 0.025)
+plot_pruning_comparison("Chr1", pruned_stage1, results_min_loci5_2[[2]], map_hyb_005, ld_w_threshold = 0.025, direction = "low")
+
+results_min_loci5_2[[2]]$group[grepl("U",group_id) & n_loci>=5]
+
+# ------------------------------------------------------------
+# Final filtering and eMLG construction 
+# ------------------------------------------------------------
+
+eMLG_5loci_0025 <- ld_prune_and_eMLG(
+  GTs = GTs_hybrids_005, stage1 = pruned_stage1, ld_w_col = "ld_w_095",
+  ld_w_threshold = 0.025, score_threshold = 0.80, min_r2 = 0.2,min_n_loci_flag=5,
+  distance_threshold = 5e5,compute_unflagged_eMLG = TRUE,min_n_loci_eMLG = 5
+)
+
+saveRDS(eMLG_5loci_0025,"./data/eMLG_5loci_0025.rds")
