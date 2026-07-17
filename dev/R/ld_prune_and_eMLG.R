@@ -137,6 +137,20 @@ pick_representative <- function(cl_ids, eMLG, stage1_clusters) {
 #'   unflagged) with fewer than this many raw loci -- the pruned
 #'   representative marker is returned regardless, this only trims the
 #'   returned `eMLG` matrix. Default `1` (no filtering).
+#' @param min_n_loci_flag Additionally flag (send into the distance-
+#'   restricted dynamic cut, alongside the `ld_w_threshold` criterion) any
+#'   Stage-1 cluster with at least this many raw loci, even if its ld_w
+#'   never exceeds `ld_w_threshold` -- giving already-substantial low-ld_w
+#'   clusters a chance to merge with a physically-nearby, correlated
+#'   neighbour instead of just passing through unchanged. Default `Inf`
+#'   (disabled -- flagging is by `ld_w_threshold` alone, existing
+#'   behaviour). NOTE: this only usefully restricts the flagged set when
+#'   `ld_w_threshold` is a real, discriminating cutoff -- at `ld_w_threshold
+#'   = 0` virtually every cluster already exceeds it (99.998% of markers
+#'   have ld_w_095 > 0 genome-wide, checked directly), so `min_n_loci_flag`
+#'   adds nothing there; the intended use is a real threshold (e.g. 0.025)
+#'   plus a `min_n_loci_flag` that pulls in the small number of additional
+#'   substantial-but-low-ld_w clusters on top of it.
 #'
 #' @return A list: `eMLG` (matrix, individuals x groups that have one --
 #'   see `compute_unflagged_eMLG`/`min_n_loci_eMLG`), `groups` (data.table:
@@ -148,12 +162,16 @@ ld_prune_and_eMLG <- function(GTs, stage1, ld_w_col, ld_w_threshold,
                                score_threshold = 0.80, min_r2 = 0.2,
                                distance_threshold = 5e5,
                                compute_unflagged_eMLG = TRUE,
-                               min_n_loci_eMLG = 1) {
+                               min_n_loci_eMLG = 1,
+                               min_n_loci_flag = Inf) {
 
   map_snp  <- stage1$map_snp
   clusters <- stage1$clusters
 
   needs_merge_ids <- map_snp[get(ld_w_col) > ld_w_threshold, unique(CL_id)]
+  if (is.finite(min_n_loci_flag)) {
+    needs_merge_ids <- union(needs_merge_ids, clusters[n_snps >= min_n_loci_flag, CL_id])
+  }
   flagged   <- clusters[CL_id %in% needs_merge_ids]
   unflagged <- clusters[!CL_id %in% needs_merge_ids]
 
