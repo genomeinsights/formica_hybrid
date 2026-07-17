@@ -135,13 +135,13 @@ eMLG_5loci_0025 <- ld_prune_and_eMLG(
   ld_w_threshold = 0.025, score_threshold = 0.80, min_r2 = 0.2,min_n_loci_flag=5,
   distance_threshold = 5e5,compute_unflagged_eMLG = TRUE,min_n_loci_eMLG = 5
 )
-
+eMLG_5loci_0025$groups
 saveRDS(eMLG_5loci_0025,"./data/eMLG_5loci_0025.rds")
 
 plot_pruning_comparison("Chr1", pruned_stage1, eMLG_5loci_0025, map_hyb_005, ld_w_threshold = 0.025, min_n_loci_flag = 5)
 plot_pruning_comparison("Chr1", pruned_stage1, eMLG_5loci_0025, map_hyb_005, ld_w_threshold = 0.025, min_n_loci_flag = 5, direction = "low")
 
-eMLG_5loci_0025$groups[n_loci>=5,table(has_eMLG,ifelse(grepl("F",group_id),"Flagged","Unflagged"))]
+eMLG_5loci_0025$groups[n_loci>=10,table(has_eMLG,ifelse(grepl("F",group_id),"Flagged","Unflagged"))]
 
 eMLG_5loci_0025$group
 
