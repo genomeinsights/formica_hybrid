@@ -224,3 +224,6 @@ eMLG_5loci_0025 <- ld_prune_and_eMLG(
 )
 
 saveRDS(eMLG_5loci_0025,"./data/eMLG_5loci_0025.rds")
+
+plot_pruning_comparison("Chr1", pruned_stage1, eMLG_5loci_0025, map_hyb_005, ld_w_threshold = 0.025)
+plot_pruning_comparison("Chr1", pruned_stage1, eMLG_5loci_0025, map_hyb_005, ld_w_threshold = 0.025, direction = "low")
