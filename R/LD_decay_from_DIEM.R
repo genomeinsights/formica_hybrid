@@ -81,8 +81,52 @@ map[,maf_hyb:= snpgdsSNPRateFreq(gds_hyb)$MinorFreq]
 map_hyb_005 <- map[maf_hyb>=0.05]
 GTs_hybrids_005 <- GTs_hybrids[TRUE,map_hyb_005$marker]
 
+## get GTs with parents here!!
+## GTs at this point still has every individual kept by the original
+## keep_inds filter (line ~53): all hybrids in sample_data, plus every
+## Fpol*/Faqu* parental reference individual -- so this is just a marker
+## subset (to map_hyb_005's already-maf-filtered set), not a fresh parse.
+## NOTE: for LD-decay/pruning/eMLG -- everything else in this pipeline --
+## use GTs_hybrids_005/sample_data (hybrids only). Including parents would
+## badly distort local LD estimates (parent-vs-hybrid population structure
+## dwarfs the within-hybrid-zone LD signal this whole pipeline is built to
+## measure). GTs_with_parents/sample_data_with_parents below are for
+## analyses that specifically need direct hybrid-vs-parent comparison
+## (e.g. computing ancestry statistics against true parental references),
+## not for anything already built on GTs_hybrids_005.
+GTs_with_parents <- GTs[, map_hyb_005$marker]
+
+parent_ids <- setdiff(rownames(GTs_with_parents), sample_data$Sample_ID)
+sample_data_parents <- data.table(
+  Sample_ID = parent_ids,
+  Population = fifelse(
+    grepl("Faqu", parent_ids), "aquilonia_parent",
+    fifelse(grepl("Fpol", parent_ids), "polyctena_parent", NA_character_)
+  ),
+  PC1 = NA_real_, PC2 = NA_real_
+)
+## PC1/PC2 came from a hybrids-only PCA (see wherever sample_data was
+## originally built) and have no natural extension to pure parental
+## individuals -- left NA here rather than guessed at.
+sample_data_with_parents <- rbind(sample_data, sample_data_parents, use.names = TRUE)
+setkey(sample_data_with_parents, Sample_ID)
+sample_data_with_parents <- sample_data_with_parents[rownames(GTs_with_parents)]
+
+stopifnot(
+  identical(rownames(GTs_with_parents), sample_data_with_parents$Sample_ID),
+  identical(colnames(GTs_with_parents), map_hyb_005$marker),
+  sum(grepl("_parent$", sample_data_with_parents$Population)) == length(parent_ids)
+)
+
+save(GTs_with_parents, sample_data_with_parents, map_hyb_005, file = "./data/hybrids_and_parents_maf005.Rdata")
+message(
+  "Saved ./data/hybrids_and_parents_maf005.Rdata: ", nrow(GTs_with_parents), " individuals (",
+  sum(!grepl("_parent$", sample_data_with_parents$Population)), " hybrids + ",
+  length(parent_ids), " parents), ", ncol(GTs_with_parents), " markers"
+)
+
 snpgdsClose(gds_hyb)
-rm(GTs,GTs_hybrids)
+rm(GTs,GTs_hybrids,GTs_with_parents,sample_data_with_parents,parent_ids,sample_data_parents)
 gc()
 
 #save(GTs_hybrids_005,map_hyb_005,sample_data,file = "./data/hybrids_only_maf005.Rdata")
