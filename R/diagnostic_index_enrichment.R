@@ -41,11 +41,11 @@ library(ggplot2)
 
 message("=== Loading data ===")
 load("./data/hybrids_only_maf005.Rdata")
-DI <- map_hyb_005[, .(marker, DiagnosticIndex)]
+DI <- map_hyb_005[TRUE, .(marker, DiagnosticIndex)]
 
-eMLG_result <- readRDS("./data/eMLG_5loci_0025.rds")
+eMLG_result <- readRDS("./data/eMLG_5loci_0025_cM05.rds")
 has_eMLG_groups <- eMLG_result$groups[has_eMLG == TRUE]
-marker_group <- has_eMLG_groups[, .(marker = unlist(members), n_loci = n_loci), by = group_id]
+marker_group <- has_eMLG_groups[TRUE, .(marker = unlist(members), n_loci = n_loci), by = group_id]
 marker_group <- DI[marker_group, on = "marker"]
 
 import_bf <- function(file, n_expected) {

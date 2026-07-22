@@ -82,11 +82,11 @@ pc2_aland_excluded_noOmega <- load_baypass_bf("./aland_excluded/", "PC2_DIEM_noO
 ##
 ## Restricts to markers belonging to a cluster that actually got an eMLG
 ## (has_eMLG==TRUE, i.e. n_loci >= min_n_loci_eMLG under this run's
-## settings -- see ./data/eMLG_5loci_0025.rds, ld_w_threshold=0.025,
+## settings -- see ./data/eMLG_5loci_0025_cM05.rds, ld_w_threshold=0.025,
 ## min_n_loci_flag=5, min_n_loci_eMLG=5).
-eMLG_result <- readRDS("./data/eMLG_5loci_0025.rds")
+eMLG_result <- readRDS("./data/eMLG_5loci_0025_cM05.rds")
 has_eMLG_groups <- eMLG_result$groups[has_eMLG == TRUE]
-marker_group <- has_eMLG_groups[, .(marker = unlist(members), n_loci = n_loci), by = group_id]
+marker_group <- has_eMLG_groups[TRUE, .(marker = unlist(members), n_loci = n_loci), by = group_id]
 message(
   "eMLG-filtered marker set: ", nrow(marker_group), "/", nrow(map_hyb_005), " markers, ",
   uniqueN(marker_group$group_id), " clusters"
@@ -106,7 +106,7 @@ message(
 pal_cluster <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33",
                   "#A65628","#F781BF","#1B9E77","#D95F02","#7570B3","#66A61E")
 group_pos <- map_hyb_005[, .(marker, Chr, Pos)][
-  has_eMLG_groups[, .(group_id, representative)], on = c(marker = "representative")
+  has_eMLG_groups[TRUE, .(group_id, representative)], on = c(marker = "representative")
 ]
 group_pos[TRUE, chr_num := suppressWarnings(as.integer(gsub("[^0-9]", "", Chr)))]
 data.table::setorder(group_pos, chr_num, Pos)

@@ -47,3 +47,40 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# ============================================================
+# Merged Formica pipeline: data / outputs / artifacts (NOT code)
+# (data/ is already ignored above)
+# ============================================================
+.DS_Store
+Rplots.pdf
+*.zip
+*.gds
+
+# BayPass run/output directories (12G+ each) -- keep only the run scripts
+with_aland/*
+aland_excluded/*
+sielva_excluded/*
+aland_sielva_excluded/*
+!with_aland/run_baypass.sh
+!aland_excluded/run_baypass.sh
+!sielva_excluded/run_baypass.sh
+!aland_sielva_excluded/run_baypass.sh
+out_baypass/
+out_baypass_2/
+infiles_for_baypass/
+el_diem/
+data_sim/
+*baypass.log
+*.out
+
+# other large intermediates
+ld_decay_DIEM_100w.rds
+keynote/
+
+# generated figures (regenerable from dev/R scripts; force-add specific ones if wanted)
+Figures/
+
+# dev/ reference artifacts (screenshots, reading PDFs) -- not code
+dev/*.pdf
+dev/*.png

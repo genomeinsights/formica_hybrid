@@ -161,12 +161,11 @@ eMLG_5loci_0025 <- ld_prune_and_eMLG(
   compute_unflagged_eMLG = TRUE, min_n_loci_eMLG = 5
 )
 eMLG_5loci_0025$groups
-saveRDS(eMLG_5loci_0025,"./data/eMLG_5loci_0025.rds")
+saveRDS(eMLG_5loci_0025,"./data/eMLG_5loci_0025_cM05.rds")
 
 ## ld_w_col/ld_w_threshold/min_n_loci_flag default from eMLG_5loci_0025$params,
 ## so these two panels can't drift out of sync with what actually produced it
 plot_pruning_comparison("Chr26", pruned_stage1, eMLG_5loci_0025, map_hyb_005)
 plot_pruning_comparison("Chr26", pruned_stage1, eMLG_5loci_0025, map_hyb_005, direction = "low")
 
-eMLG_5loci_0025$groups[n_loci>=10,table(has_eMLG,ifelse(grepl("F",group_id),"Flagged","Unflagged"))]
 
