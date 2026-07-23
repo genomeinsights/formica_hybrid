@@ -2,6 +2,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{booktabs}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
 
@@ -9,8 +10,8 @@
 \newcommand{\Fpo}{\textit{F.~polyctena}}
 \newcommand{\BF}{\ensuremath{\mathrm{BF}(\mathrm{dB})}}
 
-\title{\vspace{-3em}Sorting and climate: a robust differentiation signal,\\
-but a leverage-driven sorting overlap}
+\title{\vspace{-3em}Climate-associated regions are enriched for ancestry-diagnostic
+loci,\\ but do not preferentially harbour directional sorting}
 \author{}
 \date{}
 
@@ -20,91 +21,110 @@ but a leverage-driven sorting overlap}
 
 \noindent\textit{Draft results summary (Module C, the extrinsic-climate arm).
 Methods are deferred to Supplementary Materials. Findings are descriptive:
-associations with climate are genotype--environment correlations, and the
-sorting itself is licensed as selection only against the forthcoming neutral
-null. The climate-axis identities (which variables load on PC1 vs PC2) are
-pending and will be added (Module~C4).}
+climate associations are genotype--environment correlations, and the sorting
+itself is licensed as selection only against the forthcoming neutral null. The
+climate-axis identities (which variables load on PC1 vs PC2) are pending
+(Module~C4).}
 
 \section*{Results}
 
-\paragraph{Design and a controlled ancestry confound.}
-We associated per-population allele frequencies with two per-population climate
-principal components (PC1, PC2) using BayPass, across eight configurations
-(two population sets $\times$ two PCs $\times$ two covariance settings). A
-climate-association \emph{outlier cluster} is an LD cluster (eMLG, $\ge 5$
-loci) with $\ge 10$ member loci individually significant at $\BF \ge 20$;
-sorting is the eMLG-consensus call for every such cluster. Because sorting is,
-by definition, ancestry fixation, a climate axis that is itself correlated with
-genome-wide ancestry could co-localise with sorting for structural rather than
-ecological reasons. PC1 is only weakly ancestry-correlated (Spearman
-$\rho=-0.23$), but PC2 is moderately so ($\rho=+0.57$), driven by a single
-population, {\AA}land (dropping it lowers the correlation to $+0.38$; dropping
-Sielva instead \emph{raises} it; Fig.~\ref{fig:conf}). This shared-ancestry
-structure is conditioned out by BayPass's covariance matrix ($\Omega$),
-estimated on the LD-pruned set, and by the {\AA}land-excluded population set; we
-therefore treat {\AA}land-excluded, with-$\Omega$ as the structure-robust
-primary and read the other configurations as uncontrolled comparators.
+\paragraph{Design, and a controlled ancestry confound.}
+Per-population allele frequencies were associated with two per-population climate
+principal components (PC1, PC2) using BayPass across eight configurations (two
+population sets $\times$ two PCs $\times$ two covariance settings). Because sorting
+is by definition ancestry fixation, a climate axis correlated with genome-wide
+ancestry could co-localise with sorting for structural rather than ecological
+reasons. PC1 is weakly ancestry-correlated (Spearman $\rho=-0.23$), PC2 moderately
+so ($\rho=+0.57$), driven by a single population, {\AA}land (dropping it lowers the
+correlation to $+0.38$; dropping Sielva instead \emph{raises} it, so Sielva
+exclusion is not the relevant control; Fig.~\ref{fig:conf}). This structure is
+conditioned out by BayPass's covariance matrix ($\Omega$, estimated on the
+LD-pruned set) and by the {\AA}land-excluded population set, which we therefore
+treat as the structure-robust primary.
 
-\paragraph{Diagnostic-index enrichment is robust for PC1, fragile for PC2.}
-Climate-outlier clusters are enriched for ancestry-diagnostic (high-DI) loci
-(Fig.~\ref{fig:mc}a). For PC1 this enrichment is robust across configurations
-(size-adjusted odds ratio $1.8$--$3.1$, all significant). For PC2 it is not:
-the odds ratio swings from $10.5$ to $0.5$ between covariance settings and, under
-the structure-robust primary, reverses to depletion. Enrichment for static
-ancestry-informativeness is therefore a genuine PC1 (climate) signal, whereas
-the PC2 enrichment is largely structure-driven.
+\paragraph{A size-gated definition, and why it must be replaced.}
+Climate-association outliers are conventionally defined as LD clusters carrying at
+least $N$ member loci individually significant at $\BF \ge T$. This is an
+\emph{absolute count}, so eligibility scales with cluster size: on these data a
+cluster of 9 loci (the background median) would need 56\% of its members
+significant to qualify, whereas a cluster of 64--90 loci (the outlier median)
+needs only 6--8\%; 88\% of background clusters contain fewer than 20 loci.
+Adjusting for $\log(n_{\text{loci}})$ assumes a smooth log-linear size effect and
+cannot represent this hard, highly non-linear eligibility threshold---it
+extrapolates the outlier coefficient into a size range in which outliers cannot
+occur. We therefore replace the binary outlier flag with the per-cluster
+significance \emph{rate} $p_{\text{sig}} = n_{\text{sig}}/n_{\text{loci}}$, which
+is size-normalised by construction, retaining $\log(n_{\text{loci}})$ as a
+covariate, and additionally restrict to clusters for which outlier status is
+attainable ($n_{\text{loci}} \ge 20$, $\ge 50$).
 
-\paragraph{The sorting--climate overlap is driven by {\AA}land and does not
-survive the controls.}
-Testing whether outlier clusters are more likely to be directionally sorted
-(size-adjusted), the only significant overlap is PC2 with {\AA}land included
-(odds ratio $6.8$--$16$; Fig.~\ref{fig:mc}b). Excluding {\AA}land collapses the
-PC2 outlier set from $\sim$15--22 clusters to two, leaving the overlap
-untestable; PC1 straddles the null throughout. A member-level analysis (fraction
-of a cluster's member loci that sort) gives no support in either axis
-(coefficients negative, non-significant), and the sorted primary-outlier
-clusters are few and \Fpo-leaning (Fig.~\ref{fig:mc}c). The previously reported
-extrinsic co-localisation of sorting with the PC2 climate axis is thus a
-leverage artifact of a single population rather than a robust genome-wide
-signal.
+\paragraph{Ancestry-diagnostic loci are robustly enriched in climate-associated
+regions.}
+Under the size-normalised measure, high-DI loci are enriched in proportion to a
+cluster's climate-association strength, and the effect \emph{strengthens} as the
+comparison is restricted to size-comparable clusters (Table~\ref{tab:mc}): odds
+ratios per $+10$ percentage points of significance rate rise from 1.35 to 1.50
+(PC1) and 1.20 to 1.47 (PC2). Both climate axes show the effect at similar
+magnitude---the binary criterion had masked PC2 entirely (1.04, n.s.\ at
+$n_{\text{loci}}\ge 50$), so the apparent PC1-versus-PC2 dissociation reported
+under threshold-based definitions is itself an artifact of thresholding.
+
+\paragraph{Directional sorting does not co-localise with climate association.}
+The same reformulation removes the apparent sorting--climate overlap. Under the
+binary definition, outlier clusters appear 5--8 times more likely to be
+directionally sorted; that estimate falls to 2.3 (non-significant) once restricted
+to size-comparable clusters, and under the size-normalised measure it collapses to
+$\approx 1.0$ (Table~\ref{tab:mc}). The point estimate moves \emph{to} unity rather
+than merely widening, which is the signature of a confound being removed rather
+than of lost power. A member-level analysis (the fraction of a cluster's member
+loci that sort---also size-normalised) is likewise null, in agreement.
 
 \paragraph{Interpretation and outlook.}
-The robust climate signal in these data is a \emph{static} one---outlier
-clusters are enriched for ancestry-diagnostic loci along PC1---not a
-\emph{dynamic} co-localisation of directional sorting with climate. The
-apparent PC2 sorting overlap does not survive control for the shared-ancestry
-structure and the {\AA}land leverage point. Two caveats temper the deflation:
-the strict outlier definition yields few clusters per configuration (2--19), so
-power is low, especially after population exclusion; and this rests on a single
-clustering. The extrinsic-climate hypothesis for the \emph{sorting} is
-therefore, on present evidence, weakly supported relative to the descriptive
-directional-sorting result itself. Naming the PC1/PC2 climate axes (Module~C4)
-and the recombination-matched neutral null remain the decisive next steps;
-discriminating intrinsic incompatibilities is pursued separately through
-among-population linkage disequilibrium between unlinked diagnostic units.
+The robust climate signal in these data is \emph{static}: regions associated with
+climate are enriched for ancestry-diagnostic loci, on both climate axes. There is
+no corresponding \emph{dynamic} signal---directional ancestry sorting is not
+preferentially located in climate-associated regions once association strength is
+measured independently of cluster size. We note the limits: the most
+size-homogeneous stratum contains 451 clusters for the sorting test, so this is
+``no surviving evidence'' rather than a demonstrated absence, and a marginal PC2
+effect persists at the intermediate restriction ($1.77$, $p=0.035$). On present
+evidence the extrinsic-climate hypothesis is supported for differentiation but not
+for the sorting itself. Identifying the PC1/PC2 climate axes (Module~C4) and the
+recombination-matched neutral null remain the decisive next steps; intrinsic
+incompatibilities are pursued separately via among-population linkage
+disequilibrium between unlinked diagnostic units.
+
+\begin{table}[h]
+\centering
+\caption{Climate association versus DI-enrichment and directional sorting, primary
+configuration ({\AA}land-excluded $\times$ with-$\Omega$). Odds ratios are per
+$+10$ percentage points of significance rate (size-normalised measure) or for the
+binary outlier flag. Columns restrict to progressively more size-comparable
+clusters.}
+\label{tab:mc}
+\begin{tabular}{llccc}
+\toprule
+Test & Measure & all clusters & $n_{\text{loci}}\ge 20$ & $n_{\text{loci}}\ge 50$ \\
+\midrule
+DI-enrichment, PC1 & rate & 1.35\textsuperscript{***} & 1.39\textsuperscript{***} & \textbf{1.50}\textsuperscript{***} \\
+DI-enrichment, PC2 & rate & 1.20\textsuperscript{***} & 1.32\textsuperscript{***} & \textbf{1.47}\textsuperscript{***} \\
+DI-enrichment, PC1 / PC2 & binary & 1.54 / 1.15 & 1.59 / 1.11 & 1.89 / 1.04\,n.s. \\
+\midrule
+Sorting overlap, PC1 & rate & 1.25 & 1.37 & \textbf{0.99}\,n.s. \\
+Sorting overlap, PC2 & rate & 1.16\,n.s. & 1.77 & \textbf{1.03}\,n.s. \\
+Sorting overlap, PC1 / PC2 & binary & 5.19 / 8.04 & 3.50 / 3.12 & 2.28 / 2.26\,n.s. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{../Figures/moduleC_ancestry_confound.pdf}
-\caption{\textbf{The climate covariates versus genome-wide ancestry.} Per-population
-climate PC scores against genome-wide \Faq{} ancestry; {\AA}land and Sielva
-(orange) highlighted. PC1 is weakly ancestry-correlated; PC2 is moderately so,
+\caption{\textbf{The climate covariates versus genome-wide ancestry.}
+Per-population climate PC scores against genome-wide \Faq{} ancestry; {\AA}land and
+Sielva (orange) highlighted. PC1 is weakly ancestry-correlated; PC2 moderately so,
 driven by {\AA}land, motivating the $\Omega$ and {\AA}land-excluded controls.}
 \label{fig:conf}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{../Figures/moduleC_fig3.pdf}
-\caption{\textbf{Sorting and climate outliers.}
-(\textbf{a}) Size-adjusted DI-enrichment of climate-outlier clusters
-({\AA}land-excluded set): robust for PC1, fragile/structure-dependent for PC2.
-(\textbf{b}) Size-adjusted odds ratio that an outlier cluster is directionally
-sorted, by configuration (larger point = structure-robust primary); the
-significant PC2 overlap appears only with {\AA}land included (Al-in) and is
-untestable once {\AA}land is excluded. (\textbf{c}) Direction of the sorted
-primary-outlier clusters (few, \Fpo-leaning).}
-\label{fig:mc}
 \end{figure}
 
 \end{document}

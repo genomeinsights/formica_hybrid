@@ -59,8 +59,8 @@ import_bf <- function(file, n_expected) {
   res$`BF(dB)`
 }
 
-sig_threshold <- 20
-min_n_sig_loci <- 10
+sig_threshold <- 15
+min_n_sig_loci <- 5
 di_threshold <- -25
 
 # ------------------------------------------------------------
@@ -132,8 +132,8 @@ enrichment[, adj_sig := fifelse(adj_p < 0.001, "***", fifelse(adj_p < 0.01, "**"
 genome_wide_pct <- 100 * mean(DI$DiagnosticIndex > di_threshold, na.rm = TRUE)
 
 dir.create("./data/", showWarnings = FALSE)
-fwrite(enrichment, "./data/diagnostic_index_enrichment.csv")
-message("Saved: ./data/diagnostic_index_enrichment.csv")
+fwrite(enrichment, paste0("./data/diagnostic_index_enrichment",min_n_sig_loci,"_",sig_threshold,".csv"))
+message("Saved: ./data/diagnostic_index_enrichment", min_n_sig_loci, "_", sig_threshold, ".csv")
 print(enrichment[, .(population_set, pc, omega, n_clusters, n_outlier_markers,
                       pct_outlier, pct_background, naive_OR, naive_sig, adj_OR, adj_sig)])
 
@@ -167,8 +167,8 @@ p_forest <- ggplot(plot_dt, aes(or, config_label, color = method)) +
   theme_bw(base_size = 12) +
   theme(legend.position = "top", plot.title = element_text(size = 13), plot.caption = element_text(hjust = 0, size = 9))
 
-ggsave("./Figures/diagnostic_index_enrichment_forest.png", p_forest, width = 9.5, height = 5.5, dpi = 150)
-message("Saved: ./Figures/diagnostic_index_enrichment_forest.png")
+ggsave(paste0("./Figures/diagnostic_index_enrichment_forest_",min_n_sig_loci,"_",sig_threshold,".png"), p_forest, width = 9.5, height = 5.5, dpi = 150)
+message("Saved: ./Figures/diagnostic_index_enrichment_forest_",min_n_sig_loci,"_",sig_threshold,".png")
 
 # ------------------------------------------------------------
 # Figure: proportions -- outlier cluster vs. background range, per config
@@ -189,12 +189,12 @@ p_proportions <- ggplot(enrichment, aes(config_label, pct_outlier)) +
     title = "Raw proportions: outlier clusters vs. background",
     subtitle = "Grey band: background range across configs (7.4-8.0%).\nDotted line: genome-wide baseline (4.5%).",
     caption = paste0(
-      "Outlier cluster = LD cluster with >=10 individually significant (BF(dB)>=20) member loci.\n",
+      "Outlier cluster = LD cluster with >=",min_n_sig_loci," individually significant (BF(dB)>=",sig_threshold,") member loci.\n",
       "Significance stars are from the NAIVE (unadjusted) test -- see the size-adjusted forest plot for the confound-corrected result."
     )
   ) +
   theme_bw(base_size = 12) +
   theme(plot.title = element_text(size = 13), plot.caption = element_text(hjust = 0, size = 9))
 
-ggsave("./Figures/diagnostic_index_enrichment_proportions.png", p_proportions, width = 9, height = 6, dpi = 150)
-message("Saved: ./Figures/diagnostic_index_enrichment_proportions.png")
+ggsave(paste0("./Figures/diagnostic_index_enrichment_proportions_",min_n_sig_loci,"_",sig_threshold,".png"), p_proportions, width = 9, height = 6, dpi = 150)
+message("Saved: ./Figures/diagnostic_index_enrichment_proportions_",min_n_sig_loci,"_",sig_threshold,".png")

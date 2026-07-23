@@ -35,7 +35,17 @@ set.seed(1)
 ## ---- PARAMETERS (locked, match Module A) --------------------------------
 MIN_PARENT_MAF <- 0.15; FIX_TH <- 0.15; SORT_TH <- 0.5; NULL_PROB <- 0.5
 DI_AGG <- "max"; CORES <- 8
-SIG_THR <- 20; MIN_N_SIG <- 10          # BayPass outlier: >=10 members BF(dB)>=20
+## BayPass outlier definition: >= MIN_N_SIG members with BF(dB) >= SIG_THR.
+## RELAXED from the original 20/10 to 15/5 to raise the number of PUTATIVE outlier
+## clusters (aland_excluded PC2 had only 2-4, leaving the sorting overlap
+## untestable). Trade-off: false positives under a relaxed rule are SIZE-BIASED --
+## the chance of >=5 members crossing grows with cluster size and is amplified by
+## within-cluster LD -- and cluster size independently predicts DI, so they can ADD
+## spurious enrichment rather than merely dilute it. Read the SIZE-ADJUSTED
+## estimates, not the naive ones. MUST match R/diagnostic_index_enrichment.R (C2),
+## or Fig 3a and 3b describe different outlier sets.
+SIG_THR <- 15; MIN_N_SIG <- 5
+TAG <- sprintf("%d_%d", MIN_N_SIG, SIG_THR)   # output suffix so both settings coexist
 CLUSTERING <- "data/eMLG_5loci_0025_cM05.rds"
 uni <- c("aquilonia", "polyctena")
 elapsed <- function(t0) as.numeric(difftime(Sys.time(), t0, units = "secs"))
@@ -84,6 +94,9 @@ prim_PC2 <- oid[["aland_excluded_PC2_withOmega"]]
 ##         the parent build is the only slow step, so cache its result and skip
 ##         it on re-runs -- a downstream bug must never discard it again).
 ## ========================================================================
+## NB deliberately NOT tagged by TAG: the consensus sort_class does not depend on
+## the BayPass outlier definition, so it is reused across threshold settings --
+## which is exactly what makes re-running at new thresholds cheap.
 CKPT <- "data/moduleC_C3_cl.rds"
 if (file.exists(CKPT)) {
   message("[C3.2] loading cached consensus sort_class (skipping the parent build): ", CKPT)
@@ -154,9 +167,20 @@ print(cl[differentiated == TRUE & group_id %in% prim_PC2,
          .(n = .N, median_DI = round(median(DI, na.rm = TRUE), 1)),
          by = .(sorted = ifelse(directional == 1, "directional", "not"))])
 
+## outlier-vs-background cluster size: did relaxing the definition narrow the gap
+## the size adjustment has to extrapolate across? (was outlier ~147 vs bg ~15)
+cat("\n[C3.3c] outlier vs background cluster size (median n_loci):\n")
+szg <- function(ids, lab) {
+  d <- cl[differentiated == TRUE]
+  data.table(set = lab, n_out = sum(d$group_id %in% ids),
+             med_nloci_outlier = as.double(median(d[group_id %in% ids, n_loci])),
+             med_nloci_background = as.double(median(d[!group_id %in% ids, n_loci])))
+}
+print(rbind(szg(prim_PC1, "PC1 primary"), szg(prim_PC2, "PC2 primary")))
+
 saveRDS(list(cl = cl, grid = grid, memb = memb,
              outliers = list(PC1 = prim_PC1, PC2 = prim_PC2)),
-        "data/moduleC_sorting_climate.rds")
+        sprintf("data/moduleC_sorting_climate_%s.rds", TAG))
 
 ## ========================================================================
 ## Figure 3 (a-c)
@@ -174,7 +198,9 @@ pc_col <- c(PC1 = "#0072B2", PC2 = "#D55E00")
 om_lab <- function(o) ifelse(o == "withOmega", "wOm", "noOm")
 
 ## (a) DI-enrichment (from C2): size-adjusted OR, PC1 vs PC2 (aland_excluded)
-enr_f <- "data/diagnostic_index_enrichment.csv"
+## match C2's parameterised name; fall back to the legacy unsuffixed file (= 20/10)
+enr_f <- sprintf("data/diagnostic_index_enrichment%s.csv", TAG)
+if (!file.exists(enr_f)) enr_f <- "data/diagnostic_index_enrichment.csv"
 p3a <- if (file.exists(enr_f)) {
   enr <- fread(enr_f)[population_set == "aland_excluded"][, ylab := paste(pc, om_lab(omega))]
   ggplot(enr, aes(adj_OR, ylab)) +
@@ -209,6 +235,6 @@ p3c <- ggplot(dir_dt, aes(pc, N, fill = sort_class)) +
 
 fig3 <- p3a + p3b + p3c + plot_layout(widths = c(1, 1.5, 0.85), guides = "collect") +
   plot_annotation(tag_levels = "a") & theme(legend.position = "bottom")
-ggsave("Figures/moduleC_fig3.pdf", fig3, width = 210, height = 82, units = "mm")
-ggsave("Figures/moduleC_fig3.png", fig3, width = 210, height = 82, units = "mm", dpi = 300)
-cat("\nSaved: data/moduleC_sorting_climate.rds, Figures/moduleC_fig3.pdf/.png\n")
+ggsave(sprintf("Figures/moduleC_fig3_%s.pdf", TAG), fig3, width = 210, height = 82, units = "mm")
+ggsave(sprintf("Figures/moduleC_fig3_%s.png", TAG), fig3, width = 210, height = 82, units = "mm", dpi = 300)
+cat(sprintf("\nSaved: data/moduleC_sorting_climate_%s.rds, Figures/moduleC_fig3_%s.pdf/.png\n", TAG, TAG))
