@@ -77,13 +77,25 @@ cluster_table <- function(bf) {
 }
 
 ## ---- the two tests, each with the three predictor parameterisations ------
-## DI: cluster-level binomial on (n_hi / n_loci) -- identical likelihood to the
-## marker-level logistic C2 uses, but on 32k rows instead of ~1M.
+## DI: CLUSTER-LEVEL -- each cluster is ONE observation. A marker-level binomial
+## treats LD-correlated members as independent trials (dispersion ~64 on these
+## data), understating the SE ~8-fold; that is precisely the pseudo-replication
+## this pipeline collapses everywhere else (Module A). PRIMARY = unweighted
+## cluster-level linear model on the high-DI fraction. CONSERVATIVE CHECK =
+## size-weighted quasibinomial (overdispersion-corrected).
 fit_di <- function(D, pred) {
-  f <- as.formula(sprintf("cbind(n_hi, n_di - n_hi) ~ %s + log(n_loci)", pred))
-  m <- glm(f, data = D[n_di > 0], family = binomial); cf <- summary(m)$coefficients
-  data.table(test = "DI-enrichment", predictor = pred,
-             est = cf[pred, "Estimate"], p = cf[pred, "Pr(>|z|)"], n = nrow(D[n_di > 0]))
+  d <- copy(D[n_di > 0])[, frac_hi := n_hi / n_di]
+  m1 <- lm(as.formula(sprintf("frac_hi ~ %s + log(n_loci)", pred)), data = d)
+  c1 <- summary(m1)$coefficients
+  m2 <- glm(as.formula(sprintf("cbind(n_hi, n_di - n_hi) ~ %s + log(n_loci)", pred)),
+            data = d, family = quasibinomial)
+  c2 <- summary(m2)$coefficients
+  rbind(
+    data.table(test = "DI cluster-level", predictor = pred,
+               est = c1[pred, "Estimate"], p = c1[pred, "Pr(>|t|)"], n = nrow(d)),
+    data.table(test = "DI quasibinomial", predictor = pred,
+               est = c2[pred, "Estimate"], p = c2[pred, "Pr(>|t|)"], n = nrow(d))
+  )
 }
 ## sorting: cluster-level logistic on directional (differentiated clusters only)
 fit_sort <- function(D, pred) {
@@ -95,11 +107,19 @@ fit_sort <- function(D, pred) {
 }
 ## report on a common scale: OR per +10 percentage points of significance rate
 ## (p_sig), per +1 SD of excess z, and per the binary flag as-is.
+## Common reporting scale. The cluster-level DI model is linear in the high-DI
+## FRACTION, so its effect is reported in PERCENTAGE POINTS; the logistic /
+## quasibinomial models are reported as ODDS RATIOS. Both are expressed per +10
+## percentage points of significance rate (p_sig), or per unit for the others.
 scale_est <- function(dt) {
-  dt[, OR := fifelse(predictor == "p_sig", exp(est * 0.1), exp(est))]
-  dt[, note := fifelse(predictor == "p_sig", "per +10pp sig. rate",
-               fifelse(predictor == "z_excess", "per +1 excess z", "binary outlier"))]
-  dt[, .(test, predictor, note, OR = round(OR, 3), p = signif(p, 2), n)]
+  lin <- dt$test == "DI cluster-level"
+  dt[, effect := fifelse(lin,
+                         fifelse(predictor == "p_sig", est * 10, est * 100),
+                         fifelse(predictor == "p_sig", exp(est * 0.1), exp(est)))]
+  dt[, scale := fifelse(lin, "pp high-DI", "odds ratio")]
+  dt[, per := fifelse(predictor == "p_sig", "per +10pp sig rate",
+              fifelse(predictor == "z_excess", "per +1 excess z", "outlier vs not"))]
+  dt[, .(test, predictor, per, scale, effect = round(effect, 3), p = signif(p, 3), n)]
 }
 
 run_config <- function(i, min_nloci = 0) {
@@ -116,9 +136,8 @@ run_config <- function(i, min_nloci = 0) {
 ## ========================================================================
 message("[rate] fitting all 8 configs, full set ...")
 full <- rbindlist(lapply(seq_len(nrow(cfg)), run_config))
-cat("\n=== SIZE-NORMALISED vs BINARY, all has_eMLG clusters ===\n")
-cat("(p_sig = size-normalised association strength; is_outlier = the old gated count)\n")
-print(dcast(full, popset + pc + omega ~ test + predictor, value.var = "OR"))
+cat("\n=== all has_eMLG clusters: size-normalised association (p_sig) ===\n")
+print(full[predictor == "p_sig", .(popset, pc, omega, test, scale, effect, p)])
 cat("\n--- PRIMARY config (aland_excluded x withOmega), with p-values ---\n")
 print(full[popset == "aland_excluded" & omega == "withOmega"])
 
@@ -133,6 +152,60 @@ for (mn in c(20, 50)) {
   assign(sprintf("rob%d", mn), rb)
 }
 
-saveRDS(list(full = full, rob20 = rob20, rob50 = rob50),
+## ========================================================================
+## 3 -- dose-response figure: ancestry-diagnostic content vs climate-association
+##      strength, in size-comparable strata (primary config)
+## ========================================================================
+suppressMessages(library(ggplot2))
+message("[rate] building dose-response figure ...")
+prim <- cfg[popset == "aland_excluded" & omega == "withOmega"]
+dr <- rbindlist(lapply(seq_len(nrow(prim)), function(i) {
+  c <- prim[i]
+  bf <- import_bf(sprintf("./%s/%s_DIEM_%s_summary_betai_reg.out", c$popset, c$pc, c$omega))
+  cluster_table(bf)[, pc := c$pc][]
+}))
+gw <- 100 * mean(map$DiagnosticIndex > DI_TH, na.rm = TRUE)   # genome-wide baseline
+
+## p_sig is heavily zero-inflated (most clusters have no member at BF >= SIG_THR),
+## so quantile breaks over all clusters collapse to a single bin. Bin the zeros
+## separately ("no climate signal"), then split the positive rates by quantile.
+bin_dr <- function(d, lab, nb = 5) {
+  d <- d[n_di > 0 & is.finite(p_sig)]
+  d[, bin := NA_character_]
+  d[p_sig == 0, bin := "0"]
+  pos <- d[p_sig > 0]
+  if (nrow(pos) > nb) {
+    br <- unique(quantile(pos$p_sig, 0:nb / nb, na.rm = TRUE))
+    if (length(br) > 1) d[p_sig > 0, bin := as.character(cut(p_sig, br, include.lowest = TRUE))]
+  }
+  d[!is.na(bin), .(x = 100 * median(p_sig), y = 100 * sum(n_hi) / sum(n_di), n = .N),
+    by = .(pc, bin)][order(x)][, stratum := lab][]
+}
+dr_plot <- rbind(bin_dr(dr[n_loci >= 20], "clusters >= 20 loci"),
+                 bin_dr(dr[n_loci >= 50], "clusters >= 50 loci"))
+
+dir.create("Figures", showWarnings = FALSE)
+p_dr <- ggplot(dr_plot, aes(x, y, colour = stratum)) +
+  geom_hline(yintercept = gw, linetype = 2, colour = "grey60") +
+  annotate("text", x = Inf, y = gw, label = "genome-wide", hjust = 1.05, vjust = -0.6,
+           size = 2.3, colour = "grey45") +
+  geom_line(linewidth = 0.5) + geom_point(aes(size = n)) +
+  scale_colour_manual(values = c("clusters >= 20 loci" = "#0072B2",
+                                 "clusters >= 50 loci" = "#D55E00")) +
+  scale_size_continuous(range = c(1, 3.2), guide = "none") +
+  facet_wrap(~ pc) +
+  labs(x = expression("climate association: % of member loci with BF(dB) " >= " 15"),
+       y = "% of member loci with DI > -25", colour = NULL) +
+  theme_classic(base_size = 9) +
+  theme(legend.position = "bottom", legend.key.size = unit(3, "mm"),
+        legend.text = element_text(size = 7), strip.text = element_text(size = 8),
+        axis.title = element_text(size = 8))
+ggsave(sprintf("Figures/moduleC_dose_response_%d_%d.pdf", MIN_N_SIG, SIG_THR),
+       p_dr, width = 150, height = 78, units = "mm")
+ggsave(sprintf("Figures/moduleC_dose_response_%d_%d.png", MIN_N_SIG, SIG_THR),
+       p_dr, width = 150, height = 78, units = "mm", dpi = 300)
+
+saveRDS(list(full = full, rob20 = rob20, rob50 = rob50, dose_response = dr_plot),
         sprintf("data/moduleC_rate_based_%d_%d.rds", MIN_N_SIG, SIG_THR))
-cat(sprintf("\nSaved: data/moduleC_rate_based_%d_%d.rds\n", MIN_N_SIG, SIG_THR))
+cat(sprintf("\nSaved: data/moduleC_rate_based_%d_%d.rds, Figures/moduleC_dose_response_%d_%d.pdf/.png\n",
+            MIN_N_SIG, SIG_THR, MIN_N_SIG, SIG_THR))

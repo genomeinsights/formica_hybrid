@@ -54,6 +54,9 @@ rsconnect/
 # ============================================================
 .DS_Store
 Rplots.pdf
+# throwaway test figures written to the repo ROOT only (Rplot.png etc.);
+# the leading slash means PNGs in subdirectories are unaffected
+/*.png
 *.zip
 *.gds
 
