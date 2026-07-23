@@ -25,12 +25,12 @@ LD-based complexity reduction and the analysis of ancestry sorting}
 
 \noindent A recurring principle organises the procedures below. Markers in
 linkage disequilibrium (LD) do not carry independent information, so the unit of
-analysis throughout is the LD block rather than the marker; quantities are
-measured per block, and statistical tests treat blocks, not markers, as
+analysis throughout is the LD cluster rather than the marker; quantities are
+measured per cluster, and statistical tests treat clusters, not markers, as
 observations. Two further conventions follow from the same reasoning and are
 stated where they arise: a variable that is to be tested as a predictor is never
 also used to select the data, and a criterion whose stringency would otherwise
-depend on block size is expressed as a rate rather than a count.
+depend on cluster size is expressed as a rate rather than a count.
 
 \section{Data}
 
@@ -120,12 +120,48 @@ separate procedures, but they answer the same question: what is the finest
 partition of markers that can no longer be distinguished statistically, and
 therefore constitutes an independent unit in these data? Once that partition is
 fixed, two projections of it are useful. Selecting one representative marker per
-block gives an LD-pruned marker set. Collapsing each block to a single consensus
-dosage gives an expected multi-locus genotype (eMLG) per block. Both are
+cluster gives an LD-pruned marker set. Collapsing each cluster to a single consensus
+dosage gives an expected multi-locus genotype (eMLG) per cluster. Both are
 produced here from a single clustering pass, so the two representations always
 refer to the same underlying units.
 
-\subsection{Stage 1: local LD blocks}
+\subsection{What a cluster represents, and why it is not a haplotype block}
+A biallelic marker carries exactly one bipartition of the sampled chromosomes: it
+divides them into two groups and can encode nothing further. Where the local
+genealogy contains more than two segregating lineages, mutations falling on
+different branches define \emph{different} bipartitions. Markers arising on the
+same branch are carried by the same set of lineages and are therefore perfectly
+correlated, in the absence of recombination, recurrent mutation and missing data;
+markers arising on different branches are correlated only partially, according to
+how those branches are related.
+
+Clustering on linkage disequilibrium therefore groups markers by the partition of
+individuals they report, not by their position, and two consequences follow.
+First, clusters need not partition the chromosome: where several branches
+segregate in one region, the markers tagging each are physically interleaved, so
+the resulting clusters overlap along the sequence. The distance restriction
+applied below keeps clusters local, but locality is not spatial exclusivity.
+Second, because \rsq{} is sensitive to allele frequency, two markers tagging
+\emph{nested} branches can show complete association on a frequency-independent
+measure and yet a low \rsq{}; clustering on \rsq{} accordingly separates nested
+branches, which is precisely the situation in which a single interval contains
+several overlapping clusters.
+
+For these reasons we avoid the term haplotype block. A block, in its usual sense,
+is a contiguous stretch of limited haplotype diversity with defined boundaries,
+implicitly reflecting a single genealogy, and it partitions the sequence. The
+units here are instead sets of markers reporting the same partition of
+individuals, several of which may occupy the same interval. The reduction
+performed below is over information content---which split of the sample a marker
+reports---rather than over physical space.
+
+This is also what makes a consensus genotype meaningful. Averaging markers that
+report the same partition reinforces the dosage of that partition, whereas
+averaging across partitions would blur distinct splits. The complete-linkage
+requirement in Stage~1 and the pairwise correlation floor in Stage~2 both exist to
+prevent that.
+
+\subsection{Stage 1: local LD clusters}
 The clustering threshold was derived, per chromosome, from that chromosome's own
 fitted decay curve at $\rho = 0.5$, its half-decay point, rather than from a
 fixed \rsq{} cutoff applied genome-wide. The threshold was deliberately not
@@ -158,7 +194,7 @@ The pairwise LD edge list is built within a sliding window, so pairs of markers
 farther apart than that window were never evaluated; in the clustering they
 behave as though $\rsq = 0$. Single linkage tolerates this, because a chain of
 overlapping windows still connects distant markers. Complete linkage does not:
-a genuine single block wider than the window is fragmented into several
+a genuine single cluster wider than the window is fragmented into several
 clusters purely because the unevaluated pairs default to zero. The window is
 sized from average decay behaviour to reach a high $\rho$, which covers typical
 regions comfortably, but slowly-recombining regions decay far more slowly than
@@ -168,8 +204,8 @@ Stage~2 addresses this after the fact rather than by changing Stage~1. Candidate
 clusters are compared directly from genotypes, with no window restriction, and
 are selected for reconsideration using Stage~1's own cluster boundaries. Markers
 are deliberately not pre-split by their local LD before clustering: doing so
-severs real blocks exactly at the selection boundary, whereas selecting whole
-clusters leaves genuine blocks intact.
+severs real clusters exactly at the selection boundary, whereas selecting whole
+clusters leaves genuine clusters intact.
 
 \subsection{Stage 2: quality-gated merging}
 A Stage-1 cluster was flagged for reconsideration if any of its members exceeded
@@ -182,10 +218,15 @@ consensus genotype must survive hard-calling, quantified as
 $\mathrm{score}_{\mathrm{eMLG}}(x) = \mathrm{cor}(\mathrm{round}(x),x)^2 \ge
 0.80$, which is the property downstream LD statistics require of a consensus;
 and the two sides being merged must themselves be correlated, at pairwise
-$\rsq \ge 0.2$, since the fidelity criterion alone can be satisfied by a merge
-of essentially uncorrelated markers. Because merging proceeds only while both
-conditions hold, this stage cannot over-merge regardless of how permissively
-clusters were flagged.
+$\rsq \ge 0.2$. The two conditions are not redundant. Fidelity is a property of
+the resulting consensus, and once a cluster is large that consensus is dominated
+by the markers already in it, so appending a few further markers changes the
+score very little whether or not they report the same partition. The fidelity
+criterion is therefore least discriminating precisely where clusters are
+largest, and the pairwise requirement is what prevents an essentially
+uncorrelated marker from being absorbed there. Because merging proceeds only
+while both conditions hold, this stage cannot over-merge regardless of how
+permissively clusters were flagged.
 
 The distance restriction was applied in genetic rather than physical units, at
 0.5~cM, using the linkage map. Physical distance is a poor and sometimes
@@ -194,7 +235,7 @@ than a megabase apart can be at essentially zero genetic distance, while others
 only a few hundred kilobases apart span several centimorgans. A genetic
 threshold also behaves correctly on exceptional chromosomes, where a slower
 local recombination rate gives 0.5~cM a proportionally larger physical span,
-instead of clipping a genuine block to a distance calibrated on typical
+instead of clipping a genuine cluster to a distance calibrated on typical
 chromosomes.
 
 \subsection{Outputs and conventions}
@@ -263,7 +304,7 @@ one parent) when $|\mathrm{uni}| \ge \mathrm{bi}$ and $|\mathrm{uni}| \ge \tau$,
 bidirectional when $\mathrm{bi} > |\mathrm{uni}|$ and $\mathrm{bi} \ge \tau$, and
 unsorted otherwise. Because all three quantities are fractions of the population
 panel, the same threshold is directly comparable between individual markers and
-aggregated blocks, and genome-wide summaries are simple tallies over units.
+aggregated clusters, and genome-wide summaries are simple tallies over units.
 
 \subsection{Test of directional predictability}
 Among the $n_{\mathrm{fixed}}$ populations that near-fixed in either direction,
@@ -296,7 +337,7 @@ individuals and folded to the minor allele---with a threshold of $0.15$.
 
 The gate is deliberately placed on parental allele frequency rather than on the
 diagnostic index. DI is a predictor to be tested in later analyses, against
-recombination, block size, climate association and the direction of sorting.
+recombination, cluster size, climate association and the direction of sorting.
 Selecting loci on DI would truncate its range, attenuating every one of those
 relationships, and would make the question of whether DI predicts sorting
 circular. Parental allele frequency instead performs the role a gate should
@@ -311,15 +352,15 @@ $n_{\mathrm{pol}}$ without altering their sum or their minimum. Only the parenta
 \emph{direction} depends on the orientation, and is therefore interpretable only
 where the parental samples differ.
 
-\subsection{Testing at the level of blocks}
+\subsection{Testing at the level of clusters}
 The same statistic was applied to the eMLG consensus genotypes so that each LD
-block contributes one test rather than one test per constituent marker. Stored
-consensus genotypes cover blocks of at least five markers; for the remaining
-blocks containing a sorted marker, consensus genotypes were constructed by the
-identical procedure, so that every block is tested at whatever resolution its
+cluster contributes one test rather than one test per constituent marker. Stored
+consensus genotypes cover clusters of at least five markers; for the remaining
+clusters containing a sorted marker, consensus genotypes were constructed by the
+identical procedure, so that every cluster is tested at whatever resolution its
 size permits and none is represented only by its individual markers.
 
-Testing a block requires parental as well as hybrid consensus genotypes, since
+Testing a cluster requires parental as well as hybrid consensus genotypes, since
 orientation is defined from the parents. The parental consensus was constructed
 using the reference-marker choice and per-marker flip decisions derived from the
 hybrid genotypes, rather than recomputed on the parental individuals alone.
@@ -329,17 +370,17 @@ which would place the hybrid and parental consensus genotypes on opposite
 orientations for any marker where the two choices disagree, without any error
 being raised.
 
-The diagnostic index of a block was taken as the maximum across its member
-markers, so that a block is excluded by a DI criterion only if none of its
+The diagnostic index of a cluster was taken as the maximum across its member
+markers, so that a cluster is excluded by a DI criterion only if none of its
 members is ancestry-informative. Using the representative marker alone would
-exclude blocks whose informative markers lie elsewhere in the block.
+exclude clusters whose informative markers lie elsewhere in the cluster.
 
 \subsection{Distinguishing absence of signal from dilution}
-A block may contain a marker that sorts individually and yet not sort once its
+A cluster may contain a marker that sorts individually and yet not sort once its
 members are aggregated. Two situations produce this, and they were separated
 using the same round-trip fidelity measure that governs merging: a coherent
-block whose consensus is faithful and genuinely does not sort, versus a
-heterogeneous block in which averaging across dissimilar members dilutes a real
+cluster whose consensus is faithful and genuinely does not sort, versus a
+heterogeneous cluster in which averaging across dissimilar members dilutes a real
 signal. Blocks falling below the fidelity floor used during clustering were
 flagged for separate consideration.
 
@@ -363,7 +404,7 @@ a distinction that a relative measure alone cannot make.
 Sorting was summarised across recombination deciles twice: once treating each
 independent unit as one observation, using the pruning representatives, and once
 on a random sample of individual markers. The comparison is diagnostic rather
-than decorative. Adjacent markers within a low-recombination block report the
+than decorative. Adjacent markers within a low-recombination region report the
 same underlying event, so a relationship that is present at marker level and
 absent at unit level reflects the spatial redundancy of markers rather than a
 property of the units themselves.
@@ -373,23 +414,23 @@ Block size occupies a different causal position in different questions here, and
 is handled differently in each; we state this explicitly because the same
 variable is deliberately treated in opposite ways.
 
-When relating recombination to sorting, block size is a consequence of both
+When relating recombination to sorting, cluster size is a consequence of both
 recombination and local diversity, and therefore a collider. It is excluded from
 those models: conditioning on it induces an apparent association between
 recombination and sorting that is not otherwise present.
 
 When relating climate-association outlier status to the diagnostic index
-(Section~\ref{sec:climate}), block size is a confounder. It independently
+(Section~\ref{sec:climate}), cluster size is a confounder. It independently
 predicts DI genome-wide, and it is also required by any criterion that counts
-significant members within a block. It is therefore adjusted for in those models.
+significant members within a cluster. It is therefore adjusted for in those models.
 
 \subsection{Direction of sorting versus architecture}
 To ask whether genomic architecture predicts the \emph{direction} of sorting
 beyond the diagnostic index, the direction of unidirectionally sorted units was
 modelled by logistic regression on standardised diagnostic index, log
-recombination rate, pooled parental allele frequency and log block size, fitted
+recombination rate, pooled parental allele frequency and log cluster size, fitted
 across units. Any recombination term here is an association: under neutrality a
-non-recombining autosomal block does not experience stronger drift than its
+non-recombining autosomal region does not experience stronger drift than its
 surroundings, so attributing such a term to linked selection requires an
 explicit demographic null, which is evaluated separately.
 
@@ -433,37 +474,37 @@ population identified as carrying the ancestry--climate correlation was taken as
 the primary analysis, with the full set retained as a comparator. Results are
 reported across all eight runs so that dependence on either choice is visible.
 
-\subsection{Association strength per block}
-Each block's climate association was summarised as its \emph{significance
+\subsection{Association strength per cluster}
+Each cluster's climate association was summarised as its \emph{significance
 rate}: the proportion of its member markers reaching the Bayes factor threshold.
 A rate is used rather than a count of significant members because a count makes
-eligibility depend on block size. A block of nine markers would need more than
+eligibility depend on cluster size. A cluster of nine markers would need more than
 half of its members to be individually significant in order to reach a count of
-five, whereas a block of ninety needs only a small fraction; the same nominal
-criterion is therefore far stricter for small blocks. This cannot be repaired by
-conditioning on block size, because the resulting eligibility is a hard,
+five, whereas a cluster of ninety needs only a small fraction; the same nominal
+criterion is therefore far stricter for small clusters. This cannot be repaired by
+conditioning on cluster size, because the resulting eligibility is a hard,
 strongly non-linear function of size rather than a smooth trend, and the
 adjustment would have to extrapolate across a range in which one outcome cannot
 occur at all. Expressing association as a rate removes the dependence by
-construction, and block size is retained as a covariate for its independent
+construction, and cluster size is retained as a covariate for its independent
 effects.
 
-Because a rate is estimated imprecisely when a block contains few markers,
-results are reported across nested size strata rather than pooled: all blocks,
+Because a rate is estimated imprecisely when a cluster contains few markers,
+results are reported across nested size strata rather than pooled: all clusters,
 those with at least twenty markers, and those with at least fifty. Reporting the
 strata together makes the dependence of any estimate on measurement precision in
 the predictor explicit.
 
-\subsection{Testing at the level of blocks}
+\subsection{Testing at the level of clusters}
 Blocks are the units of observation, as elsewhere. For the diagnostic-index
-outcome, the quantity modelled is the proportion of a block's members that are
-ancestry-informative, with each block contributing one observation. A
+outcome, the quantity modelled is the proportion of a cluster's members that are
+ancestry-informative, with each cluster contributing one observation. A
 size-weighted model with an overdispersion correction is reported alongside it as
 a check. The corresponding marker-level model is not used as the primary
-analysis: it treats markers within a block as independent trials, whereas they
+analysis: it treats markers within a cluster as independent trials, whereas they
 are in linkage disequilibrium by construction, which understates the standard
 errors substantially. The relationship between climate association and the
-sorting classification was tested in the same way, with the block's
+sorting classification was tested in the same way, with the cluster's
 classification as the outcome.
 
 \section{Software and reproducibility}
@@ -517,7 +558,7 @@ Sorting & near-fixation tolerance & 0.15 \\
  & null probability & 0.5 \\
  & minimum fixed populations & 5 \\
  & parental MAF gate & $\ge 0.15$ (pooled counts) \\
- & block diagnostic index & maximum across members \\
+ & cluster diagnostic index & maximum across members \\
  & multiple testing & Benjamini--Hochberg \\
 \midrule
 Climate & evidence threshold & $\mathrm{BF(dB)} \ge 15$ \\
