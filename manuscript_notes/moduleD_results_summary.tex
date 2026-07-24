@@ -1,0 +1,96 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\Rst}{\ensuremath{R_{\mathrm{st}}}}
+
+\title{\vspace{-3em}Among-population disequilibrium between unlinked ancestry
+clusters is genome-wide, not pair-specific}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-4em}
+
+\noindent\textit{Draft results summary (Module D, the intrinsic arm). Methods are
+deferred to Supplementary Materials. Findings are descriptive: the screen
+characterises the observed distribution of among-population two-locus
+disequilibrium and ranks candidate pairs, but a pair-specific incompatibility is
+licensed only as an excess over the forthcoming recombination-matched neutral
+null. All statements below concern that observed distribution.}
+
+\section*{Results}
+
+\paragraph{Design.}
+An intrinsic incompatibility between two loci acts on their joint parental
+ancestry, and across independent replicate populations should leave a pair-level
+trace that per-locus sorting cannot show: the two loci fixing compatible ancestry
+in the same direction repeatedly, so that their allele frequencies covary across
+populations. For loci on different chromosomes this covariance cannot be produced
+by linkage, and under drift alone independent replicates sort unlinked loci
+independently, so its neutral expectation is near zero. We therefore screened all
+pairs of \emph{unlinked} (different-chromosome) LD clusters that were polymorphic
+in the parents (pooled parental MAF $\ge 0.15$; 27{,}223 of the 32{,}840
+consensus clusters), a little over $3.5\times10^{8}$ pairs. The among-population
+covariance was measured as \Rst{}, the correlation across the twenty populations
+of a cluster's mean consensus dosage; the exact Ohta decomposition of two-locus
+disequilibrium into within- and among-population components was then evaluated on
+the 387{,}841 unlinked pairs reaching $|\Rst| \ge 0.7$. Same-chromosome (linked)
+pairs, where linkage is present, serve as an internal reference.
+
+\paragraph{Unlinked pairs carry as much among-population disequilibrium as linked
+pairs.} If elevated among-population disequilibrium between unlinked clusters
+reflected specific interactions, unlinked pairs would show a heavier tail of \Rst{}
+than linked pairs, where the same tail is expected from linkage alone. They do not.
+The fraction of pairs exceeding $\Rst = 0.7$ is essentially the same for the two
+classes---$0.068\%$ of unlinked versus $0.083\%$ of linked pairs, a ratio of only
+$1.2$---and the two \Rst{} distributions are superimposed across their whole range
+($1.1\times$ at $\Rst \ge 0.5$). Physical linkage barely raises among-population
+disequilibrium above the unlinked background, which means that background is not a
+property of particular pairs but a genome-wide one.
+
+\paragraph{The decomposition points to structure, not epistasis.}
+On the high-\Rst{} pairs the Ohta decomposition is unambiguous about the source of
+the disequilibrium. The among-population component exceeds the within-population
+component in virtually every pair (median $D^2_{ST} = 0.13$ versus
+$D^2_{IS} = 0.005$; $D^2_{ST} > D^2_{IS}$ in $>99.99\%$ of pairs), while the
+disequilibrium of the averaged population is negligible (median
+$D'^2_{ST} = 0.005$, below $D'^2_{IS}$ in every pair). A large among-population
+variance component together with a vanishing average disequilibrium is the classic
+signature of correlated allele-frequency \emph{divergence} among subpopulations---
+drift and shared structure---rather than of a systematic two-locus association of
+the kind epistatic selection would maintain within populations.
+
+\paragraph{A single shared ancestry axis accounts for the pattern.}
+The covariance is predominantly positive: $62\%$ of the high-\Rst{} pairs covary in
+the same direction, and among pairs in which both clusters are themselves
+directionally sorted, same-direction pairs outnumber opposite-direction pairs
+$1.3$ to $1$. This is what a single genome-wide ancestry gradient produces---
+populations that fixed \Faq{} ancestry did so across many diagnostic loci at once,
+so those loci covary positively regardless of any interaction between them. The
+among-population disequilibrium between unlinked clusters is thus dominated by the
+same directional ancestry sorting characterised in the per-locus analyses, now seen
+as the covariance it induces between loci, rather than by pair-specific coupling.
+
+\paragraph{Interpretation and outlook.}
+Before a neutral null, the screen finds no evidence of pair-specific incompatibility:
+among-population two-locus disequilibrium between unlinked clusters is abundant but
+is statistically indistinguishable from the linked reference and reads, by its own
+decomposition, as correlated ancestry divergence along one genome-wide axis. This
+is the expected descriptive outcome, and it sharpens rather than answers the
+intrinsic question. A Dobzhansky--Muller interaction would appear as an
+\emph{excess} of among-population disequilibrium, at specific unlinked pairs, over
+what neutral sorting of the same replicate populations produces. Module D is
+therefore run as a distribution-generator: it emits the observed \Rst{} and
+among-population disequilibrium distributions, and candidate incompatibilities are
+defined downstream as the pairs exceeding the recombination-matched neutral null,
+which is evaluated by applying the identical pre-filter and decomposition to
+simulated genotypes. That comparison, with the concurrent linked-pair reference,
+is the decisive next step.
+
+\end{document}
