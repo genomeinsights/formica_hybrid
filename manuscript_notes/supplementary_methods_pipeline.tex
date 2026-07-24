@@ -127,8 +127,11 @@ resolution and directness required for a per-marker decision. Such a
 directly-measured LD statistic is also informative where a pedigree-based
 recombination estimate is not: in this cross roughly two thirds of
 adjacent-marker intervals contain no observed recombinant, so the direct
-estimate is uninformative over most of its range. $\mathrm{ld}_w$ is used below
-to identify clusters for reconsideration in Stage~2.
+estimate is uninformative over most of its range. The correspondence is also
+visible directly along the chromosome: $\mathrm{ld}_w$ is elevated exactly over
+each low-recombination region, where both the decay rate and the map-based rate
+are reduced (Fig.~\ref{fig:tracks}). $\mathrm{ld}_w$ is used below to identify
+clusters for reconsideration in Stage~2.
 
 \begin{figure}[h]
 \centering
@@ -140,6 +143,20 @@ map-based recombination rate, at three definitions of ``low recombination''
 is stronger, while $\mathrm{ld}_w$ is defined per marker and requires no
 interpolation.}
 \label{fig:roc}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../Figures/ld_tracks_chr26_chr10.png}
+\caption{Per-marker local LD support ($\mathrm{ld}_w$, grey points) along two
+example chromosomes, each with a pronounced low-recombination region, shown
+against the window-level decay rate $a$ (orange, left column) and the map-based
+recombination rate (blue, right column); every series is min-max scaled.
+$\mathrm{ld}_w$ is elevated across each low-recombination region, where both $a$
+and the recombination rate are reduced. Note the directions: $a$ is a decay
+rate, so $a$ and the recombination rate are positive correlates of each other,
+whereas $\mathrm{ld}_w$ is their inverse.}
+\label{fig:tracks}
 \end{figure}
 
 \section{Complexity reduction: one partition, two projections}
