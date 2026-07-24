@@ -584,13 +584,28 @@ complementary to the per-locus sorting measured above.
 \subsection{Units and the restriction to unlinked pairs}
 The units are the eMLG consensus genotypes, as in the sorting analysis, so that
 each LD cluster contributes once and physically redundant markers are not counted
-repeatedly. Pairs were formed only between clusters on different chromosomes. This
-is the restriction that makes the test specific: same-chromosome pairs can carry
-disequilibrium through linkage irrespective of any interaction, whereas
-between-chromosome pairs cannot, so an association there must arise from correlated
-sorting rather than from proximity. Same-chromosome pairs were retained not as
-tests but as an internal reference---the disequilibrium expected where linkage is
-present---against which the unlinked pairs are read.
+repeatedly. A pair was treated as unlinked if the two clusters lay on different
+chromosomes or on the same chromosome more than a threshold genetic distance apart;
+the remaining same-chromosome pairs, within that distance, were retained not as
+tests but as a close-linkage reference against which the unlinked pairs are read.
+The restriction is what makes the test specific: linked clusters can carry
+disequilibrium through recombinational linkage irrespective of any interaction,
+whereas sufficiently distant clusters cannot, so an association there must arise
+from correlated sorting rather than from proximity.
+
+The threshold was set on the genetic rather than the physical map, and chosen from
+the age of the hybrid populations. Admixture disequilibrium between two loci decays
+as $(1-c)^{t}$ in the recombination fraction $c$, independent of physical distance,
+so the distance beyond which founding disequilibrium has dissipated is a property of
+map distance and generation number alone. At the $\sim\!50$ generations implied for
+these populations, $10$~cM corresponds to about $99\%$ decay (Haldane $c \approx
+0.088$), and the mean ancestry-tract length, $\sim\!1/t$ Morgans or about $2$~cM,
+makes $10$~cM roughly five tract lengths---so clusters that far apart segregate on
+effectively independent ancestry tracts. The threshold is also supported directly by
+the data: among-population disequilibrium between same-chromosome clusters decays to
+the inter-chromosomal baseline by about $10$--$15$~cM. Because these are
+high-recombination chromosomes ($\sim\!19$~cM/Mb), $10$~cM corresponds to roughly
+half a megabase.
 
 \subsection{The polymorphism gate}
 As in the sorting analysis, clusters were restricted to those polymorphic in the
@@ -701,7 +716,7 @@ Climate & evidence threshold & $\mathrm{BF(dB)} \ge 15$ \\
  & size strata & all, $\ge 20$, $\ge 50$ markers \\
 \midrule
 Intrinsic LD & unit & eMLG consensus (hard-called) \\
- & pair restriction & different chromosomes \\
+ & unlinked definition & different chr, or same chr $> 10$ cM \\
  & cluster gate & parental MAF $\ge 0.15$ \\
  & screening proxy & among-population dosage correlation $R_{\mathrm{st}}$ \\
  & pre-filter threshold & $|R_{\mathrm{st}}| \ge 0.7$ \\

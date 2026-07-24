@@ -39,9 +39,11 @@
 ##     (iii) EXACT Ohta decomposition (dstat_unphased_scan) only on the surviving
 ##          unlinked tail -> confirm the among-population component (D2st) and
 ##          characterise the within-population part (D2is) and the averaged LD (Dp2st).
-##   LINKED (same-chromosome) pairs are retained as an internal POSITIVE CONTROL:
-##   physical linkage SHOULD raise LD, so the interesting anomaly is UNLINKED pairs
-##   carrying among-population LD.
+##   UNLINKED is defined on the GENETIC map (see LINK_CM): different chromosome, or
+##   same chromosome but > LINK_CM cM apart, so that admixture LD from founding has
+##   decayed (~99% at 10 cM within ~50 gen). The close-LINKED pairs (same chr,
+##   <= LINK_CM) are retained as an internal POSITIVE CONTROL -- linkage SHOULD raise
+##   LD there, so the interesting anomaly is UNLINKED pairs carrying among-population LD.
 ##
 ## INFERENCE STATUS. This is a DESCRIPTIVE DISTRIBUTION-GENERATOR, not a candidate
 ##   caller. The run showed the raw among-population LD tail is essentially IDENTICAL
@@ -54,7 +56,7 @@
 ##   `moduleD_pop_freq_matrix()`, `moduleD_prefilter()`, `moduleD_scan()` (top of
 ##   file) so Module E sources THIS file and runs the IDENTICAL pre-filter + scan on
 ##   simulated genotypes -- the null plugs in with no re-implementation. IMPORTANT
-##   for E: apply the SAME RST_THR.
+##   for E: apply the SAME RST_THR and LINK_CM.
 ##
 ## Run from repo root. Reads canonical clustering, hybrids_only sample_data,
 ## moduleC_C3_cl.rds (the differentiated / DI gate). Writes data/moduleD_ohta.rds
@@ -68,7 +70,20 @@ set.seed(1)
 ## ---- PARAMETERS ---------------------------------------------------------
 CLUSTERING <- "data/eMLG_5loci_0025_cM05.rds"
 CL_GATE    <- "data/moduleC_C3_cl.rds"   # per-cluster differentiated / DI / sort_class
+RECMAP     <- "data/Frufa_DTOL_PR.ref_genome.recmap"   # cumulative cM per chromosome
 CORES      <- 8
+## "Unlinked" is defined on the GENETIC map, not just by chromosome: a pair is
+## linked (the close-linkage positive control) only if the two clusters are on the
+## same chromosome AND within LINK_CM centimorgans; everything else -- different
+## chromosome, or same chromosome but farther -- is unlinked and forms the test set.
+## Rationale (recombination map now available): admixture LD decays as (1-c)^t
+## irrespective of physical distance, so after ~50 generations of hybridisation
+## (Module E brackets these populations at 30-70 gen) LD at 10 cM has decayed to
+## ~1% of its founding value (Haldane; c=0.088), and the mean ancestry-tract length
+## ~1/t Morgans ~ 2 cM makes 10 cM ~5 tract lengths -- two clusters that far apart
+## sort essentially independently. 10 cM ~ 0.5 Mb on these high-recombination
+## (~19 cM/Mb) chromosomes.
+LINK_CM    <- 10
 DROP_SIELVA <- FALSE   # near-F1 pop (ancestry SD ~0.001): TRUE = robustness rerun.
                        # It mostly adds a ~0.5-frequency leverage point to the
                        # among-pop covariance; default keeps all 20 pops (as A/B/C).
@@ -107,49 +122,73 @@ moduleD_pop_freq_matrix <- function(GT, pops, cols) {
   out
 }
 
-## Blocked among-population correlation R_st = cor(F) over pops, returning
-##   $edges : data.table(i, j, R_st) for pairs with |R_st| >= rst_thr, chr[i]!=chr[j],
-##            i<j (indices into colnames(Fmat)); linked pairs are for the histogram
-##            only and are NOT returned as edges.
-##   $hist  : binned distribution of R_st for linked vs unlinked pairs (all pairs),
-##            for the figure -- accumulated without materialising the full K x K matrix.
-## Correlation across the (few) populations is computed as a crossproduct of
-## column-standardised frequency vectors: scale each cluster's pop-vector to
-## mean 0 / unit L2 norm, then crossprod == Pearson r.
-moduleD_prefilter <- function(Fmat, chr, rst_thr = 0.7, block = 500,
-                              hist_breaks = seq(-1, 1, by = 0.05)) {
+## Blocked among-population correlation R_st = cor(F) over pops. "Unlinked" is
+## defined on the GENETIC map (see LINK_CM): a pair is LINKED only if same chromosome
+## AND |dcM| <= link_cm; otherwise UNLINKED (different chromosome, or same chromosome
+## but > link_cm). Returns
+##   $edges : data.table(i, j, R_st) for UNLINKED pairs with |R_st| >= rst_thr, i<j
+##            (indices into colnames(Fmat)); linked pairs are histogram-only.
+##   $hist  : binned R_st distribution for linked vs unlinked pairs (all pairs).
+##   $decay : among-population LD (mean R_st^2) for SAME-chromosome pairs binned by
+##            genetic distance, with the inter-chromosomal baseline -- the empirical
+##            LD-vs-cM decay that justifies the threshold. $baseline_rst2 = inter-chr mean.
+## All accumulated without materialising the full K x K matrix. Correlation across the
+## (few) populations = crossproduct of column-standardised (mean 0, unit L2) freq vectors.
+moduleD_prefilter <- function(Fmat, chr, cm, rst_thr = 0.7, link_cm = 10, block = 500,
+                              hist_breaks = seq(-1, 1, by = 0.05),
+                              cm_breaks = c(seq(0, 40, by = 2), Inf)) {
   K  <- ncol(Fmat)
   Fs <- scale(Fmat, center = TRUE, scale = FALSE)         # centre over pops
   nrm <- sqrt(colSums(Fs^2))
   Fs <- sweep(Fs, 2, nrm, "/")                            # unit norm -> crossprod = r
-  chr <- as.character(chr)
+  chr <- as.character(chr); cm <- as.numeric(cm)
   nb  <- length(hist_breaks) - 1L
+  nbc <- length(cm_breaks) - 1L
   h_link <- numeric(nb); h_unlink <- numeric(nb)
+  s_rst2 <- numeric(nbc); n_cm <- numeric(nbc)            # same-chr decay: sum R_st^2, count / cM bin
+  base_s <- 0; base_n <- 0                                # inter-chromosomal baseline
+  binsum <- function(x, b) { o <- numeric(nbc); t <- tapply(x, b, sum); o[as.integer(names(t))] <- t; o }
   edges <- vector("list", ceiling(K / block))
   bi <- 0L
   for (start in seq(1L, K, by = block)) {
     bi  <- bi + 1L
     idx <- start:min(start + block - 1L, K)
     Rb  <- crossprod(Fs[, idx, drop = FALSE], Fs)         # |idx| x K  (r of block vs all)
-    ## histogram over off-diagonal pairs with global-j > global-i (each pair once)
+    ## off-diagonal pairs with global-j > global-i (each pair once)
     gi <- rep(idx, times = K)
     gj <- rep(seq_len(K), each = length(idx))
     rv <- as.vector(Rb)
     up <- gj > gi & is.finite(rv)
     if (any(up)) {
-      link <- chr[gi[up]] == chr[gj[up]]
-      hb <- cut(rv[up], hist_breaks, include.lowest = TRUE, labels = FALSE)
+      gi <- gi[up]; gj <- gj[up]; rv <- rv[up]
+      same <- chr[gi] == chr[gj]
+      dcm  <- abs(cm[gi] - cm[gj])
+      link <- same & is.finite(dcm) & dcm <= link_cm      # cM-based linkage
+      hb <- cut(rv, hist_breaks, include.lowest = TRUE, labels = FALSE)
       h_link   <- h_link   + tabulate(hb[link],  nbins = nb)
       h_unlink <- h_unlink + tabulate(hb[!link], nbins = nb)
       ## surviving UNLINKED edges
-      sel <- up & !link & abs(rv) >= rst_thr
+      sel <- !link & abs(rv) >= rst_thr
       if (any(sel)) edges[[bi]] <- data.table(i = gi[sel], j = gj[sel], R_st = rv[sel])
+      ## empirical decay: same-chromosome pairs binned by genetic distance
+      sc <- same & is.finite(dcm)
+      if (any(sc)) {
+        cb <- cut(dcm[sc], cm_breaks, include.lowest = TRUE, right = FALSE, labels = FALSE)
+        r2 <- rv[sc]^2
+        s_rst2 <- s_rst2 + binsum(r2, cb)
+        n_cm   <- n_cm   + tabulate(cb, nbins = nbc)
+      }
+      ic <- !same                                         # inter-chromosomal baseline
+      if (any(ic)) { base_s <- base_s + sum(rv[ic]^2); base_n <- base_n + sum(ic) }
     }
   }
   edges <- rbindlist(edges)
   list(edges = edges,
        hist  = data.table(mid = (head(hist_breaks, -1) + tail(hist_breaks, -1)) / 2,
-                          linked = h_link, unlinked = h_unlink))
+                          linked = h_link, unlinked = h_unlink),
+       decay = data.table(cm_lo = head(cm_breaks, -1), cm_hi = tail(cm_breaks, -1),
+                          mean_rst2 = s_rst2 / pmax(n_cm, 1), n = n_cm),
+       baseline_rst2 = if (base_n > 0) base_s / base_n else NA_real_)
 }
 
 ## Exact Ohta decomposition for a set of column-index pairs, on ROUNDED consensus
@@ -185,6 +224,24 @@ message(sprintf("[D1] %d hybrid individuals x %d clusters | %d populations%s",
 chr_of  <- setNames(as.character(groups$Chr), groups$group_id)
 cl_gate <- cl[, .(group_id, differentiated, DI, sort_class)]
 
+## per-cluster GENETIC position (cumulative cM). Interpolate cM at each marker's
+## physical position from the recombination map (per chromosome, same interpolation
+## Module B uses for rate), then take the cluster's median member cM.
+map_dt <- as.data.table(e1$map_hyb_005)[, .(marker, Chr = as.character(Chr), Pos)]
+rec <- fread(RECMAP); setnames(rec, 1:4, c("chr", "pos", "cM", "cMMb"))
+rec[, Chr := sub("chromosome_", "Chr", chr)]
+map_dt[, cM := NA_real_]
+for (ch in unique(map_dt$Chr)) {
+  r <- rec[Chr == ch]; if (nrow(r) < 2) next
+  ix <- map_dt[, which(Chr == ch)]
+  map_dt[ix, cM := approx(r$pos, r$cM, xout = Pos, rule = 2)$y]
+}
+marker_cM <- setNames(map_dt$cM, map_dt$marker)
+memL <- groups[.(colnames(eMLG)), on = "group_id", .(marker = unlist(members)), by = group_id]
+memL[, cM := marker_cM[marker]]
+cm_of <- memL[, .(cM = median(cM, na.rm = TRUE)), by = group_id][, setNames(cM, group_id)]
+message(sprintf("[D1] genetic positions assigned (%d clusters with finite cM)", sum(is.finite(cm_of))))
+
 ## =========================================================================
 ## D2 -- scope: differentiated clusters (the informativeness gate)
 ## =========================================================================
@@ -201,12 +258,16 @@ Fmat <- moduleD_pop_freq_matrix(eMLG, pops_all, scope)
 dropped <- attr(Fmat, "dropped")
 scope_kept <- colnames(Fmat)                              # monomorphic-across-pop dropped
 chr_scope  <- chr_of[scope_kept]
+cm_scope   <- cm_of[scope_kept]
 message(sprintf("[D3] pop-frequency matrix %d x %d built (%d monomorphic-across-pop dropped) | %.0fs",
                 nrow(Fmat), ncol(Fmat), length(dropped), elapsed(t0)))
 
 t0 <- Sys.time()
-pf <- moduleD_prefilter(Fmat, chr = chr_scope, rst_thr = RST_THR, block = PREFILTER_BLOCK)
+pf <- moduleD_prefilter(Fmat, chr = chr_scope, cm = cm_scope, rst_thr = RST_THR,
+                        link_cm = LINK_CM, block = PREFILTER_BLOCK)
 n_pairs_total <- pf$hist[, sum(linked + unlinked)]
+message(sprintf("[D3] unlinked = different chromosome or same chromosome > %g cM; %s linked (<=%g cM) reference pairs",
+                LINK_CM, format(pf$hist[, sum(linked)], big.mark = ","), LINK_CM))
 message(sprintf("[D3] pre-filter done: %s scope pairs scanned, %d unlinked survivors (|R_st|>=%.2f) | %.0fs",
                 format(n_pairs_total, big.mark = ","), nrow(pf$edges), RST_THR, elapsed(t0)))
 
@@ -269,13 +330,21 @@ cat(sprintf("\n[D4] reading: D2st >> D2is (frac %.2f) with Dp2st ~ 0 (frac Dp2st
 cat("     among-population LD is correlated allele-frequency DIVERGENCE (structure/\n")
 cat("     shared ancestry axis), not systematic epistasis. Excess-over-null = E.\n")
 
+## (iv) empirical LD-vs-cM decay: does among-pop LD (mean R_st^2) between same-chr
+## pairs fall to the inter-chromosomal baseline by ~LINK_CM cM? (validates the threshold)
+cat(sprintf("\n[D4] among-pop LD (mean R_st^2) vs genetic distance | inter-chromosomal baseline = %.4f:\n",
+            pf$baseline_rst2))
+print(pf$decay[is.finite(cm_hi)][, .(cM = sprintf("%g-%g", cm_lo, cm_hi),
+                                     mean_rst2 = round(mean_rst2, 4), n)])
+
 ## =========================================================================
 ## D5 -- outputs + figure
 ## =========================================================================
 saveRDS(list(pairs = pairs_dt, rst_hist = pf$hist, ranked = ranked,
              tail_contrast = tail_contrast, decomp = decomp,
+             rst_decay = pf$decay, baseline_rst2 = pf$baseline_rst2,
              scope = scope_kept, dropped = dropped, n_pairs_total = n_pairs_total,
-             params = list(RST_THR = RST_THR, DROP_SIELVA = DROP_SIELVA,
+             params = list(RST_THR = RST_THR, LINK_CM = LINK_CM, DROP_SIELVA = DROP_SIELVA,
                            TOP_N = TOP_N, clustering = CLUSTERING)),
         "data/moduleD_ohta.rds")
 message("[D5] saved data/moduleD_ohta.rds")
@@ -290,14 +359,15 @@ th <- theme_classic(base_size = 8) +
         plot.margin = margin(4, 9, 2, 4))
 
 ## (a) THE KEY CONTRAST: among-population frequency correlation (R_st), unlinked vs
-## linked, over ALL scope pairs. Linked (positive control) carries the physical-LD
-## tail; an UNLINKED tail beyond it = candidate correlated among-population sorting.
+## linked (same chr <= LINK_CM), over ALL scope pairs. An UNLINKED tail beyond the
+## close-linked reference = candidate correlated among-population sorting.
 hh <- melt(pf$hist, id.vars = "mid", variable.name = "pairtype", value.name = "n")
 hh[, frac := n / sum(n), by = pairtype]
 p4a <- ggplot(hh, aes(mid, frac, colour = pairtype)) +
   geom_vline(xintercept = c(-RST_THR, RST_THR), linetype = 2, colour = "grey70") +
   geom_line(linewidth = 0.5) +
-  scale_colour_manual(values = c(linked = "#D55E00", unlinked = "#0072B2")) +
+  scale_colour_manual(values = c(linked = "#D55E00", unlinked = "#0072B2"),
+                      labels = c(linked = sprintf("linked (<=%g cM)", LINK_CM), unlinked = "unlinked")) +
   scale_y_sqrt() +
   labs(x = expression(R[st]~"(among-population freq. correlation)"),
        y = "fraction of pairs (sqrt)", title = "a  Unlinked vs linked among-pop LD") + th
@@ -313,14 +383,19 @@ p4b <- if (nrow(pairs_dt) > 0) {
          title = "b  Among- vs within-pop (D'2st≈0)") + th
 } else patchwork::plot_spacer()
 
-## (c) pre-filter validation: the cheap R_st proxy tracks the exact among-pop
-## component D2st (so the genome-wide R_st distribution E is compared against is a
-## faithful stand-in for the exact statistic).
-p4c <- if (nrow(pairs_dt) > 0) {
-  ggplot(pairs_dt, aes(abs(R_st), D2st)) +
-    geom_point(alpha = 0.2, size = 0.4, colour = "#0072B2") +
-    labs(x = expression("|"*R[st]*"|  (pre-filter proxy)"), y = "among-pop  D2st",
-         title = "c  Proxy vs exact among-pop LD") + th
+## (c) empirical LD-vs-cM decay: among-population LD (mean R_st^2) between
+## same-chromosome pairs falling to the inter-chromosomal baseline with genetic
+## distance, justifying the LINK_CM threshold from the data. Vertical line = LINK_CM.
+p4c <- if (pf$decay[is.finite(cm_hi) & n > 0, .N] > 0) {
+  dd <- pf$decay[is.finite(cm_hi) & n > 0][, cm_mid := (cm_lo + cm_hi) / 2]
+  ggplot(dd, aes(cm_mid, mean_rst2)) +
+    geom_hline(yintercept = pf$baseline_rst2, linetype = 3, colour = "grey50") +
+    geom_vline(xintercept = LINK_CM, linetype = 2, colour = "grey70") +
+    geom_line(linewidth = 0.5, colour = "#D55E00") + geom_point(size = 0.7, colour = "#D55E00") +
+    annotate("text", x = LINK_CM + 1, y = max(dd$mean_rst2), hjust = 0, size = 2.2,
+             label = "inter-chr baseline", colour = "grey50", vjust = 3) +
+    labs(x = "genetic distance (cM)", y = expression("among-pop LD  ("*R[st]^2*")"),
+         title = "c  LD decay vs cM (same chr)") + th
 } else patchwork::plot_spacer()
 
 fig4 <- p4a + p4b + p4c + plot_layout(widths = c(1.1, 1, 1)) +
