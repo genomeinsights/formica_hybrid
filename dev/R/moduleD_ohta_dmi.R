@@ -65,6 +65,7 @@
 
 suppressMessages({ library(data.table); library(ggplot2); library(patchwork); library(parallel) })
 source("dev/R/Ohta.R")   # ohta_fast_prepare(), dstat_unphased_scan() (uses parallel::mclapply)
+source("dev/R/moduleD_paralogy.R")   # cross-chromosome duplication filter (shared with the EMMAX arm)
 set.seed(1)
 
 ## ---- PARAMETERS ---------------------------------------------------------
@@ -96,6 +97,7 @@ PREFILTER_BLOCK <- 500          # cluster columns per crossprod block (~2 GB tra
                                 # peak at K~27k; lower it if memory-constrained)
 TOP_N      <- 2000              # size of the ranked top-R_st view saved for inspection
                                 # (a convenience list, NOT a candidate call -- see header)
+PARALOGY_R <- 0.9               # |within-pop r| above which a survivor pair is a duplicate
 elapsed <- function(t0) as.numeric(difftime(Sys.time(), t0, units = "secs"))
 
 ## =========================================================================
@@ -240,6 +242,7 @@ marker_cM <- setNames(map_dt$cM, map_dt$marker)
 memL <- groups[.(colnames(eMLG)), on = "group_id", .(marker = unlist(members)), by = group_id]
 memL[, cM := marker_cM[marker]]
 cm_of <- memL[, .(cM = median(cM, na.rm = TRUE)), by = group_id][, setNames(cM, group_id)]
+marker_Ho <- colMeans(e1$GTs_hybrids_005 == 1, na.rm = TRUE)   # per-cluster het for the paralogy filter
 message(sprintf("[D1] genetic positions assigned (%d clusters with finite cM)", sum(is.finite(cm_of))))
 
 ## =========================================================================
@@ -292,6 +295,17 @@ di_v <- setNames(cl_gate$DI, cl_gate$group_id); sc_v <- setNames(cl_gate$sort_cl
 pairs_dt[, `:=`(DI1 = di_v[cluster1], DI2 = di_v[cluster2],
                 sort1 = sc_v[cluster1], sort2 = sc_v[cluster2])]
 
+## cross-chromosome paralogy / duplication filter: two unlinked clusters that are
+## genotype-near-identical (|within-pop r| ~ 1) are the same reads at two assembly
+## locations, not epistasis -- and the cM rule cannot catch them (different chromosome
+## = infinite recombinational distance). Flag them here (shared with the EMMAX arm).
+t0 <- Sys.time()
+het_of <- moduleD_cluster_het(groups, scope_kept, marker_Ho)
+pairs_dt <- flag_paralogy(pairs_dt, "cluster1", "cluster2", eMLG, pops_all,
+                          het_of = het_of, thr = PARALOGY_R, cores = CORES)
+message(sprintf("[D3] paralogy filter: %d/%d survivor pairs flagged as duplicates (|within-pop r| > %.2f) | %.0fs",
+                sum(pairs_dt$paralog), nrow(pairs_dt), PARALOGY_R, elapsed(t0)))
+
 ## =========================================================================
 ## D4 -- descriptive summary (NO candidate network: deferred to Module E)
 ## =========================================================================
@@ -321,7 +335,7 @@ decomp <- pairs_dt[, .(D2is = median(D2is, na.rm = TRUE), D2st = median(D2st, na
 ## (iii) ranked top-R_st view (a convenience list for eyeballing, NOT a candidate call)
 ranked <- head(pairs_dt[order(-abs(R_st))], TOP_N)[, .(
   cluster1, cluster2, Chr1, Chr2, R_st, D2st, D2is, Dp2st, Ohta_D, Fst_mean,
-  DI1, DI2, sort1, sort2)]
+  DI1, DI2, sort1, sort2, within_pop_r, concordance, paralog)]
 
 cat("\n[D4] unlinked-vs-linked R_st tail contrast:\n"); print(tail_contrast)
 cat("\n[D4] Ohta decomposition on unlinked survivors (medians):\n"); print(decomp)
