@@ -61,6 +61,35 @@ for (ch in unique(map$Chr)) {
   map[idx, recomb := approx(r$pos, r$cMMb, xout = map$Pos[idx], rule = 2)$y]
 }
 
+## per-marker LD-decay rate `a`, window-midpoint interpolated -- commented
+## out, for a colleague's whitelist of SNPs NOT in low-recombination
+## regions (decided criterion: all SNPs with a != 0 from the ld_decay
+## object; a<=0 is the degenerate/near-non-recombining case, e.g. Chr26's
+## centromeric block -- 571/4566 windows genome-wide have a<=0, matching
+## the a-vs-cM comparison in dev/methods_notes.md). ld_decay only lives in
+## hybrids_only_maf005.Rdata, not the parent-inclusive file loaded above.
+
+# e_ld <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e_ld)
+# ld_decay <- e_ld$ld_decay
+# map[, a := NA_real_]
+# for (ch in names(ld_decay$by_chr)) {
+#   d <- ld_decay$by_chr[[ch]]$decay
+#   idx <- map[, which(Chr == ch)]
+#   if (nrow(d) < 2 || length(idx) == 0) next
+#   mid <- (d$start + d$end) / 2
+#   map[idx, a := approx(mid, d$a, xout = map$Pos[idx], rule = 2)$y]
+# }
+# whitelist_markers <- map[a > 1e-5, marker]
+# length(whitelist_markers)
+# 
+#out <- gsub("Chr","chromosome_",whitelist_markers)
+#length(out)
+#write.table(out,"high_a_whitelist_000001.txt",row.names = FALSE,col.names = FALSE, quote = FALSE)
+#abline(v=1e-5)
+
+#log(0.0001)
+#map[,plot(recomb,log10(a))]
+#abline(h=log10(0.00001))
 ## per-marker cluster size (from the canonical clustering)
 g <- readRDS(CLUSTERING)$groups
 memb <- data.table(marker = unlist(g$members),

@@ -11,13 +11,12 @@ if(!file.exists("./data/diem_parsed.rds")){
   DIEM <- fread("data/Formica_hybrids_filtered_diem_output.bed.gz")
   DIEM_samples <- colnames(DIEM)[10]
   DIEM_samples <- strsplit(DIEM_samples,"|",fixed = TRUE)[[1]]
-  
+  DIEM[DiagnosticIndex>= -25,.N]
   DIEM <- DIEM[DIEM$nVNTs==2]
   ## map
   map <- DIEM[,.(Chr=gsub("chromosome_","Chr",`#Chrom`),Pos=End)]
   map[,marker := paste(Chr,Pos,sep=":")]
   map <- cbind(map,DIEM[,.(Polarity,DiagnosticIndex)])
-  
   
   # Pre-extract only the column you need so workers do not carry full DIEM
   track_strings <- as.character(DIEM[[10]])
@@ -181,6 +180,20 @@ ld_decay <- readRDS("./data/ld_decay_DIEM_100w.rds")
 ld_w_095 <- as.vector(compute_ld_w(0.95,ld_decay = ld_decay))
 map_hyb_005[,ld_w_095:=ld_w_095]
 save(GTs_hybrids_005,map_hyb_005,sample_data,ld_decay,file = "./data/hybrids_only_maf005.Rdata")
+
+## --- lean inputs for the ld_w track figure (dev/R/fig_ld_tracks.R) ---
+## Saved here so that figure need not reload this 966 MB decay object or the
+## genotype matrices: per-SNP ld_w, and the windowed decay rate a.
+saveRDS(map_hyb_005[, .(Chr, Pos, ld_w_095)], "./data/ld_tracks_ldw_persnp.rds")
+saveRDS(
+  data.table::rbindlist(lapply(names(ld_decay$by_chr), function(ch) {
+    d <- data.table::as.data.table(ld_decay$by_chr[[ch]]$decay)
+    if (!all(c("a", "start", "end") %in% names(d))) return(NULL)
+    d[, .(Chr = ch, start, end, mid = (start + end) / 2, a,
+          regime = if ("regime" %in% names(d)) as.character(regime) else NA_character_)]
+  })),
+  "./data/ld_tracks_a_windows.rds"
+)
 
 map <- copy(map_hyb_005)
 
@@ -408,6 +421,8 @@ plot_ld_decay_tracks <- function(
   p
 }
 
+
+p
 p <- plot_ld_decay_tracks(
   ld_decay = ld_decay,
   ld_w_095 = ld_w_095,

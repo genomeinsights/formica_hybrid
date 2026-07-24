@@ -87,3 +87,9 @@ Figures/
 # dev/ reference artifacts (screenshots, reading PDFs) -- not code
 dev/*.pdf
 dev/*.png
+
+# Module E sim outputs (regenerated, multi-GB)
+moduleE_slim/output/
+
+# large unrelated whitelist dumps
+high_a_whitelist*.txt

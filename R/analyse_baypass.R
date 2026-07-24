@@ -62,7 +62,8 @@ load_baypass_bf <- function(out_folder, prefix, map) {
 ## since that was computed once genome-wide from the full sample set,
 ## independent of which BayPass run's poolsizes are used. BF(dB) >= 20
 ## ("strong" evidence on Jeffreys' scale) is the significance threshold.
-sig_threshold <- 20
+sig_threshold <- 15
+min_n_sig_loci <- 5
 pc1_with_aland_withOmega     <- load_baypass_bf("./with_aland/",     "PC1_DIEM_withOmega", map_hyb_005)
 pc2_with_aland_withOmega     <- load_baypass_bf("./with_aland/",     "PC2_DIEM_withOmega", map_hyb_005)
 pc1_aland_excluded_withOmega <- load_baypass_bf("./aland_excluded/", "PC1_DIEM_withOmega", map_hyb_005)
@@ -201,14 +202,14 @@ plot_clustered_manhattan_with_background <- function(baypass_result, fig_prefix,
   list(background = bg, foreground = fg, plot = p)
 }
 
-pc1_with_aland_withOmega_layered     <- plot_clustered_manhattan_with_background(pc1_with_aland_withOmega,     "PC1_with_aland_withOmega",     min_n_sig_loci = 10)
-pc2_with_aland_withOmega_layered     <- plot_clustered_manhattan_with_background(pc2_with_aland_withOmega,     "PC2_with_aland_withOmega",     min_n_sig_loci = 10)
-pc1_aland_excluded_withOmega_layered <- plot_clustered_manhattan_with_background(pc1_aland_excluded_withOmega, "PC1_aland_excluded_withOmega", min_n_sig_loci = 10)
-pc2_aland_excluded_withOmega_layered <- plot_clustered_manhattan_with_background(pc2_aland_excluded_withOmega, "PC2_aland_excluded_withOmega", min_n_sig_loci = 10)
+pc1_with_aland_withOmega_layered     <- plot_clustered_manhattan_with_background(pc1_with_aland_withOmega,     "PC1_with_aland_withOmega",     min_n_sig_loci = min_n_sig_loci)
+pc2_with_aland_withOmega_layered     <- plot_clustered_manhattan_with_background(pc2_with_aland_withOmega,     "PC2_with_aland_withOmega",     min_n_sig_loci = min_n_sig_loci)
+pc1_aland_excluded_withOmega_layered <- plot_clustered_manhattan_with_background(pc1_aland_excluded_withOmega, "PC1_aland_excluded_withOmega", min_n_sig_loci = min_n_sig_loci)
+pc2_aland_excluded_withOmega_layered <- plot_clustered_manhattan_with_background(pc2_aland_excluded_withOmega, "PC2_aland_excluded_withOmega", min_n_sig_loci = min_n_sig_loci)
 
-pc1_with_aland_noOmega_layered     <- plot_clustered_manhattan_with_background(pc1_with_aland_noOmega,     "PC1_with_aland_noOmega",     min_n_sig_loci = 10)
-pc2_with_aland_noOmega_layered     <- plot_clustered_manhattan_with_background(pc2_with_aland_noOmega,     "PC2_with_aland_noOmega",     min_n_sig_loci = 10)
-pc1_aland_excluded_noOmega_layered <- plot_clustered_manhattan_with_background(pc1_aland_excluded_noOmega, "PC1_aland_excluded_noOmega", min_n_sig_loci = 10)
-pc2_aland_excluded_noOmega_layered <- plot_clustered_manhattan_with_background(pc2_aland_excluded_noOmega, "PC2_aland_excluded_noOmega", min_n_sig_loci = 10)
+pc1_with_aland_noOmega_layered     <- plot_clustered_manhattan_with_background(pc1_with_aland_noOmega,     "PC1_with_aland_noOmega",     min_n_sig_loci = min_n_sig_loci)
+pc2_with_aland_noOmega_layered     <- plot_clustered_manhattan_with_background(pc2_with_aland_noOmega,     "PC2_with_aland_noOmega",     min_n_sig_loci = min_n_sig_loci)
+pc1_aland_excluded_noOmega_layered <- plot_clustered_manhattan_with_background(pc1_aland_excluded_noOmega, "PC1_aland_excluded_noOmega", min_n_sig_loci = min_n_sig_loci)
+pc2_aland_excluded_noOmega_layered <- plot_clustered_manhattan_with_background(pc2_aland_excluded_noOmega, "PC2_aland_excluded_noOmega", min_n_sig_loci = min_n_sig_loci)
 
 

@@ -109,8 +109,38 @@ comparably across chromosomes with different background LD.
 For each marker a measure of local LD support, $\mathrm{ld}_w$, was computed as
 the median \rsq{} between that marker and its neighbours within the window
 corresponding to $\rho = 0.95$. It summarises how strongly a marker is embedded
-in local LD, and is used below to identify the regions where Stage~1 clustering
-is most likely to have been conservative.
+in local LD. Its practical value is that it is a per-marker quantity read
+directly from the LD data: unlike a recombination rate, which must be
+interpolated from a genetic map, and unlike the decay rate $a$, which is fitted
+per window, $\mathrm{ld}_w$ requires no interpolation and is defined at the
+resolution of the individual marker.
+
+Because reduced recombination elevates local LD, $\mathrm{ld}_w$ reflects the
+local recombination environment. Treating the least-recombining regions,
+defined as the lowest quantiles of map-based recombination rate, as the target,
+both $\mathrm{ld}_w$ and the window-level decay rate $a$ discriminate them well:
+across the lowest 5\%, 10\% and 25\% of windows, $a$ achieves areas under the
+receiver-operating-characteristic curve of 0.91 to 0.98 and $\mathrm{ld}_w$ of
+0.73 to 0.86 (Fig.~\ref{fig:roc}). The decay rate is the stronger predictor,
+as expected of a window-level summary, but $\mathrm{ld}_w$ retains the
+resolution and directness required for a per-marker decision. Such a
+directly-measured LD statistic is also informative where a pedigree-based
+recombination estimate is not: in this cross roughly two thirds of
+adjacent-marker intervals contain no observed recombinant, so the direct
+estimate is uninformative over most of its range. $\mathrm{ld}_w$ is used below
+to identify clusters for reconsideration in Stage~2.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{../Figures/p_roc_low_recombination.png}
+\caption{Discrimination of low-recombination regions by local LD support
+($\mathrm{ld}_w$) and by the window-level decay rate ($a$), against
+map-based recombination rate, at three definitions of ``low recombination''
+(the lowest 5\%, 10\% and 25\% of windows). Both are effective; the decay rate
+is stronger, while $\mathrm{ld}_w$ is defined per marker and requires no
+interpolation.}
+\label{fig:roc}
+\end{figure}
 
 \section{Complexity reduction: one partition, two projections}
 
@@ -210,8 +240,15 @@ clusters leaves genuine clusters intact.
 \subsection{Stage 2: quality-gated merging}
 A Stage-1 cluster was flagged for reconsideration if any of its members exceeded
 $\mathrm{ld}_w > 0.025$, or if the cluster contained at least five markers. The
-second criterion captures substantial clusters whose local LD support is
-moderate and which would otherwise pass through unmerged. Flagged clusters were
+$\mathrm{ld}_w$ criterion follows directly from what the statistic measures: a
+marker with low local LD support is by definition weakly correlated with its
+neighbours, and is therefore already close to independent and would not merge
+with anything. Restricting the reconsideration to markers with appreciable local
+support concentrates this comparatively expensive step exactly where a merge is
+possible, without omitting merges elsewhere. The second criterion is a separate
+route in, for clusters that have already grown to at least five markers---and so
+demonstrably do cluster---but whose local support is only moderate, which would
+otherwise pass through unmerged. Flagged clusters were
 then merged by a distance-restricted, average-linkage dynamic tree cut that
 accepts each candidate merge only while two quality conditions hold: the
 consensus genotype must survive hard-calling, quantified as

@@ -1,0 +1,288 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\title{Module E: a recombination-matched haplodiploid neutral null for
+ancestry sorting in replicate \textit{Formica} hybrid populations}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-2.2em}
+
+\begin{abstract}
+\noindent
+Modules A--C established that parental ancestry sorts in a directional,
+partly predictable way across 20 replicate \textit{F.\ polyctena}\,$\times$\,\textit{F.\
+aquilonia} hybrid populations, but those results are descriptive: without a
+neutral null they cannot distinguish selection from drift. Module E builds that
+null. Founders are seeded from \emph{real phased parental haplotypes} rather than
+independent allele-frequency draws, so within-species linkage disequilibrium is
+preserved; recombination follows the empirical genetic map; the model is
+haplodiploid; and all selection is removed, leaving drift and recombination as
+the only forces. The key design element is an \emph{internal control}: markers are
+stratified by DiagnosticIndex (DI), so low-DI markers---which cannot be driven by
+ancestry sorting---calibrate the demography within the same runs that test the
+high-DI markers. Observed among-population differentiation rises steeply with DI
+($F_{ST}=0.051\rightarrow0.315$) while the neutral null is essentially flat
+($0.191\rightarrow0.156$), and the fraction of sorted loci exceeds the null by
+$\sim$1.5-fold at low DI rising to $>$100-fold at high DI. Because drift is
+DI-blind by construction, a DI-scaled excess cannot be produced by demographic
+misspecification. The null does not yet reproduce the neutral background itself
+(it over-differentiates 3--4$\times$ at $\mathrm{DI}\le-90$), indicating a
+simulated effective size that is too small; recalibrating on these neutral
+markers---rather than on the ancestry-informative markers, which are the test---
+lowers simulated differentiation in every DI bin and thus \emph{widens} the
+high-DI excess, so the reported magnitudes are conservative.
+\end{abstract}
+
+\section{Rationale}
+
+Near-fixation of a parental allele in a hybrid population is expected under a
+Dobzhansky--Muller incompatibility or consistent directional selection, but also
+under plain drift in small, young populations. The two are separated by
+\emph{direction}: selection predicts the same parent fixing repeatedly across
+replicates, drift predicts random directions. Quantifying ``more parallel than
+drift'' requires a null that reproduces the actual demography, recombination
+landscape and sampling design of the data. That is what Module E provides.
+
+\section{Methods}
+
+\subsection{Conditional design}
+
+Rather than simulating the parental species' history, we \emph{condition} on it.
+Founders are drawn from real phased parental haplotypes, the mutation rate is set
+to zero, and only the post-contact hybrid phase is simulated. This inherits true
+allele frequencies, true between-species divergence and---critically---true
+within-species haplotype structure, none of which independent binomial draws at
+empirical frequencies would reproduce.
+
+\subsection{Founder haplotypes}
+
+Fifteen diploid females per species were imputed and phased \emph{within species}
+with Beagle~5.4, informed by the empirical cM map (phasing across the species
+boundary would manufacture artificial intermediate haplotypes). Two
+\textit{polyctena} individuals with $>$40\% missing data were excluded, giving a
+founder pool of 30 \textit{aquilonia} haplotypes and 13 \textit{polyctena} diploid
+females over 1{,}114{,}251 markers. Phasing preserved the pool faithfully:
+correlation between raw and phased allele frequencies $r=0.999$, expected
+heterozygosity $0.216/0.203$ against raw $0.216/0.206$, and mean between-species
+$|\Delta p|$ of $0.304$ against $0.303$.
+
+\subsection{Simulation model}
+
+SLiM~5, non-Wright--Fisher, haplodiploid with arrhenotoky: haploid males from
+unfertilised eggs, diploid females, spermathecal sperm storage, multiple mating
+following Pamilo, and an age-structured life table. The genome is the 26
+assembled chromosomes (chromosome 23 excluded), each with its empirical
+recombination map. Maps are in cM/Mb and must be converted with
+\texttt{scale}=$10^{-8}$ to per-base rates. Mutation rate is zero, so the
+simulation redistributes existing real variation rather than generating new
+variation. All selection (QTN, DMI, climate) is removed.
+
+Founders are read from one combined per-chromosome VCF containing 30 haploid
+\textit{aquilonia} samples and 13 diploid \textit{polyctena} samples. A single
+read call per chromosome is required: reading the two species separately creates
+two distinct mutations at each position instead of one shared biallelic marker.
+Each parameter set is run as 20 independent demes---each an independent founder
+draw and independent drift history---sampled every 20 generations to generation
+160.
+
+\subsection{Marker sets and DI stratification}
+
+Two marker sets were used. The first is the ancestry-diagnostic set,
+$\mathrm{DI}>-25$ (49{,}506 markers). The second, used for the results reported
+here, takes the locked Module~A gate (pooled parental
+$\mathrm{MAF}\ge0.15$; 650{,}950 markers, DI from $-168$ to $-4$) and draws
+\textbf{4{,}000 markers from each of 10 fixed DI bins} (40{,}000 total). Equal
+allocation per bin is deliberate: uniform thinning is swamped by the mid-DI bulk
+and starves both tails.
+
+This stratification supplies the internal control. Low-DI markers carry little
+ancestry information, so ancestry sorting cannot drive their statistics; they
+calibrate the demography \emph{in the same runs} that test the high-DI markers.
+The test is then the \emph{shape} of the discrepancy across DI: a gap that rises
+with DI implicates ancestry-specific processes, whereas a flat gap implicates
+demographic misspecification.
+
+\subsection{Requirements for a valid comparison}
+
+Three points proved essential and are worth recording.
+
+\begin{enumerate}\itemsep2pt
+\item \textbf{Sample-size matching.} Composite $r^2$ carries a finite-sample bias
+of order $1/2n$, and \texttt{sort\_class} likewise fires more readily in small
+samples (a 3-diploid sample can near-fix trivially; 50 diploids essentially
+cannot). Simulated demes are therefore subsampled to the empirical
+per-population sizes (3--20 diploids). Without this the null appears
+artificially unsorted and the LD comparison is biased toward younger ages.
+\item \textbf{Symmetric treatment.} Any filter applied to the data must be
+applied to the null. ``Sorted'' is by definition high among-population
+differentiation, so removing sorted loci from the observed data alone
+mechanically lowers its $F_{ST}$ and moves it toward the null irrespective of
+cause.
+\item \textbf{Shared orientation.} Both datasets are polarised with the same
+parental reference (the phased founder pool) and the locked Module~A conventions
+($\mathrm{MAF}\ge0.15$, $\mathrm{fix\_th}=0.15$, $\mathrm{sort\_th}=0.5$,
+$\mathrm{null\_prob}=0.5$).
+\end{enumerate}
+
+\section{Controls excluding neutral alternatives}
+
+Before interpreting any excess, several neutral explanations were quantified and
+excluded.
+
+\paragraph{Founder heterogeneity.}
+If replicate populations were founded from different local source populations,
+among-population differentiation would be inflated neutrally. Splitting the
+parental pool into $k$ balanced sub-pools and founding each deme from one of
+them gives an at-founding among-deme $F_{ST}$ of only $0.0095$--$0.024$
+($k=2$--$4$). The absolute ceiling---each deme founded from a single
+\textit{aquilonia} haplotype and a single \textit{polyctena} female, the most
+extreme founding available---is $0.090$. The mechanism is general: at
+ancestry-informative markers both species are near-fixed for opposite alleles,
+so any \textit{aquilonia} sub-pool resembles ``aquilonia'' and any
+\textit{polyctena} sub-pool ``polyctena''; a 50/50 admixture washes out
+within-species structure regardless of how divergent the sources are.
+
+\paragraph{Colony (nest) structure.}
+The empirical samples are workers from few colonies (164 workers from 39 nests;
+median 2 nests per population; 9 of 20 populations are a single colony), and
+nestmates could in principle be siblings, which would depress $\pi$ and inflate
+$F_{ST}$. Measured directly, the excess within-nest pairwise genotype
+correlation is only $0.047$ ($0.565$ within nests versus $0.517$ between nests in
+the same population): nestmates are barely more related than non-nestmates,
+as expected for polygynous supercolonial \textit{Formica}. The effect is real but
+minor.
+
+\paragraph{Among-population ancestry variance.}
+Populations differ in mean ancestry (SD $0.065$, range $0.40$--$0.66$), which
+contributes $\mathrm{Var}(a)/\bar{p}(1-\bar{p})\approx0.017$ to $F_{ST}$ at
+diagnostic markers---about 11\% of the observed high-DI gap.
+
+\paragraph{Individual outliers.}
+Sielva is a near-F$_1$ population (observed heterozygosity $0.813$ against
+$0.499$ expected from its ancestry; within-population ancestry SD $0.001$), and
+is genuinely young. Removing it changes $\pi$ from $0.299$ to $0.293$ and
+$F_{ST}$ from $0.313$ to $0.320$; across all 20 leave-one-out analyses the
+largest change in $F_{ST}$ is $0.009$. No single population drives the result.
+
+\section{Results}
+
+\subsection{The neutral null is anchored on markers that cannot sort}
+
+Low-DI markers ($\mathrm{DI}\le-60$) were used to fit the demography by LD decay,
+selecting $K=1500$ at generation~160 (Fig.~\ref{fig:ld}). This anchor must be
+computed \emph{within} populations and averaged; pooling individuals across
+differentiated populations manufactures LD and destroys the comparison.
+
+\subsection{Differentiation scales with DI in the data but not under drift}
+
+Table~\ref{tab:dose} and Fig.~\ref{fig:dose} give the central result. Observed
+$F_{ST}$ rises from $0.051$ at the neutral background to $0.315$ at the most
+ancestry-informative markers, while the neutral null is nearly flat
+($0.191\rightarrow0.156$). The fraction of sorted loci shows the same pattern
+more sharply, from a $\sim$1.5-fold excess at low DI to $>$100-fold at high DI.
+
+\begin{table}[htbp]\centering
+\caption{Observed and simulated statistics by DI bin at the anchor-matched
+neutral cell ($K=1500$, generation 160). ``sorted'' is the fraction of loci
+classified as directionally sorted.}
+\label{tab:dose}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+DI bin & $F_{ST}$ obs & $F_{ST}$ null & $\pi$ obs & $\pi$ null & sorted obs & sorted null\\
+\midrule
+$\le-90$      & 0.051 & 0.191 & 0.448 & 0.381 & 0.026 & 0.021\\
+$(-90,-75]$   & 0.257 & 0.185 & 0.308 & 0.344 & 0.184 & 0.103\\
+$(-75,-60]$   & 0.303 & 0.183 & 0.260 & 0.314 & 0.350 & 0.233\\
+$(-60,-50]$   & 0.307 & 0.179 & 0.251 & 0.313 & 0.398 & 0.267\\
+$(-50,-40]$   & 0.309 & 0.172 & 0.253 & 0.328 & 0.378 & 0.183\\
+$(-40,-30]$   & 0.305 & 0.167 & 0.277 & 0.364 & 0.260 & 0.072\\
+$(-30,-25]$   & 0.312 & 0.161 & 0.293 & 0.388 & 0.175 & 0.030\\
+$(-25,-20]$   & 0.310 & 0.160 & 0.297 & 0.398 & 0.150 & 0.015\\
+$(-20,-15]$   & 0.314 & 0.161 & 0.302 & 0.405 & 0.130 & 0.001\\
+$>-15$        & 0.315 & 0.156 & 0.304 & 0.415 & 0.116 & 0.000\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.85\textwidth]{../Figures/moduleE_fig1_dose_response.pdf}
+\caption{Among-population differentiation (top) and the fraction of sorted loci
+(bottom, log scale) against DiagnosticIndex bin, for the observed data and the
+neutral null. Neutral drift is DI-blind and produces an essentially flat
+profile; the data concentrate both differentiation and sorting in
+ancestry-informative markers.}
+\label{fig:dose}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.68\textwidth]{../Figures/moduleE_fig2_ld_anchor.pdf}
+\caption{LD decay on the low-DI anchor markers ($\mathrm{DI}\le-60$), computed
+within populations and averaged, for the observed data and the anchor-matched
+neutral cell.}
+\label{fig:ld}
+\end{figure}
+
+\subsection{Why the shape matters}
+
+Drift does not distinguish ancestry-informative from uninformative markers: a
+purely demographic error---wrong effective size, wrong age, wrong founding
+size---shifts all DI bins together. The simulated profile confirms this,
+remaining flat across the full DI range. A discrepancy that \emph{scales} with
+ancestry-informativeness therefore cannot be produced by misspecifying the
+demography, and the comparison is internally controlled because both datasets
+use the same markers, the same MAF gate and the same frequency spectrum.
+
+\section{Limitations and the planned calibration}
+
+\textbf{The null does not yet reproduce the neutral background.} At
+$\mathrm{DI}\le-90$ the observed $F_{ST}$ is $0.051$ while the null gives
+$0.14$--$0.19$ (depending on $K$): the simulation over-differentiates by
+3--4$\times$ on markers where sorting cannot be the cause, and simultaneously
+undershoots neutral $\pi$ ($\sim$0.40 against $0.448$). Both signal the same
+thing---the \emph{simulated effective size is too small}: isolated demes drift
+apart more, and lose more within-population diversity, than the real populations
+do at neutral loci. Consequently the \emph{magnitude} of the excess is
+provisional, though its \emph{direction} is not: reducing simulated drift lowers
+$F_{ST}$ in every DI bin and, because the null is flat across DI, \emph{widens}
+the high-DI gap, making the reported values conservative.
+
+\paragraph{Planned analysis.}
+The calibration must be performed \emph{on the low-DI markers}---the internal
+control that cannot sort---rather than on the ancestry-informative markers (which
+are the test) or on LD decay (which, being generated partly by drift, favours the
+opposite direction and disagrees with $\pi$/$F_{ST}$). Two demographic parameters
+are swept over the full DI-stratified marker set:
+\begin{enumerate}\itemsep2pt
+\item \textbf{carrying capacity $K$}, extended \emph{upward} beyond the values run
+so far (the neutral background requires less drift than even $K=6250$ provides,
+so larger effective sizes are needed);
+\item \textbf{number of founders} per deme, which sets both within-population
+diversity and among-deme founding variance.
+\end{enumerate}
+The cell that reproduces neutral $F_{ST}$ ($\approx0.051$) and $\pi$
+($\approx0.448$) then defines the calibrated null, and the high-DI excess is read
+off there. Because the null's $F_{ST}$ is flat across DI, matching the neutral
+background at $\sim$0.05 lowers the simulated high-DI $F_{ST}$ to the same level,
+so the observed high-DI value ($0.315$) stands against a much lower neutral
+expectation than in Table~\ref{tab:dose}; the dose-response is expected to
+strengthen, not weaken, under this recalibration. Founding is expected to be
+constrained to be \emph{large}: fewer founders lower $\pi$ and raise $F_{ST}$,
+moving the neutral background away from the observed values, which itself
+excludes a tight-bottleneck neutral explanation on the markers where the test is
+trustworthy.
+
+Until the background is reproduced, the honest statement is that
+\textbf{differentiation and sorting scale with ancestry-informativeness in a way
+neutral drift does not produce}, with the magnitude of that excess to be fixed
+once the null reproduces the markers that cannot sort.
+
+\end{document}

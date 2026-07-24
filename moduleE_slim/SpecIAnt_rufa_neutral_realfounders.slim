@@ -1,0 +1,333 @@
+////------- F. aquilonia x F. polyctena -- NEUTRAL null with REAL phased founders -------////
+///
+// Module E of the Formica sorting pipeline. Derived from SpecIAnt_rufa_genome_server.slim
+// (Portinha/Heidbreder/Poikela). Two deliberate departures from that model:
+//
+//  (1) FOUNDERS ARE REAL, PHASED HAPLOTYPES, not idealized fixed differences.
+//      The original seeds identical pure-aq males x identical pure-pol females and
+//      plants m10 ancestry markers as perfect fixed differences (aq=1, pol=0). Here
+//      we read the real phased founder pool (Module E1/E2b) via readHaplosomesFromVCF,
+//      so AIMs carry realistic within-species variation and partial between-species
+//      frequencies -- the whole point of the recombination-matched null.
+//
+//  (2) FULLY NEUTRAL. No QTN / DMI / climate / ancestry-phenotype selection; the
+//      m50/m5-8 machinery and modifyChild() fitness are removed. Population regulation
+//      is purely demographic (density + age life table), so drift + recombination on
+//      the empirical map are the only forces. This is the inference license: the null
+//      distribution of the sorting statistics to compare the observed data against.
+//
+// The haplodiploid life cycle (arrhenotoky, spermatheca cold-storage, Pamilo mating,
+// age life table) is kept verbatim from the source model.
+//
+// AIMs / markers = exactly the DI > -25 SNPs (50,072), defined by the founder VCF
+// content (founders_DIm25/founders_ch<id>.vcf), so no separate AIM planting is needed.
+//
+// Run one INDEPENDENT DEME per invocation (vary `rep` -> different founder draw + seed);
+// build the null by running many demes and resampling 20-at-a-time downstream.
+
+initialize() {
+	initializeSLiMModelType("nonWF");
+	initializeSLiMOptions(keepPedigrees=T);
+	initializeSex();
+
+	// ---- inputs (override with -d on the command line) ----
+	if (!exists("folder"))    defineConstant("folder", "~/gitlab/formica_hybrid/data/moduleE_sim/");
+	if (!exists("FDIR"))      defineConstant("FDIR", "~/gitlab/Replicate-hybrid-evolution/SLiM/founders_DIm25/"); // combined founder VCFs
+	if (!exists("RECDIR"))    defineConstant("RECDIR", "~/gitlab/Replicate-hybrid-evolution/SLiM/rec_maps/");      // per-chrom cM/Mb maps
+	if (!exists("rep"))       defineConstant("rep", 1);          // deme id
+	if (!exists("K"))         defineConstant("K", 6250);         // carrying capacity
+	if (!exists("nCycles"))   defineConstant("nCycles", 160);    // generations to run
+	if (!exists("sampleEvery")) defineConstant("sampleEvery", 20); // sample interval
+	if (!exists("sampleSize"))  defineConstant("sampleSize", 100);  // n sampled per output
+
+	// founder DRAW (the diversity knob). Pool = 30 aq haploid + 13 pol diploid.
+	if (!exists("N_AQ"))      defineConstant("N_AQ", 30);        // aq founder MALES  (<= 30)
+	if (!exists("N_POL"))     defineConstant("N_POL", 13);       // pol founder QUEENS (<= 13)
+	defineConstant("N_AQ_POOL", 30);
+	defineConstant("N_POL_POOL", 13);
+	if (N_AQ > N_AQ_POOL | N_POL > N_POL_POOL)
+		stop("N_AQ/N_POL exceed the founder pool (30 aq / 13 pol)");
+
+	defineConstant("verbose", F);
+	defineGlobal("MU", 0.0);                 // no new mutations
+	defineConstant("P_OFFSPRING_MALE", 0.5);
+	defineConstant("mCS", 150);              // max clutch size
+	defineConstant("simID", getSeed());
+
+	// ---- ancestry marker: the ONLY mutation type; never substituted away ----
+	initializeMutationType("m10", 0.5, "f", 0.0);
+	m10.convertToSubstitution = F;
+	m10.color = "gold4";
+	initializeGenomicElementType("g1", m10, 1.0);
+
+	// ---- 26 chromosomes (no chr23); empirical cM/Mb map, scale 1e-8 -> per-base ----
+	// NB: the repo maps are cM/Mb, so scale = 1e-8 (1 cM/Mb = 1e-8 recomb/bp).
+	// The source model's scale=1.0 is a units bug (rates > 0.5 -> SLiM error).
+	defineConstant("chromIDs", c(1:22, 24:27));
+	defineConstant("Ls",       // one per chromID, in chromID order
+	       c(16449812, 18558483, 15805178, 16666556, 14957794, 10925039, 13372598, 13028660,
+	         10584038, 13832892, 11830133, 11260715, 11449430, 7730741, 10965718, 11699404,
+	         11021207, 8644910, 7297899, 9820556, 10314430, 7671390, 6269374, 13114028,
+	         9969264, 7047176));
+
+	for (i in seqAlong(chromIDs)) {
+		id = chromIDs[i]; L = Ls[i];
+		initializeChromosome(id, NULL, type="A", symbol="ch" + id);
+		initializeRecombinationRateFromFile(RECDIR + "ch_" + id + ".recmap", L - 1, scale=1e-8);
+		initializeMutationRate(MU);
+		initializeGenomicElement(g1, 0, L - 1);
+	}
+
+	// sample generations 20,40,...,160
+	defineConstant("sampleCycle", seq(sampleEvery, nCycles, by=sampleEvery));
+	defineConstant("prefix", "neutral_realfounders_Naq" + N_AQ + "_Npol" + N_POL + "_K" + K + "_rep" + rep);
+}
+
+//// ------------------- 0. Founding (real phased haplotypes) ------------------ ////
+
+1 first() {
+	// full founder pool: p1 = 30 aq males (haploid), p2 = 13 pol females (diploid)
+	sim.addSubpop("p1", N_AQ_POOL, sexRatio=1.0, haploid=T);   // aq males
+	sim.addSubpop("p2", N_POL_POOL, sexRatio=0.0, haploid=F);  // pol females
+
+	// read the combined per-chromosome founder VCF into c(aq male, pol female)
+	// haplosomes. ONE read per chromosome so aq+pol share ONE mutation per site.
+	for (id in chromIDs) {
+		targets = c(p1.haplosomesForChromosomes(id, includeNulls=F),
+		            p2.haplosomesForChromosomes(id, includeNulls=F));
+		targets.readHaplosomesFromVCF(FDIR + "founders_ch" + id + ".vcf", m10);
+	}
+
+	// FOUNDER DRAW. If AQ_KEEP / POL_KEEP are supplied (comma-separated, 1-based
+	// indices into the founder pool: aq_hap01..30, pol_fem01..13) keep EXACTLY those
+	// founders. That is how the founder-heterogeneity experiment gives each deme a
+	// LOCAL source subset (a sub-pool), instead of a rangewide draw. Pool order is
+	// the founder-VCF sample order, so index i == aq_hap<i> / pol_fem<i>.
+	// Without them, draw N_AQ / N_POL at random from the whole (rangewide) pool.
+	if (exists("AQ_KEEP")) {
+		keepAq = p1.individuals[asInteger(strsplit(AQ_KEEP, ",")) - 1];
+		sim.killIndividuals(setDifference(p1.individuals, keepAq));
+	} else if (N_AQ < N_AQ_POOL) {
+		sim.killIndividuals(sample(p1.individuals, N_AQ_POOL - N_AQ));
+	}
+	if (exists("POL_KEEP")) {
+		keepPol = p2.individuals[asInteger(strsplit(POL_KEEP, ",")) - 1];
+		sim.killIndividuals(setDifference(p2.individuals, keepPol));
+	} else if (N_POL < N_POL_POOL) {
+		sim.killIndividuals(sample(p2.individuals, N_POL_POOL - N_POL));
+	}
+
+	// merge for mating (aq males into the pol-female subpop), as in the source model
+	p1.takeMigrants(p2.individuals);
+	p2.removeSubpopulation();
+	p1.individuals.tag = -1;
+
+	// cold storage for mated (dead) males held in spermathecae
+	sim.addSubpop("p1000", 1, haploid=T);
+	sim.killIndividuals(p1000.individuals);
+
+	catn("[founding] rep " + rep + ": " + N_AQ + " aq males + " + N_POL +
+	     " pol queens; markers = " + size(sim.mutations));
+}
+
+// per-cycle mating bookkeeping (verbatim from source model)
+first() {
+	if (sim.cycle == 3) {
+		founderQs = p1.subsetIndividuals(sex="F", minAge=2);
+		sim.killIndividuals(founderQs);
+	}
+	queens = p1.subsetIndividuals(sex="F");
+	if (sim.cycle == 2)
+		queens.tagL0 = asLogical(rep(0, length(queens)));
+	else if (sim.cycle == 3)
+		queens.tagL0 = asLogical(rep(1, length(queens)));
+	else
+		queens.tagL0 = asLogical(rbinom(size(queens), 1, P_OFFSPRING_MALE));
+
+	if (sim.cycle <= 3)
+		queens.tagF = asFloat(rep(3, size(queens)));
+	else
+		queens.tagF = asFloat(rnbinom(length(queens), size=0.07554167, prob=0.01824684));
+
+	expMales  = sum(queens.tagF[queens.tagL0==T & queens.tag==1]);
+	expQueens = sum(queens.tagF[queens.tagL0==F & queens.tag==1]);
+	while (expMales*expQueens == 0 & sim.cycle > 3) {
+		queens.tagL0 = asLogical(rbinom(length(queens), 1, P_OFFSPRING_MALE));
+		queens.tagF  = asFloat(rnbinom(length(queens), size=0.07554167, prob=0.01824684));
+		expMales  = sum(queens.tagF[queens.tagL0==T]);
+		expQueens = sum(queens.tagF[queens.tagL0==F]);
+	}
+	malesUnMated_prev = p1.subsetIndividuals(sex="M", tag=-1, minAge=1);
+	sim.killIndividuals(malesUnMated_prev);
+}
+
+//// ------------------- 1. Reproduction (arrhenotoky) ------------------------- ////
+
+reproduction(p1, "F") {
+	oldQueens = subpop.subsetIndividuals(sex="F", minAge=1);
+	for (queen in oldQueens) {
+		gen1 = queen.haploidGenome1;
+		gen2 = queen.haploidGenome2;
+		clutchSize = asInteger(queen.tagF);
+
+		if (queen.tagL0 | queen.tag == -1) {
+			// unfertilized -> haploid males (recombine the queen's two haplosomes)
+			patternM = Dictionary();
+			for (chrom in sim.chromosomes.id) {
+				CHROM_i = which(sim.chromosomes.id == chrom);
+				sim.addPatternForRecombinant("ch" + chrom, patternM, gen1[CHROM_i], gen2[CHROM_i],
+					NULL, NULL, NULL, NULL, "M", randomizeStrands=T);
+			}
+			subpop.addMultiRecombinant(patternM, sex="M", parent1=queen, parent2=NULL,
+				randomizeStrands=T, count=clutchSize);
+		} else {
+			// fertilized -> diploid females (queen recombinant + stored male sperm)
+			mates = queen.getValue(asString(queen.pedigreeID));
+			nMates = size(mates);
+			sireChoices = sample(0:(nMates-1), clutchSize, replace=T);
+			offspring_per_mate = tabulate(sireChoices, maxbin=nMates-1);
+			for (i in seqAlong(offspring_per_mate)) {
+				mate = sim.individualsWithPedigreeIDs(mates[i]);
+				patternF = Dictionary();
+				for (chrom in sim.chromosomes.id) {
+					CHROM_i = which(sim.chromosomes.id == chrom);
+					sim.addPatternForRecombinant("ch" + chrom, patternF, gen1[CHROM_i], gen2[CHROM_i],
+						NULL, mate.haploidGenome1[CHROM_i], NULL, NULL, "F", randomizeStrands=T);
+				}
+				subpop.addMultiRecombinant(patternF, sex="F", parent1=queen, parent2=mate,
+					randomizeStrands=T, count=offspring_per_mate[i]);
+			}
+		}
+	}
+	self.active = 0;
+}
+
+//// ------------------- 2. Mating + density/age regulation -------------------- ////
+
+early() {
+	if (sim.cycle == 2) {
+		newQueens = p1.subsetIndividuals(sex="F", maxAge=0);
+		newMales  = p1.subsetIndividuals(sex="M", maxAge=0);
+		newMales.tag = -1;
+	} else if (sim.cycle == 3) {
+		newMales  = p1.subsetIndividuals(sex="M", maxAge=0);
+		newQueens = p1.subsetIndividuals(sex="F", minAge=1, maxAge=1);
+		newMales.tag = -1;
+	} else {
+		newQueens = p1.subsetIndividuals(sex="F", maxAge=0);
+		newMales  = p1.subsetIndividuals(sex="M", maxAge=0);
+		newMales.tag = -1;
+	}
+	newQueens.tag = -1;
+	NnewMales = size(newMales);
+
+	values = 0:6;
+	if (sim.cycle == 2)
+		weights = c(0, 49, 38, 15, 7, 3, 1);
+	else
+		weights = c(15, 49, 38, 15, 7, 3, 1);      // Pamilo 1993
+	nmates_all = sample(values, size(newQueens), replace=T, weights=weights);
+	nmates_all[which(nmates_all > NnewMales)] = NnewMales;
+	// force >=1 mating if any queens exist but none drew a mate. GUARD size>0:
+	// a queenless cycle (small foundings) gives empty nmates_all -> 0:(size-1)=0:-1
+	// -> out-of-range crash (latent bug inherited from the source model).
+	if (size(nmates_all) > 0 & sum(nmates_all) == 0)
+		nmates_all[sample(0:(size(nmates_all)-1), 1)] = 1;
+
+	if (sim.cycle != 2) {
+		for (i in seqAlong(newQueens)) {
+			queen = newQueens[i];
+			nmates = nmates_all[i];
+			mate = sample(newMales, nmates, replace=F);
+			queen.setValue(asString(queen.pedigreeID), mate.pedigreeID);
+			if (size(queen.getValue(asString(queen.pedigreeID))) > 0) {
+				queen.tag = 1;
+				mate.tag = 1;
+			}
+		}
+	}
+
+	if (sim.cycle == 1) {
+		p1.fitnessScaling = K / size(p1.subsetIndividuals(sex="F"));
+	} else {
+		AS = c(0.96, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95, 1.0);
+		inds = p1.individuals;
+		mortality = AS[inds.age];
+		survival = 1 - mortality;
+		inds.fitnessScaling = asFloat(survival);
+		p1.fitnessScaling = K / (size(p1.subsetIndividuals(sex="F")) * mean(survival));
+	}
+}
+
+//// ------------------- 3. Male spermatheca cold-storage ---------------------- ////
+
+survival(p1) {
+	if (individual.sex == "M" & individual.tag == 1)
+		return p1000;
+	return NULL;
+}
+survival(p1000) {
+	return (individual.tag == 1);
+}
+
+1:nCycles late() {
+	// keep cold-stored males alive only while referenced by a living mate
+	p1000.individuals.tag = 0;
+	male_Refs = c();
+	for (queen in p1.subsetIndividuals(sex="F", tag=1)) {
+		male_Refs = c(male_Refs, queen.getValue(asString(queen.pedigreeID)));
+	}
+	male_Refs = unique(male_Refs);
+	referencedDeadMales = sim.individualsWithPedigreeIDs(male_Refs, p1000);
+	referencedDeadMales.tag = 1;
+	sim.killIndividuals(p1000.subsetIndividuals(tag=0));
+}
+
+//// ------------------- 4. Output: sampled hybrids per generation -------------- ////
+
+// diploid FEMALES (workers) match the empirical samples; output all chromosomes
+// to one VCF via outputIndividualsToVCF.
+sampleCycle late() {
+	// For nest-structured sampling use females of ALL ages: a real colony holds
+	// workers of many cohorts, all daughters of the same queen, whereas a single
+	// cycle's surviving brood is far too small to draw 4-10 sisters from.
+	if (exists("NEST_SIZES"))
+		females = p1.subsetIndividuals(sex="F");
+	else
+		females = p1.subsetIndividuals(sex="F", maxAge=0);
+	if (size(females) == 0) return;
+
+	if (exists("NEST_SIZES")) {
+		// NEST-STRUCTURED SAMPLING. The empirical data are workers taken from a few
+		// COLONIES (164 samples / 39 nests; 9 of 20 populations are a single nest),
+		// and nestmates are siblings. Sampling the simulation as random unrelated
+		// females is therefore not comparable: sibling samples have much lower
+		// within-sample diversity and family-biased allele frequencies, which
+		// deflates pi, inflates among-population F_ST, and makes loci look
+		// near-fixed (inflating sort_class). Here each deme is sampled with the
+		// nest structure of its matched empirical population: NEST_SIZES is a
+		// comma-separated list of workers per colony, e.g. "4,3,3".
+		sizes = asInteger(strsplit(NEST_SIZES, ","));
+		moms  = sapply(females, "applyValue.pedigreeParentIDs[0];");   // parent1 = queen
+		umoms = unique(moms);
+		umoms = sample(umoms, size(umoms));          // random colonies
+		sampled = NULL; j = 0;
+		for (m in umoms) {
+			if (j >= size(sizes)) break;
+			brood = females[moms == m];
+			take  = min(sizes[j], size(brood));
+			if (take > 0) {
+				sampled = c(sampled, sample(brood, take));
+				j = j + 1;
+			}
+		}
+		if (isNULL(sampled)) return;
+		females = sampled;
+	} else {
+		females = sample(females, min(size(females), sampleSize), replace=F);
+	}
+
+	out = folder + "/hyb_" + prefix + "_gen" + sim.cycle + ".vcf";
+	females.outputIndividualsToVCF(filePath=out);
+	if (verbose) catn("[gen " + sim.cycle + "] wrote " + size(females) + " females -> " + out);
+}

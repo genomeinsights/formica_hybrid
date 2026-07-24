@@ -160,8 +160,18 @@ eMLG_5loci_0025 <- ld_prune_and_eMLG(
   genetic_map = genetic_map, cM_threshold = 0.5,
   compute_unflagged_eMLG = TRUE, min_n_loci_eMLG = 5
 )
-eMLG_5loci_0025$groups
+
 saveRDS(eMLG_5loci_0025,"./data/eMLG_5loci_0025_cM05.rds")
+
+eMLG_5loci_0025_cM0 <- ld_prune_and_eMLG(
+  GTs = GTs_hybrids_005, stage1 = pruned_stage1, ld_w_col = "ld_w_095",
+  ld_w_threshold = 0.025, score_threshold = 0.80, min_r2 = 0.2, min_n_loci_flag = 5,
+  genetic_map = genetic_map, cM_threshold = 0.5,
+  compute_unflagged_eMLG = TRUE, min_n_loci_eMLG = 5
+)
+
+saveRDS(eMLG_5loci_0025,"./data/eMLG_5loci_0025_cM1.rds")
+
 
 ## ld_w_col/ld_w_threshold/min_n_loci_flag default from eMLG_5loci_0025$params,
 ## so these two panels can't drift out of sync with what actually produced it
