@@ -561,6 +561,86 @@ errors substantially. The relationship between climate association and the
 sorting classification was tested in the same way, with the cluster's
 classification as the outcome.
 
+\section{Among-population disequilibrium between unlinked clusters}
+\label{sec:intrinsic}
+
+\subsection{Rationale}
+The per-locus sorting statistics ask, locus by locus, whether ancestry fixes in a
+consistent direction across the replicate populations; they say nothing about
+whether \emph{pairs} of loci fix in a coordinated way. An intrinsic incompatibility
+between two loci---a Dobzhansky--Muller interaction, in which particular
+combinations of parental ancestry are unfit---acts on the joint ancestry of the
+pair rather than on either locus alone. Across independent, non-migrating
+replicate populations such an interaction has a distinctive signature: the two
+loci repeatedly fix compatible ancestry in the same direction, so their allele
+frequencies covary across populations more than either does with an arbitrary
+third locus. For loci that are not physically linked this covariance cannot be
+produced by recombinational linkage, and under drift alone independent replicates
+sort unlinked loci independently, so its neutral expectation is close to zero.
+Elevated among-population two-locus disequilibrium between unlinked clusters is
+therefore the pair-level quantity that an intrinsic incompatibility would raise,
+complementary to the per-locus sorting measured above.
+
+\subsection{Units and the restriction to unlinked pairs}
+The units are the eMLG consensus genotypes, as in the sorting analysis, so that
+each LD cluster contributes once and physically redundant markers are not counted
+repeatedly. Pairs were formed only between clusters on different chromosomes. This
+is the restriction that makes the test specific: same-chromosome pairs can carry
+disequilibrium through linkage irrespective of any interaction, whereas
+between-chromosome pairs cannot, so an association there must arise from correlated
+sorting rather than from proximity. Same-chromosome pairs were retained not as
+tests but as an internal reference---the disequilibrium expected where linkage is
+present---against which the unlinked pairs are read.
+
+\subsection{The polymorphism gate}
+As in the sorting analysis, clusters were restricted to those polymorphic in the
+founding admixture, using the pooled parental minor allele frequency at a threshold
+of $0.15$. The reasoning carries over on both counts. A cluster carries
+interpretable ancestry information, and an among-population ancestry covariance is
+defined for it, only if it was segregating in the parents; and placing the gate on
+parental allele frequency, rather than on the diagnostic index or on any property
+of how the hybrids sorted, keeps the selection off every quantity the screen then
+measures---the same separation of selection from tested variable applied throughout.
+
+\subsection{Decomposition and the two-stage screen}
+Two-locus disequilibrium was partitioned into within- and among-population
+components following Ohta's decomposition, computed from unphased genotypes. The
+component of interest is the among-population one---the variance across populations
+of the product of subpopulation allele frequencies relative to the total---which is
+what correlated among-population sorting elevates. It is reported together with the
+within-population component and with the disequilibrium of the averaged population,
+so that a genuine among-population covariance can be distinguished from a systematic
+within-population association. The exact decomposition counts joint genotype classes
+and so requires integer dosages; it was therefore evaluated on the hard-called
+consensus, whereas the screening proxy below, which uses allele frequencies only,
+was computed from the continuous consensus without rounding.
+
+The pairs between differentiated clusters number in the hundreds of millions, the
+great majority carrying no association, so the exact decomposition was not evaluated
+for every pair. A cheap proxy was computed for all of them---the correlation across
+populations of the per-population mean consensus dosage, denoted $R_{\mathrm{st}}$
+---and the exact decomposition was evaluated only for pairs whose absolute
+correlation reached $0.7$. The proxy is a linear, allele-frequency-based
+approximation of the very among-population covariance the exact statistic measures,
+so the pre-filter selects pairs on the target quantity itself rather than on an
+unrelated criterion; and because it is a deterministic function of the
+per-population frequencies, it can be applied identically to observed and to
+simulated genotypes, keeping the conditioning matched whenever the screen is
+repeated against a null.
+
+\subsection{Status of the screen}
+With only twenty populations the among-population correlation is estimated
+imprecisely, and it is in any case dominated by the single genome-wide gradient in
+ancestry that runs through all diagnostic loci; the screen is accordingly
+descriptive. It ranks pairs and yields the distribution of among-population
+disequilibrium, but does not by itself identify incompatibilities. Candidate
+interactions are those whose among-population disequilibrium exceeds the
+recombination-matched neutral expectation, obtained by applying the identical
+pre-filter and decomposition to genotypes simulated under the demographic null
+described separately, with the same-chromosome pairs serving as the concurrent
+within-data reference. The screen is implemented so that this null comparison
+reuses the same procedure unchanged.
+
 \section{Software and reproducibility}
 
 LD decay estimation, complexity reduction, consensus genotype construction and
@@ -619,6 +699,13 @@ Climate & evidence threshold & $\mathrm{BF(dB)} \ge 15$ \\
  & runs & 2 population sets $\times$ 2 axes $\times$ 2 covariance settings \\
  & diagnostic-index criterion & DI $> -25$ \\
  & size strata & all, $\ge 20$, $\ge 50$ markers \\
+\midrule
+Intrinsic LD & unit & eMLG consensus (hard-called) \\
+ & pair restriction & different chromosomes \\
+ & cluster gate & parental MAF $\ge 0.15$ \\
+ & screening proxy & among-population dosage correlation $R_{\mathrm{st}}$ \\
+ & pre-filter threshold & $|R_{\mathrm{st}}| \ge 0.7$ \\
+ & disequilibrium & Ohta within/among-population components \\
 \bottomrule
 \end{tabular}
 \end{table}
