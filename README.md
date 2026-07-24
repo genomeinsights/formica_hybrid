@@ -16,7 +16,7 @@ DIEM output ─► [0a] LD decay ─► hybrids_only + hybrids_and_parents (+ ld
    moduleA_*                                          moduleB_*                        BayPass + moduleC_*
 ```
 
-All three analysis modules join on the **canonical clustering** and on the two genotype matrices. Modules D (Ohta DMI test) and E (neutral null) are not built here — see *Status* below.
+All three analysis modules join on the **canonical clustering** and on the two genotype matrices. Module D (intrinsic/Ohta DMI arm) also joins on them and is built here (descriptive; see below); Module E (neutral null) is a separate workstream — see *Status*.
 
 ## Key shared objects
 
@@ -64,6 +64,10 @@ BayPass inputs and runs are upstream (HPC): `R/prepare_{with_aland,aland_exclude
 
 **`dev/R/moduleC_rate_based.R`** (**primary Module C analysis**) — reads `data/moduleC_C3_cl.rds`, clustering, `hybrids_and_parents`, BayPass `.out`, `data/diagnostic_index_enrichment<tag>.csv` → `data/moduleC_rate_based_<tag>.rds`, `Figures/moduleC_dose_response_<tag>.{pdf,png}` — size-normalised, cluster-level enrichment (replaces the size-gated outlier count).
 
+## Module D — intrinsic (DMI) arm
+
+**`dev/R/moduleD_ohta_dmi.R`** — reads `eMLG_5loci_0025_cM05.rds`, `hybrids_only_maf005.Rdata` (`sample_data`), `moduleC_C3_cl.rds` (differentiated / DI gate); sources `dev/R/Ohta.R` — writes `data/moduleD_ohta.rds`, `Figures/moduleD_fig4.{pdf,png}` — among-population two-locus Ohta LD on **unlinked** eMLG-cluster pairs (the intrinsic test: correlated among-replicate ancestry sorting = candidate DMIs, vs the generic per-locus sorting of A/B). Scope = all *differentiated* clusters (parent MAF ≥ 0.15) with a cheap among-population frequency-correlation (`R_st`) pre-filter; exact Ohta decomposition only on the `|R_st| ≥ 0.7` unlinked tail. Primary statistic = the among-population component `R_st` / `D2st`. **Descriptive**: unlinked ≈ linked (`D2st` ≫ `D2is`, `Dp2st` ≈ 0 ⇒ correlated allele-frequency divergence / shared ancestry axis, not systematic epistasis), so candidate DMIs are defined downstream as pairs whose among-population LD *exceeds* Module E's null. The reusable `moduleD_pop_freq_matrix()` / `moduleD_prefilter()` / `moduleD_scan()` functions let E run the identical pre-filter + scan on simulated genotypes.
+
 ## Shared code and helpers
 
 - `dev/R/Ohta.R` — `ohta_fast_prepare()` (per-population allele-frequency prep).
@@ -89,5 +93,5 @@ BayPass inputs and runs are upstream (HPC): `R/prepare_{with_aland,aland_exclude
 
 ## Status
 
-- **Module D** (among-region two-locus Ohta D′2st DMI test on unlinked eMLG pairs) — designed, not built. Needs the null (E) to be interpretable.
+- **Module D** (among-region two-locus Ohta test on unlinked eMLG pairs; `dev/R/moduleD_ohta_dmi.R`) — **built, descriptive**. The among-population LD screen finds unlinked ≈ linked (structure/drift signature, no pair-specific signal), so the DMI reading (excess over neutral) plugs in when Module E's null is ready — E reuses D's factored scan functions.
 - **Module E** (recombination-matched haplodiploid neutral null; `dev/R/moduleE_*.R`) — separate workstream. The inference license: until it exists, the descriptive sorting results are "consistent with neutral" only.
