@@ -38,7 +38,7 @@ plot_pruning_comparison("Chr10", pruned_stage1, eMLG_5loci_0025_cM1, map_hyb_005
 # plot_pruning_comparison("Chr10", pruned_stage1, eMLG_5loci_0025_cM1, map_hyb_005, direction = "low")
 # 
 # 
-
+gc()
 ## data for Bea
 # groups <- eMLG_5loci_0025_cM1$groups
 # 

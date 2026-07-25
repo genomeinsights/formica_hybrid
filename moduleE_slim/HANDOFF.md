@@ -137,3 +137,24 @@ moduleE_slim/
 - **Migration** — not pursued (no evidence for it); the low neutral F_ST is treated
   as a large-Ne / low-drift signal to be matched by the K sweep instead.
 ```
+
+## Update (2026-07-23): population-structure findings (WIP writeup in results/)
+
+Two empirical structure results now largely settle the "low neutral F_ST" question
+without new simulations (both run from `inputs/empirical_bundle.rds`):
+
+- **Neutral F_ST ~ 0.** At strictly neutral markers (DI<=-90) pairwise *Hudson*
+  F_ST among the 20 populations is ~0 (median 0.000); the earlier ~0.05 was Nei
+  small-sample bias. Diagnostic markers give F_ST=0.31. Drift is DI-blind, so this
+  dissociation is not drift. Script: `../dev/R/moduleE_population_structure.R`
+  (uses the 1 GB dataset; not portable).
+- **Variable admixture rejected.** Decomposing diagnostic F_ST=0.313: sampling
+  0.049 (16%), single ancestry axis 0.019 (6%), locus-specific residual 0.245
+  (78%). So the differentiation is locus-specific, and it is DIVERGENT (among-pop
+  variance) rather than the parallel/mean signal of Module A. Script:
+  `../dev/R/moduleE_ancestry_decomp.R` (reads the compact bundle -> portable; just
+  fix its BUNDLE path to `inputs/empirical_bundle.rds`).
+
+Consequence for the sweep: calibrate the null to neutral F_ST ~ 0 (push K up until
+neutral drift ~0); at that point diagnostic drift ~0 too, so the observed 0.245 is
+almost all excess over neutral. See `results/moduleE_WIP.pdf` for the full writeup.

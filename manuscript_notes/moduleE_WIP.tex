@@ -1,0 +1,271 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{xcolor}
+
+\newcommand{\wip}[1]{\textcolor{gray}{\textit{#1}}}
+\title{Module E (WIP): a neutral null for ancestry sorting, and what the empirical
+population structure already rules out}
+\author{}
+\date{Work in progress --- \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\begin{abstract}
+\noindent
+This is a working note on Module E: a recombination-matched, haplodiploid
+\emph{neutral null} for the 20 replicate \textit{F.\ polyctena}\,$\times$\,\textit{F.\
+aquilonia} hybrid populations, built to test whether the directional ancestry
+sorting seen in Modules A--C exceeds drift. The null conditions on real phased
+parental haplotypes, uses the empirical recombination map, is haplodiploid, and
+contains no selection. The central design choice is to stratify markers by
+DiagnosticIndex (DI): low-DI markers cannot be driven by ancestry sorting and so
+serve as an \emph{internal demographic control} in the same analysis that tests
+the high-DI markers. Two results now stand largely on the empirical data alone,
+independent of the simulation calibration. First, among-population differentiation
+scales steeply with DI in the data ($F_{ST}$: $\sim$0 at neutral markers $\to$
+0.31 at diagnostic markers) whereas neutral drift, being DI-blind, is flat.
+Second, decomposing the diagnostic differentiation shows that a single
+per-population admixture proportion (``variable founding admixture'') explains
+only $\sim$6\%: the differentiation is 78\% \emph{locus-specific}. Because neutral
+drift is excluded (neutral $F_{ST}\approx0$) and variable admixture is excluded
+(6\%), what remains is a large, locus-specific, \emph{divergent} ancestry signal
+standing against a near-zero neutral expectation. A wrinkle worth flagging: this
+signal is divergent (populations differing at diagnostic loci), which is distinct
+from --- though compatible with --- the parallel directional sorting of Module~A.
+The definitive test, a $p$-value from the sorting statistic run through the
+calibrated null, is in progress.
+\end{abstract}
+
+\section{The null model}
+
+Rather than simulating the parental species' history, we \emph{condition} on it:
+founders are drawn from real phased parental haplotypes (15 diploid females per
+species, imputed and phased within species with Beagle~5.4; pool of 30
+\textit{aquilonia} haplotypes and 13 \textit{polyctena} diploid females), the
+mutation rate is zero, and only the post-contact hybrid phase is simulated. This
+inherits true allele frequencies, true between-species divergence, and true
+within-species haplotype structure. The engine is SLiM~5, non-Wright--Fisher,
+haplodiploid (haploid males from unfertilised eggs, spermathecal storage, Pamilo
+mating, age-structured life table), over the 26 assembled chromosomes with their
+empirical cM maps (converted with \texttt{scale}$=10^{-8}$). All selection is
+removed, so drift and recombination on the empirical map are the only forces. Each
+parameter set runs as 20 independent demes sampled every 20 generations to
+generation~160.
+
+\paragraph{Requirements for a valid comparison.}
+Three points are load-bearing and worth recording. (i) \textbf{Sample-size
+matching}: composite $r^2$ and the sorting classification are both sample-size
+sensitive, so simulated demes are subsampled to the empirical per-population sizes
+(3--20 diploids). (ii) \textbf{Symmetric treatment}: any filter applied to the data
+is applied to the null (``sorted'' \emph{is} high differentiation, so filtering the
+data alone would move it toward the null mechanically). (iii) \textbf{$F_{ST}$
+estimator}: with per-population $n$ of 3--20, the Nei estimator is upward-biased by
+$\mathcal{O}(1/2n)$; the Hudson estimator corrects this and is used for the
+structure results below. This correction matters (Section~\ref{sec:struct}).
+
+\paragraph{Neutral alternatives excluded as controls.}
+Before interpreting any excess we quantified and excluded several neutral
+explanations. \emph{Founder heterogeneity} (populations founded from different
+local sub-pools): even the absolute ceiling --- each deme founded from a single
+\textit{aquilonia} haplotype and a single \textit{polyctena} female --- gives an
+at-founding among-population $F_{ST}$ of only 0.090, because at diagnostic markers
+both species are near-fixed for opposite alleles and a 50/50 admixture washes out
+within-species structure. \emph{Colony (nest) sampling}: measured within-nest
+excess genotype correlation is only 0.047 (polygyny), so sibling structure is a
+minor effect. \emph{Mixed population ages}: age mixtures interpolate along the
+LD-versus-drift trade-off and match no summary. These are recorded so they need
+not be re-litigated.
+
+\section{Differentiation and sorting scale with DI in the data, not under drift}
+
+Markers were binned by DI over the parent-MAF$\ge$0.15 universe (40{,}000 markers,
+4{,}000 per bin across ten fixed DI bins). Figure~\ref{fig:dose} and
+Table~\ref{tab:dose} give the result: observed among-population $F_{ST}$ rises from
+the neutral background to the most ancestry-informative markers, while the neutral
+null is essentially flat. The fraction of sorted loci shows the same pattern more
+sharply, from a $\sim$1.5-fold excess at low DI to $>$100-fold at high DI. Because
+drift does not distinguish informative from uninformative markers, a DI-scaled
+discrepancy cannot be produced by demographic misspecification --- the comparison
+is internally controlled because both datasets use the same markers, MAF gate, and
+frequency spectrum. (Table~\ref{tab:dose} reports Nei $F_{ST}$; the absolute
+neutral value there, 0.05, is the small-sample bias corrected in
+Section~\ref{sec:struct}, but the \emph{scaling} is unaffected.)
+
+\begin{table}[htbp]\centering
+\caption{Observed vs simulated statistics by DI bin at the anchor-matched neutral
+cell. ``sorted'' is the fraction of loci classed as directionally sorted.}
+\label{tab:dose}\small
+\begin{tabular}{lrrrrrr}
+\toprule
+DI bin & $F_{ST}$ obs & $F_{ST}$ null & $\pi$ obs & $\pi$ null & sorted obs & sorted null\\
+\midrule
+$\le-90$ & 0.051 & 0.191 & 0.448 & 0.381 & 0.026 & 0.021\\
+$(-75,-60]$ & 0.303 & 0.183 & 0.260 & 0.314 & 0.350 & 0.233\\
+$(-40,-30]$ & 0.305 & 0.167 & 0.277 & 0.364 & 0.260 & 0.072\\
+$(-25,-20]$ & 0.310 & 0.160 & 0.297 & 0.398 & 0.150 & 0.015\\
+$>-15$ & 0.315 & 0.156 & 0.304 & 0.415 & 0.116 & 0.000\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.8\textwidth]{../Figures/moduleE_fig1_dose_response.pdf}
+\caption{Among-population differentiation (top) and the fraction of sorted loci
+(bottom, log scale) against DI bin, observed vs neutral null. Neutral drift is
+DI-blind and produces an essentially flat profile; the data concentrate both
+differentiation and sorting in ancestry-informative markers.}
+\label{fig:dose}
+\end{figure}
+
+\section{Population structure: neutral $\approx0$, diagnostic strong}
+\label{sec:struct}
+
+This is the pivotal result. At \emph{strictly} neutral markers ($\mathrm{DI}\le-90$,
+13{,}978 markers), the pairwise Hudson $F_{ST}$ among the 20 populations is
+essentially \textbf{zero} (median 0.000, max 0.012), and the neutral PCA is a single
+overlapping cloud with no population structure (Fig.~\ref{fig:struct}, left and
+middle). At diagnostic markers ($\mathrm{DI}>-25$) the same populations are
+\textbf{strongly structured}, $F_{ST}=0.31$, resolving into distinct clusters
+(Fig.~\ref{fig:struct}, right).
+
+Two consequences follow. First, the earlier ``neutral $F_{ST}\approx0.05$'' was
+small-sample bias in the Nei estimator; the Hudson estimate is $\approx0$. The same
+bias inflated the \emph{simulated} Nei values equally, so the sim-versus-data gap in
+Table~\ref{tab:dose} survives, but the true neutral differentiation is $\approx0$.
+Second, and more importantly, this dissociation cannot be drift: drift is DI-blind,
+so it cannot differentiate diagnostic markers while leaving neutral markers
+undifferentiated. The populations do not behave as 20 independently drifting demes
+at neutral loci (independent foundings accumulate $F_{ST}\approx t/2N_e>0$); they
+look effectively panmictic / very-large-$N_e$ / connected at neutral loci, while
+differing strongly in ancestry. A Mantel-style test confirms the two are
+dissociated: Spearman correlation between pairwise neutral $F_{ST}$ and pairwise
+$|$ancestry difference$|$ is only 0.08.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{../Figures/moduleE_structure.pdf}
+\caption{Structure among the 20 hybrid populations. Left: pairwise neutral-marker
+($\mathrm{DI}\le-90$) $F_{ST}$, Hudson estimator, clustered --- essentially zero
+everywhere. Middle: individual PCA on neutral markers --- one overlapping cloud.
+Right: individual PCA on diagnostic markers --- strong, structured differentiation.}
+\label{fig:struct}
+\end{figure}
+
+\section{The diagnostic differentiation is locus-specific, not variable admixture}
+
+If the populations were simply founded at different aquilonia:polyctena ratios, each
+would carry a single ancestry proportion $a_j$ and its diagnostic allele
+frequencies would follow $p_{ij}=f^{\mathrm{pol}}_i + a_j\,\Delta p_i$ (rank-1). We
+fit this per population and decomposed the among-population variance at diagnostic
+markers into: sampling (binomial), the single ancestry axis, and a genuine
+locus-specific residual. Of the observed diagnostic $F_{ST}=0.313$:
+\begin{center}\small
+\begin{tabular}{lr}
+\toprule
+component & $F_{ST}$ (fraction)\\
+\midrule
+sampling noise & 0.049 \ (16\%)\\
+single ancestry axis (variable admixture) & 0.019 \ (6\%)\\
+locus-specific residual & 0.245 \ (78\%)\\
+\bottomrule
+\end{tabular}
+\end{center}
+Per-population best-fit ancestry does vary (0.35--0.65, SD 0.077;
+Fig.~\ref{fig:decomp} top), but that single knob explains only $\sim$6\% of the
+differentiation. Variable founding admixture is therefore rejected as the
+explanation.
+
+Combining the two structure results: drift is excluded (neutral $F_{ST}\approx0$)
+and variable admixture is excluded (6\%), so the 0.245 locus-specific diagnostic
+differentiation is neither. This is where the internal control pays off: a neutral
+null calibrated to reproduce neutral $F_{ST}\approx0$ has essentially no drift and
+therefore predicts $\approx0$ diagnostic differentiation, making the observed
+0.245 \emph{almost entirely excess over neutral}.
+
+\paragraph{An honest wrinkle: divergent, not parallel.}
+The among-population \emph{variance} decomposed here measures \emph{divergence} ---
+populations differing at diagnostic loci. Parallel sorting (all populations fixing
+the same allele at a locus, Module~A's DI-governs-direction result) produces
+agreement, i.e.\ \emph{low} among-population variance, and lives in the \emph{mean}
+shift rather than this residual. So the 0.245 is a \emph{divergent} locus-specific
+signal, and the residual PCA is correspondingly diffuse and high-dimensional
+(Fig.~\ref{fig:decomp} bottom; PC1/PC2 $\approx$9\% each, though small per-population
+$n$ confounds this view). Divergent ancestry differentiation without drift points
+toward local/divergent processes (the extrinsic/climate arm, Module~C) more than a
+single shared intrinsic incompatibility axis. It does not contradict Module~A ---
+a parallel mean direction and divergent variance can coexist --- but it says the
+\emph{differentiation among populations} is dominated by locus-specific divergence.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.72\textwidth]{../Figures/moduleE_ancestry_decomp.pdf}
+\caption{Top: per-population best-fit aquilonia ancestry (the single admixture
+axis), 0.35--0.65. Bottom: PCA of the residual after removing that axis; structure
+here would be locus-specific sorting beyond variable admixture. It is diffuse and
+high-dimensional (sampling-confounded at these sample sizes).}
+\label{fig:decomp}
+\end{figure}
+
+\section{Supporting diagnostic: the LD landscape}
+
+Local LD ($ld_w$, median $r^2$ in a 100~kb window) along the genome
+(Fig.~\ref{fig:ldw}) shows that the null reproduces the recombination-driven LD
+\emph{landscape} well --- peaks co-localise on the same chromosomes, per-chromosome
+Spearman 0.94--0.95, robust across generations --- but carries a diffuse genome-wide
+LD \emph{floor} the data lack (mean $\sim$0.17--0.21 vs 0.09), decaying only slowly
+from gen20 to gen160. A within-group analysis (removing the between-population
+component) showed the founders themselves carry within-species LD matching the
+empirical within-population LD, so the excess floor is not founder-inherited; it is
+the between-population (Wahlund) component, i.e.\ the same over-differentiation
+(too-small $N_e$) seen in the $F_{ST}$ analysis. This independently corroborates
+that the null over-differentiates the demes and motivates the large-$N_e$
+calibration.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{../Figures/moduleE_ldw_manhattan.pdf}
+\caption{Local LD along the genome, empirical vs neutral null over generations
+(K=6250, pooled, matched $N$). The recombination-driven landscape is reproduced
+(peaks co-localise); the null carries a diffuse excess floor between peaks --- the
+between-population (Wahlund) component of the over-differentiation.}
+\label{fig:ldw}
+\end{figure}
+
+\section{Where this stands, and next steps \wip{(WIP)}}
+
+Two demographic explanations for the low-neutral / high-diagnostic dissociation are
+now excluded from the empirical data alone: \emph{drift} (neutral $F_{ST}\approx0$,
+and drift is DI-blind) and \emph{variable founding admixture} (6\% of the diagnostic
+differentiation). What remains is a large ($F_{ST}\approx0.245$), locus-specific,
+\emph{divergent} ancestry signal against a near-zero neutral expectation. The
+simulation's role is now sharply defined: calibrate the null to reproduce neutral
+$F_{ST}\approx0$ (the very-large-$N_e$ / effectively-panmictic-at-neutral regime),
+at which point the diagnostic excess is read against $\approx0$.
+
+\begin{enumerate}\itemsep2pt
+\item \textbf{Calibrated-null $p$-value.} Run the sorting statistic
+(\texttt{parallelism\_stats}) through the null calibrated on the neutral markers,
+extending carrying capacity upward until neutral $F_{ST}\approx0$. This puts a
+$p$-value on the excess and separates the parallel (mean) from the divergent
+(variance) components properly. \wip{Higher-$K$ simulations are running on a
+larger machine.}
+\item \textbf{Divergent vs parallel.} Characterise the residual structure with
+individual-level data (controlling sampling), and test whether it aligns with
+climate (reconciling with Modules~A and~C: parallel direction vs divergent
+differentiation).
+\item \textbf{Non-independence.} Neutral $F_{ST}\approx0$ is formally degenerate
+between enormous $N_e$ and gene flow / shared ancestry among ``populations'';
+extra within-event sampling and demographic modelling (cf.\ Nouhaud et al.) would
+separate these, and it bears on how many independent replicates the sorting test
+really has.
+\end{enumerate}
+
+\noindent\wip{All analyses run from a 19.5~MB compact empirical bundle (replacing
+the 1~GB dataset); scripts and the portable simulation pipeline are in
+\texttt{moduleE\_slim/} in the repository.}
+
+\end{document}

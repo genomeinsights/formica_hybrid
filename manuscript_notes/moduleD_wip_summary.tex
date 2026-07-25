@@ -1,0 +1,313 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\Rst}{\ensuremath{R_{\mathrm{st}}}}
+\newcommand{\rsq}{\ensuremath{r^{2}}}
+
+\title{\vspace{-3em}Screening the \textit{Formica} hybrid zone for intrinsic
+incompatibilities: structure-corrected two-locus association and the
+bidirectional-sorting test\\[0.3em]\large(work in progress)}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-3.5em}
+
+\noindent\textit{Work-in-progress note. This document records methods, reasoning
+and interim results for the intrinsic (Dobzhansky--Muller) arm of Module D, beyond
+the descriptive among-population summary reported separately. Everything here is
+structure-corrected but pre-simulation: a neutral, recombination-matched null
+(Module E) is still required to convert the leads below into excess-over-neutral
+statements. Numbers may change as that null and the analyses mature.}
+
+\section{What an intrinsic incompatibility looks like in replicate hybrids}
+
+The design is twenty independent, non-migrating hybrid populations, each sorting
+\Faq/\Fpo{} ancestry out of the same admixture. Against that background an intrinsic
+incompatibility can leave three distinct traces, and separating them is what
+organises the analysis.
+
+\paragraph{(1) Unidirectional sorting.} An incompatibility in which one parental
+combination is fitter drives the \emph{same} parent's ancestry toward fixation
+repeatedly across replicates. This is the per-locus parallelism that Module A
+measures, and it is not a two-locus problem. Crucially it is also \emph{invisible}
+to any two-locus test: linkage disequilibrium between two loci is bounded by their
+allele frequencies, and as either locus approaches fixation the disequilibrium it
+can carry goes to zero. The more completely a locus sorts unidirectionally, the less
+LD it can express. Two-locus tests therefore cannot see the most strongly
+unidirectionally-sorted loci at all; those belong to Module A, and Module D is
+complementary rather than redundant.
+
+\paragraph{(2) Bidirectional sorting (equal-fitness incompatibility).} If the two
+parental combinations are \emph{equally} fit while the recombinants are not, each
+replicate independently fixes one or the other compatible combination, chosen by
+drift. Per locus this looks like strong sorting in \emph{random} directions --- some
+populations toward \Faq, some toward \Fpo{} --- i.e.\ bidirectional sorting. Its
+single-locus parallelism test is null by construction ($n_{\mathrm{aqu}}\approx
+n_{\mathrm{pol}}$), so Module A cannot flag it. The signal lives at the pair level
+(Section~\ref{sec:bidir}). Note that the among-population component of two-locus LD
+is \emph{maximised} exactly here: a locus fixed in the same direction everywhere has
+no among-population variance, whereas one fixed in different directions across
+replicates has a great deal --- so bidirectional loci are the natural home of the
+among-population DMI signal.
+
+\paragraph{(3) Coupling maintained within populations.} A third trace is elevated
+two-locus LD \emph{within} populations (Ohta's $D^2_{IS}>D^2_{ST}$): particular
+allele combinations staying rarer than expected inside demes. This is the classic
+within-deme epistatic-selection signature, but it is badly confounded by population
+structure --- in particular by the fact that our samples are workers from few
+colonies (nine of twenty ``populations'' are a single nest; nestmates are siblings),
+so cryptic relatedness inflates apparent within-population LD (a Wahlund effect). Any
+test of this trace must therefore control for relatedness.
+
+\medskip
+\noindent The descriptive among-population screen reported separately established
+that the \emph{raw} among-population LD between unlinked clusters is dominated by a
+single genome-wide ancestry gradient (drift/structure), with no pair specificity.
+The two analyses below remove that confound in two complementary ways --- a mixed
+model that conditions on genome-wide relatedness (Section~\ref{sec:emmax}), and a
+restriction to bidirectional loci that are orthogonal to the ancestry axis by
+construction (Section~\ref{sec:bidir}) --- and both surface the same methodological
+obstacle first: cross-chromosome paralogy (Section~\ref{sec:paralogy}).
+
+\section{Structure-corrected two-locus association (EMMAX)}
+\label{sec:emmax}
+
+\paragraph{Rationale and model.} The cleanest way to ask whether two loci are
+associated \emph{beyond} what shared ancestry and relatedness predict is a linear
+mixed model. We treat one LD cluster's consensus dosage as a quantitative trait and
+test its association against every other cluster,
+\begin{equation}
+y_i = \mu + \beta\, x_j + u + \varepsilon, \qquad u \sim N(0, \sigma_g^2 K),\quad
+\varepsilon \sim N(0, \sigma_e^2 I),
+\end{equation}
+where $y_i$ is the focal cluster's dosage across the 164 individuals, $x_j$ a
+candidate partner, and $K$ a genomic-relationship matrix (EMMAX; Li, Kemppainen,
+Rastas \& Meril\"a, a method built for LD-clustered genome-wide data). This is a
+GWAS in which the ``phenotype'' is one locus and the ``markers'' are all the others.
+The variance components are estimated once under the null and reused for every
+partner, so a whole Manhattan is cheap.
+
+\paragraph{Why one random effect handles both confounds.} The leading eigenvectors of
+$K$ are the ancestry/structure principal components, so conditioning on $K$ removes
+the genome-wide ancestry gradient --- the confound that swamped the descriptive
+screen --- at the individual level. And because $K$ also encodes the sibling
+relatedness among nestmates, the Wahlund inflation of within-population LD (trace~3
+above) is regressed out in the \emph{same} term. A residual peak between two loci is
+therefore pair-specific association with both the ancestry gradient and the colony
+structure already removed. Continuous eMLG dosages are used directly, with no
+hard-calling. To keep the tested region out of its own random effect we use
+leave-one-chromosome-out $K$ (a separate $K$ per chromosome, built from all other
+chromosomes). A first, targeted run scanned 51 focal loci (bidirectional candidates,
+extreme among-population-covariance loci, and controls); peaks were called at a
+Bonferroni genome-wide threshold.
+
+\paragraph{Reading a Manhattan.} The self-peak at the focal locus and its local LD
+block are the built-in positive control that the pipeline works; the signal is any
+\emph{additional} peak that is unlinked from the focal locus (different chromosome,
+or same chromosome $>10$~cM). The scan is well calibrated: genomic-inflation
+$\lambda$ ranges 0.95--1.02 across focal sets and the background is flat
+(Fig.~\ref{fig:emmax}b, a control locus with only its self-peak). Fig.~\ref{fig:emmax}a
+shows a focal locus with a clean self-peak and a spread of unlinked peaks --- exactly
+the structure-corrected pair-specific association we are after.
+
+\paragraph{The first result is a warning.} The top associations are correlated
+\emph{within} populations (median within-population $r\approx 0.99$), robust to
+dropping the most influential individuals --- so they are neither the ancestry axis
+nor a few-individual Wahlund artifact. But $r\approx 0.99$ between two unlinked loci,
+sustained inside every population, is not what an incompatibility makes; it is the
+signature of paralogy. This is treated next, and it is why the Manhattan in
+Fig.~\ref{fig:emmax}a distinguishes clean peaks (orange) from duplicate peaks (grey
+crosses): the focal locus's strongest partners are duplicates, its moderate partners
+are genuine candidates.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../Figures/moduleD_emmax_writeup.png}
+\caption{Structure-corrected two-locus association (EMMAX, leave-one-chromosome-out
+$K$). \textbf{(a)} A focal locus (F4250, Chr2) showing its self-peak (red) and
+unlinked partner peaks, split by the paralogy filter into genuine candidates
+(orange) and cross-chromosome duplicates (grey crosses). \textbf{(b)} A
+consensus-bidirectional focal locus (F14324, Chr4): only its self-peak, a flat
+structure-corrected background ($\lambda\approx 1$). Dashed line: Bonferroni
+threshold.}
+\label{fig:emmax}
+\end{figure}
+
+\section{Cross-chromosome paralogy, and why distance cannot remove it}
+\label{sec:paralogy}
+
+\paragraph{The problem.} Two loci on different chromosomes are at infinite
+recombinational distance, so any strong LD between them cannot be linkage. It can
+be a genuine evolutionary correlation --- but those are \emph{moderate} --- or it can
+be a technical artifact in which the two ``loci'' are not distinct at all. When a
+segmental duplication or a mis-assembly places one genomic region at two locations,
+reads from the single true region map to both, and the two ``clusters'' become
+genotype-identical by construction. Such pairs are the \emph{loudest}
+inter-chromosomal disequilibrium in any dataset, and they are not biology. In the
+EMMAX run they reach $\rsq\approx 0.98$ and genotype concordance $1.000$, and they
+recur on particular scaffolds (Chr26). A genetic-distance rule is powerless against
+them: different chromosomes already are maximal distance. (Distance does its job on
+the \emph{within}-chromosome side --- our conservative complexity-reduction merge at
+$0.5$~cM rather leaves nearby clusters split than over-merges them, and the
+$10$~cM unlinked threshold then excludes those split neighbours from long-range
+candidacy --- but that is a separate problem.)
+
+\paragraph{The discriminant.} We flag duplicates by the median \emph{within-population}
+correlation of the two clusters' dosages. Within-population removes the
+among-population (ancestry-axis) component, which is not what paralogy is about;
+what remains is individual-level identity. Genuine long-range coupling in these data
+sits at $|r|\lesssim 0.6$; a duplication sits at $|r|\approx 1$. A flipped or
+complementary duplicate (one copy allele-swapped relative to the other) gives
+$r\approx -1$, which the absolute value still catches. We flag pairs with median
+within-population $|r|>0.9$. Two independent signals corroborate the flag: genotype
+\emph{concordance} approaching $1$ (positive duplicates), and per-cluster excess
+\emph{heterozygosity} --- a collapsed duplication makes reads from two paralogs look
+constitutively heterozygous, inflating $H_o$ (Fig.~\ref{fig:paralogy}b). The flag is
+deliberately simple so it can be re-thresholded from the stored values; and it is a
+screen, not a proof, because an extremely strong genuine within-deme incompatibility
+could in principle also reach $|r|\approx 1$ --- which is why the corroborating
+signals matter.
+
+\paragraph{It affects both arms, unequally.} The filter is shared between the EMMAX
+and the among-population arms. It flags $32/332$ EMMAX hits (10\%) but only
+$55/401{,}945$ among-population survivors (0.01\%). The asymmetry is informative: a
+duplicate \emph{is} structure-corrected individual-level LD, so it surfaces strongly
+in the mixed-model arm, whereas the among-population statistic --- which asks about
+allele-frequency covariance across populations --- is comparatively insensitive to
+it. In the among-population arm the excess-heterozygosity signal cleanly separates
+the flagged pairs ($H_o\approx 0.70$ vs $0.37$ background); in the EMMAX arm the
+pre-selected focal set is already high-$H_o$, so within-population $|r|$ carries the
+discrimination and $H_o$ is less informative (Fig.~\ref{fig:paralogy}). Removing the
+flagged pairs leaves 300 clean EMMAX candidates. The filter is also a free
+by-product: it identifies duplicated/mis-assembled regions directly from the
+population data.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../Figures/moduleD_paralogy_writeup.png}
+\caption{The paralogy discriminant. \textbf{(a)} Distribution of within-population
+$|r|$ for candidate pairs: the among-population survivors (green) concentrate at
+moderate $|r|$ with a thin tail, whereas the EMMAX hits (blue) carry a heavy tail to
+$|r|\approx 1$ --- the duplicates. Dashed line: the $0.9$ flag. \textbf{(b)} Pairs at
+$|r|\approx 1$ (orange, flagged) also carry elevated heterozygosity, corroborating a
+duplication origin; excess $H_o$ alone is not sufficient (many high-$H_o$ pairs at
+moderate $|r|$ are genuine).}
+\label{fig:paralogy}
+\end{figure}
+
+\section{The bidirectional-sorting test, and cis/trans coupling}
+\label{sec:bidir}
+
+\paragraph{Why bidirectional loci, and why at the SNP level.} An equal-fitness
+incompatibility (trace~2) is exactly the case the among-population statistic is built
+for, and it has a decisive advantage: bidirectional loci do \emph{not} track the
+genome-wide ancestry gradient --- that is what makes them bidirectional --- so the
+confound that dominated the general screen is largely absent, and their co-sorting is
+a comparatively clean signal. Bidirectional sorting is real at the SNP level (911
+SNPs) but is averaged \emph{below} the sorting threshold at the eMLG consensus (no
+cluster qualifies): averaging member markers pulls the fixation fraction toward the
+middle. We therefore work at the SNP level, taking each LD cluster's most
+bidirectional member SNP as its representative (599 reps), which de-redundifies
+without losing the signal. One chromosome stands out --- Chr24 carries 176 of the 911
+bidirectional SNPs, but these collapse to only 13 clusters, i.e.\ a single large LD
+block (supergene-like).
+
+\paragraph{The cis/trans logic.} Consider two loci $A$ and $B$, each carrying \Faq{}
+or \Fpo{} ancestry. There are two parental combinations, (\Faq$_A$,\Faq$_B$) and
+(\Fpo$_A$,\Fpo$_B$), and two recombinant ones, (\Faq$_A$,\Fpo$_B$) and
+(\Fpo$_A$,\Faq$_B$). A Dobzhansky--Muller incompatibility makes some of these unfit,
+and each replicate, as it sorts, fixes a \emph{compatible} pair. Two architectures
+follow:
+\begin{itemize}
+\item If the two \emph{parental} combinations are the compatible ones (the classic
+case: derived alleles from the two lineages are mutually incompatible, so the
+recombinants are unfit), each population fixes both-\Faq{} or both-\Fpo{}. Across
+replicates the two loci fix the \emph{same} ancestry direction, so their
+per-population frequencies are positively correlated: \textbf{cis} coupling,
+$\Rst>0$.
+\item If instead the \emph{recombinant} combinations are the compatible ones
+(co-adapted heterospecific alleles, so each parental pairing is unfit), populations
+fix \Faq{} at one locus with \Fpo{} at the other. The per-population frequencies are
+\emph{negatively} correlated: \textbf{trans} coupling, $\Rst<0$.
+\end{itemize}
+
+\paragraph{Why the sign matters for the confound.} A shared ancestry gradient makes
+\emph{every} locus track overall ancestry, which produces \emph{positive}
+correlations between loci. So among general loci, cis ($\Rst>0$) co-sorting is
+indistinguishable from the gradient and cannot on its own indicate an incompatibility.
+\emph{Trans} co-sorting ($\Rst<0$) is the opposite of what the gradient produces ---
+it requires two loci to fix \emph{opposite} ancestries in the same populations --- so
+it cannot arise from the shared gradient at all. Negative among-population covariance
+between unlinked loci is therefore the most confound-resistant DMI signature we have.
+Restricting to bidirectional loci additionally rescues the cis direction: because
+these loci do not track the gradient, even their positive co-sorting is
+pair-specific rather than a by-product of overall ancestry.
+
+\paragraph{Test and null.} For each bidirectional representative we compute its
+\Faq-oriented allele frequency in each of the twenty populations, and for every
+unlinked pair (different chromosome, or same chromosome $>10$~cM) the correlation
+\Rst{} of those twenty-value vectors. Because bidirectional loci are approximately
+orthogonal to the ancestry axis, a per-locus \emph{permutation} null --- independently
+shuffling each locus's twenty per-population values, which preserves each locus's
+marginal sorting but destroys any co-sorting between loci --- is a reasonable
+pre-simulation calibration here (it would not be, for the ancestry-tracking loci of
+the general screen). We compare the observed number of strongly co-sorting unlinked
+pairs to that null. Cross-chromosome duplicates are filtered as in
+Section~\ref{sec:paralogy} (only 3 of 178{,}067 pairs --- bidirectional loci are
+essentially never paralogs).
+
+\paragraph{Result: a real but modest, diffuse excess.} There are 276 unlinked pairs
+at $|\Rst|\ge 0.7$, against a permutation-null mean of 165 (95\% $\le 186$),
+empirical $p<0.001$ (Fig.~\ref{fig:bidir}b) --- about $2.3\times$ the general
+differentiated-pair rate. Three features make this the most incompatibility-consistent
+result in Module D so far: it is orthogonal to the ancestry axis; $117$ of the $276$
+are \emph{trans} (negative \Rst, which the gradient cannot produce; $159$ cis); and it
+is genome-wide, not driven by the Chr24 block (only $6/276$ pairs involve Chr24, and
+the non-Chr24 rate is identical). The honest caveats are equally clear: the
+\emph{distribution} of \Rst{} barely shifts from the null (Fig.~\ref{fig:bidir}a) ---
+the excess is a tail-count effect of order a hundred pairs; the candidate network is
+diffuse (a hairball, not a few sharp modules, Fig.~\ref{fig:bidir}c); and the
+permutation null does not model the shared drift among populations, so it
+\emph{overstates} significance. The true excess-over-neutral is smaller and awaits
+the simulation. This is a lead consistent with a weak, distributed contribution of
+equal-fitness incompatibilities, not a resolved set of strong pairwise DMIs.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../Figures/moduleD_bidirectional.png}
+\caption{Bidirectional co-sorting test. \textbf{(a)} The observed distribution of
+per-pair \Rst{} (blue) is only slightly heavier-tailed than the permutation null
+(grey). \textbf{(b)} But the count of unlinked pairs at $|\Rst|\ge 0.7$ (orange line)
+sits far beyond the permutation-null distribution of that count, $p<0.001$.
+\textbf{(c)} The candidate network's hub loci are spread across chromosomes; the
+Chr24 block (orange) is not special.}
+\label{fig:bidir}
+\end{figure}
+
+\section{Synthesis and what the simulation will settle}
+
+Three structure-corrected views now agree on the shape of the problem. The
+among-population screen showed the raw signal is the ancestry gradient. The mixed
+model, conditioning on genome-wide relatedness, is well calibrated and yields
+pair-specific candidates once its loudest signal --- cross-chromosome paralogy --- is
+filtered out. The bidirectional test, working in the sub-space orthogonal to the
+gradient, finds a real but modest and diffuse excess of co-sorting, with a
+confound-free trans component. None of this yet distinguishes weak selection from
+residual demographic structure, because all three controls (mixed-model $K$,
+bidirectional restriction, permutation) remove structure that is \emph{aligned} with
+what they condition on, while a recombination-matched neutral null is what calibrates
+the residual. The immediate next steps are therefore to bring in that null (Module E)
+and, within these analyses, to pull the strongest \emph{trans} pairs out of the
+diffuse background for individual scrutiny and to cross-check the bidirectional
+co-sorting against the mixed model.
+
+\end{document}
