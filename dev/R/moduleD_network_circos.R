@@ -50,39 +50,54 @@ dev.off()
 chr_len <- map[, .(end = max(Pos, na.rm = TRUE)), by = Chr]
 chr_len <- chr_len[Chr %in% chr_lv][order(match(Chr, chr_lv))]
 chrdf <- data.frame(chr = chr_len$Chr, start = 0, end = chr_len$end)
-## link beds (cluster positions), trans in orange, cis faint blue
+## link beds (cluster positions); trans orange, cis faint blue; + the two heatmap hub pairs (thick black)
 lk <- ed[a %in% names(pos_of) & b %in% names(pos_of)]
 b1 <- data.frame(chr = chr_of[lk$a], start = pos_of[lk$a], end = pos_of[lk$a] + 1)
 b2 <- data.frame(chr = chr_of[lk$b], start = pos_of[lk$b], end = pos_of[lk$b] + 1)
 lcol <- ifelse(lk$coupling == "repulsion", "#D55E0066", "#0072B222")
+hp  <- rbindlist(lapply(list(c("F27700", "F33028"), c("F51717", "F57289")), function(p) data.table(a = p[1], b = p[2])))
+hp  <- hp[a %in% names(pos_of) & b %in% names(pos_of)]
+hb1 <- data.frame(chr = chr_of[hp$a], start = pos_of[hp$a], end = pos_of[hp$a] + 1)
+hb2 <- data.frame(chr = chr_of[hp$b], start = pos_of[hp$b], end = pos_of[hp$b] + 1)
 
-## ld_w as a scatter track in the style of supplementary Fig S4: per member marker of the
-## has_eMLG clusters, y = local LD support (ld_w), coloured by LD-cluster (rolling palette).
 he <- groups[has_eMLG == TRUE, group_id]
-md <- mk2[group_id %in% he & is.finite(Pos) & is.finite(ldw), .(group_id, chr = Chr, pos = Pos, ldw)]
+## per-cluster sorting category for the colour bar (aquilonia / polyctena / bidirectional / unsorted)
+cl <- readRDS("data/moduleC_C3_cl.rds"); sortcat <- setNames(as.character(cl$sort_class), cl$group_id)
+bi_reps <- tryCatch(readRDS("data/moduleD_bidirectional.rds")$reps$group_id, error = function(e) character(0))
+scat <- cpos[group_id %in% he]; scat[, `:=`(chr = chr_of[group_id], cat = sortcat[group_id])]
+scat[group_id %in% bi_reps, cat := "bidirectional"]
+scat[!cat %in% c("aquilonia", "polyctena", "bidirectional"), cat := "unsorted"]
+scat <- scat[chr %in% chr_lv & is.finite(start) & is.finite(end)]
+sortcol <- c(aquilonia = "#0072B2", polyctena = "#D55E00", bidirectional = "#CC79A7", unsorted = "#E6E6E6")
+scat[, `:=`(col = sortcol[cat], uord = as.integer(cat != "unsorted"))]; setorder(scat, uord)  # sorted drawn on top
+
+## ld_w scatter (Fig S4 style), ~1/3 height, showing only ld_w > 0.2 for now
+md <- mk2[group_id %in% he & is.finite(Pos) & is.finite(ldw) & ldw > 0.2, .(group_id, chr = Chr, pos = Pos, ldw)]
 md <- md[chr %in% chr_lv]
 rollpal <- grDevices::hcl.colors(12, "Dark 3")
 cl_ord <- md[, .(chr = chr[1], mp = median(pos)), by = group_id][order(match(chr, chr_lv), mp)]
 cl_ord[, roll := rollpal[(seq_len(.N) - 1) %% length(rollpal) + 1]]
-md[cl_ord, on = "group_id", roll := i.roll]
-setorder(md, chr, pos)
+md[cl_ord, on = "group_id", roll := i.roll]; setorder(md, chr, pos)
 
 png("Figures/moduleD_trans_circos.png", width = 1700, height = 1700, res = 200)
 circos.clear(); circos.par(gap.degree = 1.4, start.degree = 90, cell.padding = c(0, 0, 0, 0))
 circos.genomicInitialize(chrdf, plotType = NULL)
-## chromosome-number labels (radial, non-overlapping)
 circos.track(ylim = c(0, 1), track.height = 0.04, bg.border = NA, panel.fun = function(x, y)
-  circos.text(CELL_META$xcenter, 0.3, gsub("Chr", "", CELL_META$sector.index),
-              cex = 0.6, facing = "clockwise", niceFacing = TRUE))
-## ld_w scatter track (per marker, coloured by LD-cluster) -- as supplementary Fig S4
-circos.genomicTrack(md[, .(chr, start = pos, end = pos, ldw, roll)], ylim = c(0, 1), track.height = 0.24, bg.border = "grey85",
+  circos.text(CELL_META$xcenter, 0.3, gsub("Chr", "", CELL_META$sector.index), cex = 0.6, facing = "clockwise", niceFacing = TRUE))
+## ld_w > 0.2, per marker, coloured by LD-cluster (1/3 height)
+circos.genomicTrack(md[, .(chr, start = pos, end = pos, ldw, roll)], ylim = c(0.2, 1), track.height = 0.08, bg.border = "grey85",
   panel.fun = function(region, value, ...) {
-    circos.genomicPoints(region, value, numeric.column = 1, col = value$roll, pch = 16, cex = 0.08)
-    if (CELL_META$sector.index == chr_lv[1])
-      circos.yaxis(side = "left", at = c(0, 0.5, 1), labels.cex = 0.4, tick.length = 0.3) })
+    circos.genomicPoints(region, value, numeric.column = 1, col = value$roll, pch = 16, cex = 0.1)
+    if (CELL_META$sector.index == chr_lv[1]) circos.yaxis(side = "left", at = c(0.2, 0.6, 1), labels.cex = 0.4, tick.length = 0.3) })
+## sorting colour bar (per cluster; sorted drawn over unsorted)
+circos.genomicTrack(scat[, .(chr, start, end, col)], ylim = c(0, 1), track.height = 0.05, bg.border = "grey85",
+  panel.fun = function(region, value, ...) circos.genomicRect(region, value, ytop = 1, ybottom = 0, col = value$col, border = NA))
 circos.genomicLink(b1, b2, col = lcol, lwd = 0.6)
-title("Genome-wide trans (orange) / cis (blue) associations; track = ld_w per marker, coloured by LD-cluster",
-      cex.main = 0.72, line = -0.5)
-legend("bottomright", legend = c("trans", "cis"), col = c("#D55E00", "#0072B2"), lwd = 3, bty = "n", cex = 0.7)
+circos.genomicLink(hb1, hb2, col = "black", lwd = 2.4)   # the two heatmap hub pairs, thick
+title("Genome-wide trans/cis associations; tracks: ld_w>0.2 (by LD-cluster) + sorting; black = heatmap hub pairs",
+      cex.main = 0.66, line = -0.5)
+legend("bottomright", legend = c("trans", "cis", "heatmap hub"), col = c("#D55E00", "#0072B2", "black"), lwd = c(3, 3, 2.4), bty = "n", cex = 0.7)
+legend("bottomleft", legend = c("aquilonia", "polyctena", "bidirectional", "unsorted"), title = "sorting",
+       fill = sortcol[c("aquilonia", "polyctena", "bidirectional", "unsorted")], border = NA, bty = "n", cex = 0.7)
 dev.off()
 cat("wrote Figures/moduleD_trans_network.png, Figures/moduleD_trans_circos.png\n")
