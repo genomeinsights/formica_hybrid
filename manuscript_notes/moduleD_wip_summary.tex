@@ -440,6 +440,141 @@ F37861--F973 & 11/1 & 5/32 & $-95/-37$ & 0.50/0.75 & 0.12/0.47 & 0.21/0.18 & $-0
 \end{tabular}
 \end{table}
 
+\section{A systematic pass: global FDR, region-merging, and the candidate modules}
+\label{sec:metanet}
+
+The account above was built one focal Manhattan at a time, under a per-focal Bonferroni
+threshold. To put every association on one footing --- and to let the hubs and the
+pair-specific residue separate themselves rather than by hand --- we re-read the whole
+EMMAX scan as a single procedure. All $1.38\times10^{6}$ unlinked $(\text{focal},
+\text{partner})$ tests were pooled and controlled at a global Benjamini--Hochberg
+$q<0.01$ (which reproduces the earlier count, ${\sim}276$ pairs, but as one
+whole-experiment error rate rather than $51$ independent ones). We then (i) removed
+cross-locus paralogues ($|r_{\mathrm{within}}|>0.9$; $-29$ pairs); (ii) applied a
+\emph{third-level merge} --- for this network only, not the canonical clustering ---
+collapsing same-chromosome clusters within $10$~cM that remain correlated at $|r|>0.5$
+into a single meta-node, so that one low-recombination region stops masquerading as a
+swarm of interacting loci (the worst case, a $16$-cluster block on Chr26, becomes one
+node; $156\to121$ meta-nodes); and (iii) dropped edges whose among-population
+allele-frequency correlation does not survive leave-one-population-out
+($|r|_{\mathrm{LOO}}<0.3$; $-50$ edges), which by itself dissolved a spurious degree-$19$
+hub on Chr4 built from a single deme --- exactly the near-fixed / leverage artifact the
+MAF--LD bound predicts. Low-recombination meta-nodes (recombination percentile $<0.1$)
+were \emph{labelled} ``structure'' rather than removed. What remains is $100$ meta-edges
+over $77$ meta-nodes ($17$ trans, $83$ cis; Fig.~\ref{fig:metanet}).
+
+The network splits cleanly into two kinds of object. The dominant one is a single grey
+\emph{structure} complex --- the low-recombination hubs of Section~\ref{sec:transhubs}
+(the merged F33028/F33095 anchor and F27700, plus F57361) wired almost entirely to one
+another: $58$ of the $100$ edges are structure--structure. A PCA over the $87$ loci of
+this module (Fig.~\ref{fig:structpca}) shows what it is \emph{not}. These loci separate
+individuals by population \emph{less} than a random draw of differentiated loci (mean
+per-locus among-population $R^{2}=0.43$, against $0.54$ for random differentiated and
+$0.64$ for the candidate loci), and they load only weakly on the genome-wide PCs
+($|r|\le0.23$). Their cross-genome correlation is therefore neither among-population
+geographic differentiation nor the dominant ancestry axis; it is \emph{individual-level
+admixture-block covariance} --- ancestral haplotype blocks co-inherited within
+individuals and, in low-recombination regions, not yet broken up --- carried within
+populations. This is the conclusion of Section~\ref{sec:transhubs} reached again, now
+from the genotypes rather than the recombination map, and it is why these hubs persist
+through PC-conditioning.
+
+The gold \emph{candidate} nodes are the residue of interest, and they are not merely
+isolated pairs. Thirteen edges have both endpoints outside the structure module
+(Table~\ref{tab:cand}), and they organise into three kinds: (a) an \emph{aquilonia
+co-sorting module} anchored on F33454 (Chr10, $50$~cM, degree $12$), whose partners on
+Chr3/4/5/9/11/13/19 are almost all aquilonia-sorted --- coordinated ancestry co-selection
+toward the minor (aquilonia) background rather than an obvious pairwise incompatibility;
+(b) a single strong, ancestry-\emph{independent} trans pair, F11431--F49480
+(Chr3--Chr16, $q=2.2\times10^{-10}$, both loci unsorted) --- the cleanest pairwise-DMI
+candidate the network contains; and (c) a handful of same-ancestry \emph{cis} pairs
+(polyctena: F17114--F49429, F15820--F26284; aquilonia: F22294--F39587), i.e. co-sorting,
+not repulsion. Stripped of structure and of ancestry co-sorting, the pair-specific
+residue is thus F11431--F49480 together with the two weak trans pairs of
+Table~\ref{tab:dmi} --- a handful of edges, as the by-hand pass already found, but now
+reached by one reproducible criterion.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.86\textwidth]{../Figures/moduleD_trans_network.png}
+\caption{The Module-D meta-network after global FDR ($q<0.01$), paralogy removal,
+third-level within-region merging, and the leave-one-population-out leverage filter.
+Nodes are meta-nodes sized by degree; grey = low-recombination ``structure'' label,
+gold = candidate region; blue edges cis (coupling), orange edges trans (repulsion). The
+large grey complex (F33095/F27700/F57361) is the admixture-block structure module; the
+gold hub F33454 is the aquilonia co-sorting module; scattered gold--gold pairs are the
+pair-specific candidates.}
+\label{fig:metanet}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\textwidth]{../Figures/moduleD_candidate_circos.png}
+\caption{Genomic view of the candidate loci: each association drawn as a band spanning the
+full extent of the two meta-nodes it joins (cis blue, trans orange; here at full opacity as
+the set is sparse, with a minimum band width enforced so narrow regions stay visible). The
+Chr10 anchor F33454 fans out to aquilonia-sorted partners on
+Chr3/4/5/9/11/13/19 (bands landing on the blue aquilonia stretches of the sorting ring) --
+the aquilonia co-sorting module -- while the single orange band F11431--F49480 (Chr3--Chr16)
+is the one ancestry-independent trans pair. Outer track: $\mathrm{ld_w}>0.2$ per marker; inner
+rings: genome-wide sorting, then the meta-node structure(grey)/candidate(gold) label.}
+\label{fig:candcircos}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\textwidth]{../Figures/moduleD_structure_circos.png}
+\caption{Genomic view of the structure / co-ancestry module (band opacity $\propto$ degree;
+black = the F27700--F33095 heatmap pair). The module is almost entirely \emph{cis} (blue):
+low-recombination admixture blocks on different chromosomes couple in the \emph{same}
+ancestry direction, converging on the Chr8/Chr10 anchors. The contrast with
+Fig.~\ref{fig:candcircos} -- cis-coupled co-ancestry here, the trans/repulsion signal with
+the candidates -- is the visual statement that the two are different phenomena.}
+\label{fig:structcircos}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\textwidth]{../Figures/moduleD_structure_pca.png}
+\caption{PCA over the $87$ loci of the structure module, individuals coloured by
+population. The module carries real between-population structure (some populations, e.g.
+J\"arvenp\"a\"a, pull out as coherent clusters), but \emph{less} than a random draw of
+differentiated loci (mean per-locus among-population $R^{2}=0.43$ vs $0.54$), and its
+axes correlate only weakly with the genome-wide PCs. The hub LD is individual-level
+admixture-block covariance in low-recombination regions, not geographic differentiation
+and not a pairwise incompatibility.}
+\label{fig:structpca}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\caption{The $13$ candidate--candidate meta-edges (both endpoints outside the structure
+module), with chromosomes, coupling, FDR $q$, and the ancestry-sorting class of each
+endpoint. The F33454 anchor and its aquilonia-sorted partners form a co-sorting module;
+F11431--F49480 is the one strong ancestry-independent trans pair.}
+\label{tab:cand}
+\small\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llccl}
+\toprule
+Pair & Chr & coupling & $q$ & sorting (a/b) \\
+\midrule
+F11431--F49480 & 3/16  & trans & $2.2\times10^{-10}$ & unsorted/unsorted \\
+F10974--F33454 & 3/10  & trans & $2.7\times10^{-4}$  & aqu/aqu \\
+F32802--F33454 & 9/10  & trans & $1.1\times10^{-3}$  & aqu/aqu \\
+F11265--F33454 & 3/10  & trans & $6.2\times10^{-3}$  & pol/aqu \\
+F15419--F33454 & 4/10  & cis   & $2.8\times10^{-11}$ & aqu/aqu \\
+F33454--F57178 & 10/19 & cis   & $8.8\times10^{-5}$  & aqu/aqu \\
+F33454--F41301 & 10/13 & cis   & $1.2\times10^{-4}$  & aqu/aqu \\
+F33454--F35575 & 10/11 & cis   & $2.2\times10^{-4}$  & aqu/aqu \\
+F17114--F49429 & 4/15  & cis   & $9.2\times10^{-4}$  & pol/pol \\
+F15820--F26284 & 4/7   & cis   & $2.3\times10^{-3}$  & pol/pol \\
+F21099--F33454 & 5/10  & cis   & $3.0\times10^{-3}$  & aqu/aqu \\
+F22294--F39587 & 6/12  & cis   & $4.7\times10^{-3}$  & aqu/aqu \\
+F45183--F45504 & 14/14 & cis   & $5.0\times10^{-3}$  & unsorted/unsorted \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Synthesis and what the simulation will settle}
 
 Three structure-corrected views now agree, and they agree on a largely negative
