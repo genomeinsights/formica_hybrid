@@ -9,7 +9,7 @@ dir.create("Figures", showWarnings = FALSE)
 
 E <- readRDS("data/moduleD_emmax.rds"); clust <- readRDS("data/eMLG_5loci_0025_cM05.rds"); groups <- clust$groups
 e1 <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e1)
-map <- as.data.table(e1$map_hyb_005)[, .(marker, Chr = as.character(Chr), Pos)]
+map <- as.data.table(e1$map_hyb_005)[, .(marker, Chr = as.character(Chr), Pos, ldw = ld_w_095)]
 chr_of <- setNames(as.character(groups$Chr), groups$group_id)
 ## per-cluster physical position (median member Pos) and recombination rate
 rec <- fread("data/Frufa_DTOL_PR.ref_genome.recmap"); setnames(rec, 1:4, c("chr","pos","cM","cMMb")); rec[, Chr := sub("chromosome_","Chr",chr)]
@@ -18,7 +18,8 @@ for (ch in unique(map$Chr)) { r <- rec[Chr == ch]; if (nrow(r) < 2) next
   ix <- map[, which(Chr == ch)]; map[ix, rate := approx(r$pos, r$cMMb, xout = Pos, rule = 2)$y] }
 mk2 <- groups[, .(marker = unlist(members)), by = group_id]
 mk2 <- map[mk2, on = "marker"]
-cpos <- mk2[, .(pos = median(Pos, na.rm = TRUE), rate = median(rate, na.rm = TRUE)), by = group_id]
+cpos <- mk2[, .(pos = median(Pos, na.rm = TRUE), start = min(Pos, na.rm = TRUE), end = max(Pos, na.rm = TRUE),
+                rate = median(rate, na.rm = TRUE), ldw = median(ldw, na.rm = TRUE)), by = group_id]
 pos_of <- setNames(cpos$pos, cpos$group_id)
 
 ## edges: clean, unlinked, deduplicated pairs, with cis/trans
@@ -67,6 +68,16 @@ zcols <- wes_palette("Zissou1Continuous", 100, type = "continuous")
 rmax  <- quantile(recbin$rate, 0.95, na.rm = TRUE)
 col_fun <- colorRamp2(seq(min(recbin$rate, na.rm = TRUE), rmax, length.out = length(zcols)), zcols)
 
+## per-cluster ld_w (local LD support -- measured, finer than the interpolated recmap) +
+## rolling cluster-identity colours, has_eMLG clusters only, drawn over each cluster's span.
+he  <- groups[has_eMLG == TRUE, group_id]
+clu <- cpos[group_id %in% he]; clu[, chr := chr_of[group_id]]
+clu <- clu[chr %in% chr_lv & is.finite(start) & is.finite(end) & is.finite(ldw)]
+clu[chr_len, on = c(chr = "Chr"), end := pmin(end, i.end)]
+ldw_fun <- colorRamp2(seq(0, quantile(clu$ldw, 0.98, na.rm = TRUE), length.out = length(zcols)), zcols)  # Zissou, high ld_w = red
+rollpal <- grDevices::hcl.colors(12, "Dark 3")
+setorder(clu, chr, pos); clu[, roll := rollpal[(seq_len(.N) - 1) %% length(rollpal) + 1]]
+
 png("Figures/moduleD_trans_circos.png", width = 1700, height = 1700, res = 200)
 circos.clear(); circos.par(gap.degree = 1.4, start.degree = 90, cell.padding = c(0, 0, 0, 0))
 circos.genomicInitialize(chrdf, plotType = NULL)
@@ -74,17 +85,29 @@ circos.genomicInitialize(chrdf, plotType = NULL)
 circos.track(ylim = c(0, 1), track.height = 0.05, bg.border = NA, panel.fun = function(x, y)
   circos.text(CELL_META$xcenter, 0.3, gsub("Chr", "", CELL_META$sector.index),
               cex = 0.6, facing = "clockwise", niceFacing = TRUE))
-## recombination-rate colour band
-circos.genomicTrack(recbin, ylim = c(0, 1), track.height = 0.09, bg.border = "grey85",
+## recombination-rate colour band (interpolated map)
+circos.genomicTrack(recbin, ylim = c(0, 1), track.height = 0.07, bg.border = "grey85",
   panel.fun = function(region, value, ...)
     circos.genomicRect(region, value, ytop = 1, ybottom = 0, col = col_fun(value$rate), border = NA))
+## ld_w track: per-cluster local LD support (Zissou, high ld_w = red = strong local LD ~ low recomb)
+circos.genomicTrack(clu[order(ldw), .(chr, start, end, ldw)], ylim = c(0, 1), track.height = 0.07, bg.border = "grey85",
+  panel.fun = function(region, value, ...)
+    circos.genomicRect(region, value, ytop = 1, ybottom = 0, col = ldw_fun(value$ldw), border = NA))
+## LD-clusters coloured by identity (rolling palette) -- the finest, data-driven resolution
+circos.genomicTrack(clu[, .(chr, start, end, roll)], ylim = c(0, 1), track.height = 0.045, bg.border = "grey85",
+  panel.fun = function(region, value, ...)
+    circos.genomicRect(region, value, ytop = 1, ybottom = 0, col = value$roll, border = NA))
 circos.genomicLink(b1, b2, col = lcol, lwd = 0.6)
-title("Genome-wide trans (orange) / cis (blue) cluster associations", cex.main = 0.85, line = -0.5)
-## legends: recombination colour bar + link type
-cb <- seq(0, rmax, length.out = 60); xb <- seq(-0.97, -0.62, length.out = 61)
-rect(xb[-61], -0.99, xb[-1], -0.955, col = col_fun(cb), border = NA)
-text(mean(c(-0.97, -0.62)), -0.915, "recombination rate (cM/Mb)", cex = 0.6)
-text(-0.97, -1.02, "0", cex = 0.5); text(-0.62, -1.02, sprintf("%.0f+", rmax), cex = 0.5)
+title("Genome-wide trans (orange) / cis (blue) associations; tracks (outer->in): recomb rate, ld_w, LD-clusters",
+      cex.main = 0.72, line = -0.5)
+## legends: recombination + ld_w colour bars (both Zissou) + link type
+ldwmax <- quantile(clu$ldw, 0.98, na.rm = TRUE); xb <- seq(-0.98, -0.66, length.out = 61)
+rect(xb[-61], -0.86, xb[-1], -0.83, col = col_fun(seq(0, rmax, length.out = 60)), border = NA)
+text(mean(range(xb)), -0.805, "recomb (cM/Mb)", cex = 0.55)
+text(-0.98, -0.845, "0", cex = 0.45, pos = 2); text(-0.66, -0.845, sprintf("%.0f", rmax), cex = 0.45, pos = 4)
+rect(xb[-61], -0.95, xb[-1], -0.92, col = ldw_fun(seq(0, ldwmax, length.out = 60)), border = NA)
+text(mean(range(xb)), -0.895, "ld_w (local LD)", cex = 0.55)
+text(-0.98, -0.935, "0", cex = 0.45, pos = 2); text(-0.66, -0.935, sprintf("%.2f", ldwmax), cex = 0.45, pos = 4)
 legend("bottomright", legend = c("trans", "cis"), col = c("#D55E00", "#0072B2"), lwd = 3, bty = "n", cex = 0.7)
 dev.off()
 cat("wrote Figures/moduleD_trans_network.png, Figures/moduleD_trans_circos.png\n")
