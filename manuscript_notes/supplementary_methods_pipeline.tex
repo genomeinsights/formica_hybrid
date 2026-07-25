@@ -282,6 +282,24 @@ uncorrelated marker from being absorbed there. Because merging proceeds only
 while both conditions hold, this stage cannot over-merge regardless of how
 permissively clusters were flagged.
 
+The two floors also bound the correlation that can survive between distinct
+clusters, and thereby the independence of the resulting units. A pair is left
+unmerged either because it falls below the correlation floor, in which case its
+members are already close to independent, or because merging would breach the
+fidelity floor, which is where a large and coherent cluster resists absorbing further
+markers; in the latter case the residual correlation between neighbouring clusters is
+limited by how much the consensus can tolerate. Measured after the fact on the
+merged units---and after correcting for relatedness, so that shared population
+structure does not inflate it---the largest such residual is of order $r^2 \approx
+0.3$. This is comparable to the fixed threshold ($r^2 = 0.2$) that conventional LD
+pruning applies uniformly, but is obtained on a relatedness-corrected scale between
+consensus genotypes rather than as a raw correlation between individual markers. Any
+residual correlation among clusters is moreover local, confined to neighbours within
+a short genetic distance; where independent observations are required across long
+distances---as in the two-locus screens for epistasis, where correlated neighbouring
+clusters would otherwise represent a single event several times---a genetic-map
+distance threshold removes it directly.
+
 The distance restriction was applied in genetic rather than physical units, at
 0.5~cM, using the linkage map. Physical distance is a poor and sometimes
 misleading proxy for recombination distance in this genome: cluster pairs more
