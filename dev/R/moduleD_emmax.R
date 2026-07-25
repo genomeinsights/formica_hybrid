@@ -62,6 +62,11 @@ B_PERM     <- 0           # permutations for the max-F structure null; 0 = F-tes
 CORES      <- 8
 SIG_CORR   <- 0.05        # corrected-p threshold when B_PERM > 0 (else Bonferroni 0.05/m is used)
 PARALOGY_R <- 0.9         # |within-pop r| above which an unlinked hit is flagged as a duplicate
+N_PC       <- 10          # condition each focal trait on the top N_PC genome-wide PCs (0 = off).
+                          # Removes SECONDARY ancestry/structure axes that K cannot -- a network
+                          # hub (e.g. F33028 = genome PC2, climate-linked) is such an axis, and it
+                          # survives K because double-LOCO drops the chromosomes that anchor it.
+                          # Conditioning leaves genuinely pair-specific residuals.
 ## focal-set sizes (the curated Pattern-2 candidates + controls)
 N_BI <- 20    # most bidirectional clusters (bi_score) -- prime symmetric-DMI candidates
 N_NEG <- 15   # clusters in the most NEGATIVE-R_st Ohta pairs (trans-compatible candidates)
@@ -100,7 +105,10 @@ DI_of <- setNames(cl$DI, cl$group_id); sc_of <- setNames(cl$sort_class, cl$group
 ## per-cluster observed heterozygosity (raw member genotypes) for the paralogy filter
 marker_Ho <- colMeans(e1$GTs_hybrids_005 == 1, na.rm = TRUE)
 het_of <- moduleD_cluster_het(groups, scope, marker_Ho)
-message(sprintf("[setup] X = %d individuals x %d differentiated eMLGs", nrow(X), ncol(X)))
+## top genome-wide PCs to condition each focal trait on (strips secondary structure axes)
+PCS <- if (N_PC > 0) prcomp(X, center = TRUE, scale. = FALSE)$x[, seq_len(N_PC), drop = FALSE] else NULL
+message(sprintf("[setup] X = %d individuals x %d differentiated eMLGs%s", nrow(X), ncol(X),
+                if (N_PC > 0) sprintf("; conditioning on top %d genome PCs", N_PC) else ""))
 
 ## =========================================================================
 ## Neutral-background genomic-relationship matrix, with DOUBLE leave-one-chromosome-out.
@@ -163,6 +171,7 @@ message(sprintf("[focal] %d focal loci: %s", nrow(focal),
 ## structure-corrected SIGN of an association: sign of the GLS coefficient, i.e. the
 ## sign of the whitened covariance between focal and partner (recomputed only for hits).
 whitened_sign <- function(y, Xsub, K) {
+  if (!is.null(PCS)) y <- residuals(lm(y ~ PCS))            # condition on the same genome PCs
   n <- nrow(K)
   Kn <- (n - 1) / sum((diag(n) - matrix(1, n, n) / n) * K) * K
   nu <- emma.REMLE(y, matrix(1, n), Kn)
@@ -179,7 +188,7 @@ scan_one <- function(gid) {
   chA <- chr_of[gid]; y <- eMLG[, gid]; y[!is.finite(y)] <- mean(y, na.rm = TRUE)
   dt <- rbindlist(lapply(unique(chr_X), function(chB) {
     cols <- which(chr_X == chB)                              # partners on chromosome chB
-    res <- emmax(Y = y, X = X[, cols, drop = FALSE], K = Kdl(chA, chB),
+    res <- emmax(Y = y, X = X[, cols, drop = FALSE], K = Kdl(chA, chB), Covar = PCS,
                  B = if (B_PERM > 0) B_PERM else NULL, cores = 1)
     d <- data.table(partner = colnames(X)[cols], Chr = chB, cM = cm_X[cols],
                     F = as.numeric(res$F), pval = as.numeric(res$pval), Rsq = as.numeric(res$Rsq))
