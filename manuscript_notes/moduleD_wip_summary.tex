@@ -104,11 +104,21 @@ relatedness among nestmates, the Wahlund inflation of within-population LD (trac
 above) is regressed out in the \emph{same} term. A residual peak between two loci is
 therefore pair-specific association with both the ancestry gradient and the colony
 structure already removed. Continuous eMLG dosages are used directly, with no
-hard-calling. To keep the tested region out of its own random effect we use
-leave-one-chromosome-out $K$ (a separate $K$ per chromosome, built from all other
-chromosomes). A first, targeted run scanned 51 focal loci (bidirectional candidates,
-extreme among-population-covariance loci, and controls); peaks were called at a
-Bonferroni genome-wide threshold.
+hard-calling. Because the scan is symmetric we use \emph{double}
+leave-one-chromosome-out: both the focal and the partner chromosome are dropped from
+$K$, so neither tested locus's own region deflates its association. This recovers a
+little power over single leave-one-out and leaves the test calibrated
+($\lambda\approx 0.98$--$1.05$). One further point is worth stating, because it runs
+against intuition: $K$ must be built from the ancestry-\emph{informative}
+(differentiated) markers, not from a neutral, LD-pruned background. The confound $K$
+has to absorb here is the ancestry-sorting axis, which is a \emph{selected} structure
+carried by those markers; a neutral basis (right for a demographic control such as the
+BayPass $\Omega$) dilutes that eigenvector and under-corrects, inflating $\lambda$ to
+$\sim\!1.2$ and leaking the ancestry gradient back as spurious positive associations.
+A first, targeted run scanned 51 focal loci (bidirectional candidates, extreme
+among-population-covariance loci, and controls); peaks were called at a Bonferroni
+genome-wide threshold, and each is signed (coupling vs repulsion) by its
+structure-corrected GLS coefficient --- both cis and trans hits are recovered.
 
 \paragraph{Reading a Manhattan.} The self-peak at the focal locus and its local LD
 block are the built-in positive control that the pipeline works; the signal is any
@@ -132,8 +142,9 @@ are genuine candidates.
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../Figures/moduleD_emmax_writeup.png}
-\caption{Structure-corrected two-locus association (EMMAX, leave-one-chromosome-out
-$K$). \textbf{(a)} A focal locus (F4250, Chr2) showing its self-peak (red) and
+\caption{Structure-corrected two-locus association (EMMAX, double
+leave-one-chromosome-out $K$ from the differentiated eMLGs). \textbf{(a)} A focal
+locus (F4250, Chr2) showing its self-peak (red) and
 unlinked partner peaks, split by the paralogy filter into genuine candidates
 (orange) and cross-chromosome duplicates (grey crosses). \textbf{(b)} A
 consensus-bidirectional focal locus (F14324, Chr4): only its self-peak, a flat

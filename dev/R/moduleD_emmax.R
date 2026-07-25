@@ -16,6 +16,11 @@
 ## A residual peak between two loci -- beyond K -- is pair-specific association with
 ## both the ancestry gradient and the colony structure already removed. Continuous
 ## eMLGs are used directly (no hard-calling, unlike the Ohta gametic tabulation).
+## K is estimated as the NEUTRAL BACKGROUND: a genomic-relationship matrix from the
+## LD-pruned representatives (one marker per cluster, genome-wide, the same basis as
+## the BayPass Omega), NOT from the DI-/size-gated eMLGs. And because the scan is
+## symmetric, DOUBLE leave-one-chromosome-out is used -- both the focal AND the partner
+## chromosome are dropped from K, so neither tested locus's region deflates its own test.
 ##
 ## READING A MANHATTAN (one focal eMLG vs the genome):
 ##   - the self-peak at the focal locus, and its local LD block, are the built-in
@@ -98,17 +103,32 @@ het_of <- moduleD_cluster_het(groups, scope, marker_Ho)
 message(sprintf("[setup] X = %d individuals x %d differentiated eMLGs", nrow(X), ncol(X)))
 
 ## =========================================================================
-## LOCO genomic-relationship matrices (one per chromosome, VanRaden GRM on eMLGs
-## EXCLUDING that chromosome -- so a focal locus is never in its own random effect).
-## emmax() re-normalises K internally, so absolute scaling is irrelevant.
+## Neutral-background genomic-relationship matrix, with DOUBLE leave-one-chromosome-out.
 ## =========================================================================
-make_grm <- function(M) {                    # M = individuals x markers (imputed)
+## K MUST contain the confound it removes. Here the confound is the ancestry-sorting
+## axis (a SELECTED structure), carried by the ancestry-informative markers -- so K is
+## built from the DIFFERENTIATED eMLGs, not a neutral background. (A neutral LD-pruned
+## basis, though right for the BayPass Omega, was tried and UNDER-corrects: it dilutes
+## the ancestry eigenvector with low-DI markers, inflating lambda to ~1.2 and leaking
+## the ancestry gradient back as positive/cis hits. Kept for the record.) Because the
+## scan is symmetric we exclude BOTH the focal and the partner chromosome from K (double
+## LOCO). Per-chromosome VanRaden contributions are precomputed so a double-LOCO K is a
+## matrix subtraction, K_{A,B} = (N - N_A - N_B) / (d - d_A - d_B); emmax() re-normalises.
+DOUBLE_LOCO <- TRUE     # exclude focal + partner chromosome (symmetric); FALSE = focal only
+Nc <- list(); dc <- numeric()
+for (cc in unique(chr_X)) {
+  M <- X[, chr_X == cc, drop = FALSE]                        # differentiated eMLGs on chr cc (imputed)
   p <- colMeans(M) / 2; Z <- sweep(M, 2, 2 * p)
-  tcrossprod(Z) / sum(2 * p * (1 - p))
+  Nc[[cc]] <- tcrossprod(Z); dc[cc] <- sum(2 * p * (1 - p))
 }
-chroms <- unique(chr_X)
-K_loco <- setNames(lapply(chroms, function(ch) make_grm(X[, chr_X != ch, drop = FALSE])), chroms)
-message(sprintf("[setup] built %d LOCO GRMs (n = %d)", length(K_loco), nrow(X)))
+Ntot <- Reduce(`+`, Nc); dtot <- sum(dc)
+Kdl <- function(a, b) {                                       # double-LOCO K excluding chr a (+ b)
+  N <- Ntot - Nc[[a]]; d <- dtot - dc[[a]]
+  if (DOUBLE_LOCO && !is.na(b) && b != a) { N <- N - Nc[[b]]; d <- d - dc[[b]] }
+  N / d
+}
+message(sprintf("[setup] GRM from %d differentiated eMLGs, %s LOCO (n = %d)",
+                ncol(X), if (DOUBLE_LOCO) "double" else "single", nrow(eMLG)))
 
 ## =========================================================================
 ## Focal set: curated Pattern-2 candidates + controls
@@ -136,26 +156,38 @@ message(sprintf("[focal] %d focal loci: %s", nrow(focal),
                 paste(names(table(focal$set)), table(focal$set), sep = "=", collapse = ", ")))
 
 ## =========================================================================
-## Scan: one EMMAX Manhattan per focal locus (LOCO K for its chromosome)
+## Scan: one EMMAX Manhattan per focal locus. With double LOCO, K depends on the
+## PARTNER chromosome too, so each focal Manhattan is assembled in partner-chromosome
+## blocks -- one null re-fit per partner chromosome (cheap at n = 164).
 ## =========================================================================
 ## structure-corrected SIGN of an association: sign of the GLS coefficient, i.e. the
 ## sign of the whitened covariance between focal and partner (recomputed only for hits).
 whitened_sign <- function(y, Xsub, K) {
-  Kn <- (nrow(K) - 1) / sum((diag(nrow(K)) - matrix(1, nrow(K), nrow(K)) / nrow(K)) * K) * K
-  nu <- emma.REMLE(y, matrix(1, length(y)), Kn)
-  M <- solve(chol(nu$vg * Kn + nu$ve * diag(nrow(K))))
-  yt <- crossprod(M, y); Xt <- crossprod(M, Xsub)
-  sign(as.numeric(crossprod(Xt - mean(Xt), yt - mean(yt))))   # per column
+  n <- nrow(K)
+  Kn <- (n - 1) / sum((diag(n) - matrix(1, n, n) / n) * K) * K
+  nu <- emma.REMLE(y, matrix(1, n), Kn)
+  M <- solve(chol(nu$vg * Kn + nu$ve * diag(n)))
+  yt <- crossprod(M, y); xt <- crossprod(M, Xsub); ot <- crossprod(M, rep(1, n))
+  ## sign of the GLS coefficient of x -- regress whitened y on the whitened intercept
+  ## (ot = M'1, which is NOT constant) plus x, exactly as emmax does. The earlier
+  ## mean-centred covariance mis-handled that non-constant intercept and forced all
+  ## signs positive (spurious all-cis); this matches the raw-correlation sign.
+  sign(lsfit(cbind(ot, xt), yt, intercept = FALSE)$coefficients[2])
 }
 
 scan_one <- function(gid) {
-  ch <- chr_of[gid]; y <- eMLG[, gid]; y[!is.finite(y)] <- mean(y, na.rm = TRUE)
-  res <- emmax(Y = y, X = X, K = K_loco[[ch]], B = if (B_PERM > 0) B_PERM else NULL, cores = 1)
-  dt <- data.table(partner = colnames(X), Chr = chr_X, cM = cm_X,
-                   F = as.numeric(res$F), pval = as.numeric(res$pval), Rsq = as.numeric(res$Rsq))
-  if (!is.null(res$pval.corr)) dt[, pval_corr := as.numeric(res$pval.corr)]
+  chA <- chr_of[gid]; y <- eMLG[, gid]; y[!is.finite(y)] <- mean(y, na.rm = TRUE)
+  dt <- rbindlist(lapply(unique(chr_X), function(chB) {
+    cols <- which(chr_X == chB)                              # partners on chromosome chB
+    res <- emmax(Y = y, X = X[, cols, drop = FALSE], K = Kdl(chA, chB),
+                 B = if (B_PERM > 0) B_PERM else NULL, cores = 1)
+    d <- data.table(partner = colnames(X)[cols], Chr = chB, cM = cm_X[cols],
+                    F = as.numeric(res$F), pval = as.numeric(res$pval), Rsq = as.numeric(res$Rsq))
+    if (!is.null(res$pval.corr)) d[, pval_corr := as.numeric(res$pval.corr)]
+    d
+  }))
   ## unlinked = different chromosome, or same chromosome > LINK_CM from the focal locus
-  dt[, unlinked := Chr != ch | (Chr == ch & is.finite(cM) & abs(cM - cm_of[gid]) > LINK_CM)]
+  dt[, unlinked := Chr != chA | (Chr == chA & is.finite(cM) & abs(cM - cm_of[gid]) > LINK_CM)]
   dt[, focal := gid]
   dt
 }
@@ -173,7 +205,7 @@ hits <- rbindlist(lapply(res_list, function(dt) dt[unlinked == TRUE & get(pcol) 
 if (nrow(hits) > 0) {
   hits[, sign := mapply(function(f, p) whitened_sign(
     { y <- eMLG[, f]; y[!is.finite(y)] <- mean(y, na.rm = TRUE); y },
-    matrix(X[, p], ncol = 1), K_loco[[chr_of[f]]]), focal, partner)]
+    matrix(X[, p], ncol = 1), Kdl(chr_of[f], chr_of[p])), focal, partner)]
   hits[, `:=`(focal_set = set_of[focal], coupling = ifelse(sign > 0, "coupling", "repulsion"))]
   ## cross-chromosome paralogy / duplication filter (within-pop |r| ~ 1 = same reads)
   hits <- flag_paralogy(hits, "focal", "partner", eMLG, pops_all, het_of = het_of,
