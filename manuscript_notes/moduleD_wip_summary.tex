@@ -376,8 +376,19 @@ Karsikas / single-colony artifact), and it survives conditioning on the top geno
 (so it is not one of the dominant, climate-aligned structure axes --- its loading on
 those is only $r\approx 0.27$). It is instead a \emph{specific, lower-variance}
 co-sorting module with a broad footprint (a ${\sim}5.5$~Mb Chr26 block in trans-LD with
-a Chr10 anchor), whose most parsimonious explanation is a large chromosomal
-rearrangement (an inversion or translocation polymorphism), not a point incompatibility.
+a Chr10 anchor; Fig.~\ref{fig:trans}). Its source is the recombination landscape.
+F33028 sits at $0.4$~cM/Mb --- the first recombination percentile against a genome-wide
+median of $20.5$ --- and 33 of its 37 module clusters fall in the low-recombination
+tail, the centromeric and pericentromeric regions the map makes plain. That argues
+\emph{against} a segregating inversion, whose recombination suppression would be its
+own rather than the reference centromere's, and for a simpler mechanism: low-recombination
+regions retain the founding admixture co-ancestry that recombination has long since erased
+elsewhere, so centromeric blocks on different chromosomes stay correlated in ancestry --- in
+whichever direction they were founded, hence the trans sign. The hub is the genome's
+low-recombination fraction co-retaining ancestral structure, neither a point
+incompatibility nor a rearrangement. (The genuine pair-specific candidates below are, by
+contrast, in normal-to-high recombination, consistent with real signal rather than a
+low-recombination artifact.)
 
 The genuine pair-specific candidates are therefore the trans edges whose \emph{both}
 endpoints have low connectivity. Of 78 clean trans pairs, 73 run through a hub. Scoring
@@ -389,6 +400,21 @@ correlation --- one pair's $r=-0.44$ collapses to $-0.03$ when five individuals 
 dropped. Only two survive as robust, appreciable-frequency, leverage-stable
 pair-specific edges, and both are weak ($r\approx -0.25$). After every structure
 control the two-locus screen can apply, that is the entire pair-specific residue.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../Figures/moduleD_trans_01_F27700_F33028.png}\\[2pt]
+\includegraphics[width=0.9\textwidth]{../Figures/moduleD_trans_04_F51717_F57289.png}
+\caption{Two of the strongest trans pairs, as genotype heatmaps of the two clusters' member
+markers (individuals in rows, ordered by the first cluster's ancestry; each cluster's
+markers polarised to its own consensus so a trans pair renders as a mirror image, not a
+flipped-together block). In the sorted individuals (the coloured band) the two unlinked
+clusters fix \emph{opposite} ancestries --- blue at one, red at the other --- while the
+heterozygous majority sits pale below. These are strong and clean, but both belong to the
+low-recombination hub structure (top: F33028), not to the pair-specific residue: they show
+what co-retained ancestral co-ancestry looks like, not an incompatibility.}
+\label{fig:trans}
+\end{figure}
 
 \begin{table}[h]
 \centering
@@ -421,7 +447,7 @@ result. The among-population screen showed the raw signal is the ancestry gradie
 The bidirectional test, working orthogonally to that gradient, found only a modest and
 diffuse excess of co-sorting. And the mixed model, once its signal is followed to the
 end --- paralogy filtered, dominant structure conditioned out, hubs recognised as
-secondary co-sorting modules (candidate rearrangements) rather than incompatibilities,
+low-recombination regions co-retaining ancestral structure rather than incompatibilities,
 and the survivors screened for the frequency and leverage artifacts the MAF--LD bound
 invites --- leaves only two weak pair-specific trans edges. Each layer of control
 removed an apparent signal and exposed it as structure, assembly, or a handful of
@@ -447,9 +473,9 @@ first axis. At the locus level the genome ancestry axes barely track the climate
 association at all ($r\approx 0.1$), so the individual-level genome--climate correlation is
 population-level entanglement (ancestry and climate both vary with geography), not
 locus-specific climate selection. The hubs therefore belong to \emph{neither} arm --- not a
-resolved intrinsic incompatibility, and not an extrinsic climate response, but most likely
-structural (a large rearrangement polymorphism), the kind of feature a two-locus
-ancestry-LD screen surfaces and that neither the sorting nor the climate analysis is built
-to catch.
+resolved intrinsic incompatibility, and not an extrinsic climate response, but the genome's
+low-recombination (centromeric) fraction retaining founding admixture co-ancestry
+(Section~\ref{sec:transhubs}): a recombination-landscape feature that a two-locus ancestry-LD
+screen surfaces and that neither the sorting nor the climate analysis is built to catch.
 
 \end{document}
