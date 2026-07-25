@@ -50,64 +50,39 @@ dev.off()
 chr_len <- map[, .(end = max(Pos, na.rm = TRUE)), by = Chr]
 chr_len <- chr_len[Chr %in% chr_lv][order(match(Chr, chr_lv))]
 chrdf <- data.frame(chr = chr_len$Chr, start = 0, end = chr_len$end)
-## recombination-rate track (500 kb bins, mean cM/Mb) -- low dips = centromeres
-recbin <- map[!is.na(rate), .(rate = mean(rate, na.rm = TRUE)),
-              by = .(Chr, bin = floor(Pos / 5e5))][, .(chr = Chr, start = bin * 5e5, end = bin * 5e5 + 5e5, rate)]
-recbin <- recbin[chr %in% chr_lv]
-recbin[chr_len, on = c(chr = "Chr"), end := pmin(end, i.end)]   # clamp last bin to chromosome end
 ## link beds (cluster positions), trans in orange, cis faint blue
 lk <- ed[a %in% names(pos_of) & b %in% names(pos_of)]
 b1 <- data.frame(chr = chr_of[lk$a], start = pos_of[lk$a], end = pos_of[lk$a] + 1)
 b2 <- data.frame(chr = chr_of[lk$b], start = pos_of[lk$b], end = pos_of[lk$b] + 1)
 lcol <- ifelse(lk$coupling == "repulsion", "#D55E0066", "#0072B222")
 
-## recombination rate as a COLOUR band (Zissou; low = blue ... high = red), so the full
-## range shows without a y-axis to overrun -- the low-recombination centromeric bands read
-## as blue, and the hub links converge on them.
-zcols <- wes_palette("Zissou1Continuous", 100, type = "continuous")
-rmax  <- quantile(recbin$rate, 0.95, na.rm = TRUE)
-col_fun <- colorRamp2(seq(min(recbin$rate, na.rm = TRUE), rmax, length.out = length(zcols)), zcols)
-
-## per-cluster ld_w (local LD support -- measured, finer than the interpolated recmap) +
-## rolling cluster-identity colours, has_eMLG clusters only, drawn over each cluster's span.
-he  <- groups[has_eMLG == TRUE, group_id]
-clu <- cpos[group_id %in% he]; clu[, chr := chr_of[group_id]]
-clu <- clu[chr %in% chr_lv & is.finite(start) & is.finite(end) & is.finite(ldw)]
-clu[chr_len, on = c(chr = "Chr"), end := pmin(end, i.end)]
-ldw_fun <- colorRamp2(seq(0, quantile(clu$ldw, 0.98, na.rm = TRUE), length.out = length(zcols)), zcols)  # Zissou, high ld_w = red
+## ld_w as a scatter track in the style of supplementary Fig S4: per member marker of the
+## has_eMLG clusters, y = local LD support (ld_w), coloured by LD-cluster (rolling palette).
+he <- groups[has_eMLG == TRUE, group_id]
+md <- mk2[group_id %in% he & is.finite(Pos) & is.finite(ldw), .(group_id, chr = Chr, pos = Pos, ldw)]
+md <- md[chr %in% chr_lv]
 rollpal <- grDevices::hcl.colors(12, "Dark 3")
-setorder(clu, chr, pos); clu[, roll := rollpal[(seq_len(.N) - 1) %% length(rollpal) + 1]]
+cl_ord <- md[, .(chr = chr[1], mp = median(pos)), by = group_id][order(match(chr, chr_lv), mp)]
+cl_ord[, roll := rollpal[(seq_len(.N) - 1) %% length(rollpal) + 1]]
+md[cl_ord, on = "group_id", roll := i.roll]
+setorder(md, chr, pos)
 
 png("Figures/moduleD_trans_circos.png", width = 1700, height = 1700, res = 200)
 circos.clear(); circos.par(gap.degree = 1.4, start.degree = 90, cell.padding = c(0, 0, 0, 0))
 circos.genomicInitialize(chrdf, plotType = NULL)
-## clean chromosome-number labels (radial, non-overlapping), one per sector
-circos.track(ylim = c(0, 1), track.height = 0.05, bg.border = NA, panel.fun = function(x, y)
+## chromosome-number labels (radial, non-overlapping)
+circos.track(ylim = c(0, 1), track.height = 0.04, bg.border = NA, panel.fun = function(x, y)
   circos.text(CELL_META$xcenter, 0.3, gsub("Chr", "", CELL_META$sector.index),
               cex = 0.6, facing = "clockwise", niceFacing = TRUE))
-## recombination-rate colour band (interpolated map)
-circos.genomicTrack(recbin, ylim = c(0, 1), track.height = 0.07, bg.border = "grey85",
-  panel.fun = function(region, value, ...)
-    circos.genomicRect(region, value, ytop = 1, ybottom = 0, col = col_fun(value$rate), border = NA))
-## ld_w track: per-cluster local LD support (Zissou, high ld_w = red = strong local LD ~ low recomb)
-circos.genomicTrack(clu[order(ldw), .(chr, start, end, ldw)], ylim = c(0, 1), track.height = 0.07, bg.border = "grey85",
-  panel.fun = function(region, value, ...)
-    circos.genomicRect(region, value, ytop = 1, ybottom = 0, col = ldw_fun(value$ldw), border = NA))
-## LD-clusters coloured by identity (rolling palette) -- the finest, data-driven resolution
-circos.genomicTrack(clu[, .(chr, start, end, roll)], ylim = c(0, 1), track.height = 0.045, bg.border = "grey85",
-  panel.fun = function(region, value, ...)
-    circos.genomicRect(region, value, ytop = 1, ybottom = 0, col = value$roll, border = NA))
+## ld_w scatter track (per marker, coloured by LD-cluster) -- as supplementary Fig S4
+circos.genomicTrack(md[, .(chr, start = pos, end = pos, ldw, roll)], ylim = c(0, 1), track.height = 0.24, bg.border = "grey85",
+  panel.fun = function(region, value, ...) {
+    circos.genomicPoints(region, value, numeric.column = 1, col = value$roll, pch = 16, cex = 0.08)
+    if (CELL_META$sector.index == chr_lv[1])
+      circos.yaxis(side = "left", at = c(0, 0.5, 1), labels.cex = 0.4, tick.length = 0.3) })
 circos.genomicLink(b1, b2, col = lcol, lwd = 0.6)
-title("Genome-wide trans (orange) / cis (blue) associations; tracks (outer->in): recomb rate, ld_w, LD-clusters",
+title("Genome-wide trans (orange) / cis (blue) associations; track = ld_w per marker, coloured by LD-cluster",
       cex.main = 0.72, line = -0.5)
-## legends: recombination + ld_w colour bars (both Zissou) + link type
-ldwmax <- quantile(clu$ldw, 0.98, na.rm = TRUE); xb <- seq(-0.98, -0.66, length.out = 61)
-rect(xb[-61], -0.86, xb[-1], -0.83, col = col_fun(seq(0, rmax, length.out = 60)), border = NA)
-text(mean(range(xb)), -0.805, "recomb (cM/Mb)", cex = 0.55)
-text(-0.98, -0.845, "0", cex = 0.45, pos = 2); text(-0.66, -0.845, sprintf("%.0f", rmax), cex = 0.45, pos = 4)
-rect(xb[-61], -0.95, xb[-1], -0.92, col = ldw_fun(seq(0, ldwmax, length.out = 60)), border = NA)
-text(mean(range(xb)), -0.895, "ld_w (local LD)", cex = 0.55)
-text(-0.98, -0.935, "0", cex = 0.45, pos = 2); text(-0.66, -0.935, sprintf("%.2f", ldwmax), cex = 0.45, pos = 4)
 legend("bottomright", legend = c("trans", "cis"), col = c("#D55E00", "#0072B2"), lwd = 3, bty = "n", cex = 0.7)
 dev.off()
 cat("wrote Figures/moduleD_trans_network.png, Figures/moduleD_trans_circos.png\n")
