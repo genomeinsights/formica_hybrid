@@ -2,6 +2,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
@@ -115,9 +116,14 @@ has to absorb here is the ancestry-sorting axis, which is a \emph{selected} stru
 carried by those markers; a neutral basis (right for a demographic control such as the
 BayPass $\Omega$) dilutes that eigenvector and under-corrects, inflating $\lambda$ to
 $\sim\!1.2$ and leaking the ancestry gradient back as spurious positive associations.
-A first, targeted run scanned 51 focal loci (bidirectional candidates, extreme
-among-population-covariance loci, and controls); peaks were called at a Bonferroni
-genome-wide threshold, and each is signed (coupling vs repulsion) by its
+Finally, each focal trait is residualised on the top ten genome-wide PCs before the
+mixed model: $K$ cannot remove a \emph{secondary} structure axis that is concentrated
+on the very chromosomes double-LOCO drops, and such axes otherwise surface as hubs
+(Section~\ref{sec:transhubs}). Conditioning on the PCs strips the dominant, climate-aligned
+axes --- after it the random-focal control gives essentially no significant partner ---
+while calibration holds. A first, targeted run scanned 51 focal loci (bidirectional
+candidates, extreme among-population-covariance loci, and controls); peaks were called at
+a Bonferroni genome-wide threshold, and each is signed (coupling vs repulsion) by its
 structure-corrected GLS coefficient --- both cis and trans hits are recovered.
 
 \paragraph{Reading a Manhattan.} The self-peak at the focal locus and its local LD
@@ -355,21 +361,81 @@ within $10$~cM.}
 \label{fig:independence}
 \end{figure}
 
+\section{Following the trans signal: hubs, structure, and the pair-specific residue}
+\label{sec:transhubs}
+
+The confound-free part of the signal is the \emph{trans} associations
+(Section~\ref{sec:bidir}), so we followed the strongest of them to their source. Most
+do not come from isolated pairs. They come from \emph{hubs}: a single focal cluster
+that anti-sorts with many unlinked partners which, in turn, co-vary strongly with one
+another. The clearest is F33028 (Chr10), with 34 trans partners that correlate among
+themselves at mean $|r| = 0.66$ --- one coherent axis with F33028 at one pole and the
+partner module at the other, not thirty-four independent incompatibilities. Two
+properties place it: it is robust to leaving out any single population (so it is not a
+Karsikas / single-colony artifact), and it survives conditioning on the top genome PCs
+(so it is not one of the dominant, climate-aligned structure axes --- its loading on
+those is only $r\approx 0.27$). It is instead a \emph{specific, lower-variance}
+co-sorting module with a broad footprint (a ${\sim}5.5$~Mb Chr26 block in trans-LD with
+a Chr10 anchor), whose most parsimonious explanation is a large chromosomal
+rearrangement (an inversion or translocation polymorphism), not a point incompatibility.
+
+The genuine pair-specific candidates are therefore the trans edges whose \emph{both}
+endpoints have low connectivity. Of 78 clean trans pairs, 73 run through a hub. Scoring
+the remaining five on within-hybrid minor allele frequency and leverage
+(Table~\ref{tab:dmi}) removes the rest of the illusion: the strongest of them are
+\emph{near-fixed} loci, where the minor allele frequency is too low for real
+disequilibrium (the MAF--LD bound) and a handful of individuals manufacture the
+correlation --- one pair's $r=-0.44$ collapses to $-0.03$ when five individuals are
+dropped. Only two survive as robust, appreciable-frequency, leverage-stable
+pair-specific edges, and both are weak ($r\approx -0.25$). After every structure
+control the two-locus screen can apply, that is the entire pair-specific residue.
+
+\begin{table}[h]
+\centering
+\caption{Putative pair-specific (non-hub) trans-DMI pairs from the structure-conditioned
+scan, with per-cluster diagnostic index (DI), parental allele frequencies (the aqu-oriented
+allele's frequency in each parent species), within-hybrid minor allele frequency (MAF),
+the consensus correlation $r$, and its value after dropping the five most influential
+individuals. Values are given as (first cluster / second cluster). ``candidate'' = both
+loci appreciably polymorphic in the hybrids and $r$ leverage-stable; ``near-fixed'' =
+MAF too low for real LD; ``leverage'' = correlation not stable to individual removal.}
+\label{tab:dmi}
+\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccccrc}
+\toprule
+Pair & Chr & $n_{\mathrm{loci}}$ & DI & $p_{\mathrm{aqu}}$ & $p_{\mathrm{pol}}$ & MAF & $r$ ($r_{-5}$) & disposition \\
+\midrule
+F12448--F30042 & 3/9 & 6/5 & $-62/-26$ & 0.59/0.85 & 0.42/0.17 & 0.28/0.32 & $-0.26$ ($-0.27$) & candidate \\
+F67262--F38669 & 26/12 & 7/8 & $-29/-42$ & 1.00/0.81 & 0.65/0.46 & 0.40/0.17 & $-0.23$ ($-0.24$) & candidate \\
+F22685--F32802 & 6/9 & 5/9 & $-42/-15$ & 0.99/0.88 & 0.55/0.34 & 0.07/0.09 & $-0.70$ ($-0.55$) & near-fixed \\
+F26284--F58007 & 7/20 & 5/6 & $-52/-42$ & 0.30/1.00 & 0.00/0.64 & 0.05/0.09 & $-0.44$ ($+0.03$) & near-fixed \\
+F37861--F973 & 11/1 & 5/32 & $-95/-37$ & 0.50/0.75 & 0.12/0.47 & 0.21/0.18 & $-0.27$ ($-0.18$) & leverage \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Synthesis and what the simulation will settle}
 
-Three structure-corrected views now agree on the shape of the problem. The
-among-population screen showed the raw signal is the ancestry gradient. The mixed
-model, conditioning on genome-wide relatedness, is well calibrated and yields
-pair-specific candidates once its loudest signal --- cross-chromosome paralogy --- is
-filtered out. The bidirectional test, working in the sub-space orthogonal to the
-gradient, finds a real but modest and diffuse excess of co-sorting, with a
-confound-free trans component. None of this yet distinguishes weak selection from
-residual demographic structure, because all three controls (mixed-model $K$,
-bidirectional restriction, permutation) remove structure that is \emph{aligned} with
-what they condition on, while a recombination-matched neutral null is what calibrates
-the residual. The immediate next steps are therefore to bring in that null (Module E)
-and, within these analyses, to pull the strongest \emph{trans} pairs out of the
-diffuse background for individual scrutiny and to cross-check the bidirectional
-co-sorting against the mixed model.
+Three structure-corrected views now agree, and they agree on a largely negative
+result. The among-population screen showed the raw signal is the ancestry gradient.
+The bidirectional test, working orthogonally to that gradient, found only a modest and
+diffuse excess of co-sorting. And the mixed model, once its signal is followed to the
+end --- paralogy filtered, dominant structure conditioned out, hubs recognised as
+secondary co-sorting modules (candidate rearrangements) rather than incompatibilities,
+and the survivors screened for the frequency and leverage artifacts the MAF--LD bound
+invites --- leaves only two weak pair-specific trans edges. Each layer of control
+removed an apparent signal and exposed it as structure, assembly, or a handful of
+individuals; what remains is marginal.
+
+This is the expected place to be \emph{before} the null. Every control here removes
+structure that is \emph{aligned} with what it conditions on, and none of them can say
+whether the weak residue exceeds what neutral, recombination-matched drift would
+produce in twenty replicate populations of this size and sampling design. That is the
+one thing Module E is built to answer, and it is now the load-bearing next step: it
+turns ``a weak residual signal'' into ``an excess over neutral'', or not. Two smaller
+threads follow from the results above --- the hub axes (F33028 and kin) belong with the
+\emph{extrinsic} climate analysis, since the dominant ancestry axes track the climate
+PCs; and the handful of genuine pair-specific candidates in Table~\ref{tab:dmi} are few
+and weak enough to be examined one at a time once the null gives them a scale.
 
 \end{document}

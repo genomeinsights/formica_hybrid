@@ -49,8 +49,17 @@ nonhub <- tr[deg_focal <= MAX_DEG & deg_partner <= MAX_DEG]
 nonhub[, robust := maf_focal >= MIN_MAF & maf_partner >= MIN_MAF & abs(r_drop5) >= 0.7 * abs(r)]
 nonhub <- nonhub[order(-robust, r)]                                       # robust first, then most negative
 nonhub[, `:=`(Chr_focal = chr_of[focal], Chr_partner = chr_of[partner])]
-saveRDS(nonhub[, .(focal, Chr_focal, partner, Chr_partner, deg_focal, deg_partner, F, pval, r,
-                   maf_focal, maf_partner, r_drop5, robust)], "data/moduleD_nonhub_trans.rds")
+## per-cluster DI + parental allele frequencies (aqu-oriented allele freq in each parent),
+## for the summary table: DI = max across members (cl); parental freqs = mean over members.
+cl <- readRDS("data/moduleC_C3_cl.rds"); snp <- readRDS("data/moduleA_snp.rds")
+sm <- snp[groups[, .(marker = unlist(members)), by = group_id], on = "marker"]
+cs <- sm[!is.na(f_aqu_parent), .(faqu = mean(f_aqu_parent, na.rm = TRUE), fpol = mean(f_pol_parent, na.rm = TRUE)), by = group_id]
+DI <- setNames(cl$DI, cl$group_id); nl <- setNames(groups$n_loci, groups$group_id)
+faqu <- setNames(cs$faqu, cs$group_id); fpol <- setNames(cs$fpol, cs$group_id)
+nonhub[, `:=`(n_focal = nl[focal], n_partner = nl[partner], DI_focal = DI[focal], DI_partner = DI[partner],
+              faqu_focal = faqu[focal], fpol_focal = fpol[focal], faqu_partner = faqu[partner], fpol_partner = fpol[partner],
+              disposition = fifelse(robust, "candidate", fifelse(pmin(maf_focal, maf_partner) < MIN_MAF, "near-fixed", "leverage")))]
+saveRDS(nonhub, "data/moduleD_nonhub_trans.rds")
 message(sprintf("[nonhub] %d non-hub trans pairs of %d clean trans pairs; %d ROBUST (MAF>=%.2f both, leverage-stable)",
                 nrow(nonhub), nrow(tr), sum(nonhub$robust), MIN_MAF))
 print(nonhub[, .(focal, Chr_focal, partner, Chr_partner, deg = sprintf("%d/%d", deg_focal, deg_partner),
