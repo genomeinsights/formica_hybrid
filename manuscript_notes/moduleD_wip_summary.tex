@@ -293,6 +293,57 @@ Chr24 block (orange) is not special.}
 \label{fig:bidir}
 \end{figure}
 
+\section{Cluster independence: a by-product of the Manhattans}
+\label{sec:independence}
+
+The mixed-model Manhattans double as a direct test of whether the complexity
+reduction produced \emph{independent} units. If it did, a focal cluster should give
+a single local peak --- its self-association --- with flat neighbours; several
+significant peaks in the same region, as individual SNPs would give, would mean the
+local LD block had been split into clusters that remain correlated. Because the
+random effect is fitted leave-one-chromosome-out, the focal chromosome is not in its
+own $K$, so this local structure is seen honestly. We read it off the focal
+chromosome with the self-locus omitted (its self-$r^2\approx 1$ would compress the
+scale) and its position marked, plotting the relatedness-corrected $r^2$ of every
+other cluster (Fig.~\ref{fig:independence}).
+
+About half of the focal loci are locally clean --- a single self-position with no
+significant neighbour (Fig.~\ref{fig:independence}b). The remainder carry one to
+eight same-chromosome clusters that clear genome-wide significance within $\sim\!1$~cM
+of the focal (Fig.~\ref{fig:independence}a,c), but at \emph{moderate}
+relatedness-corrected $r^2$ --- at most $\approx 0.3$, never near one. The clustering
+has therefore broken each local block apart substantially (these neighbours are far
+from duplicates of the focal) without reducing it to a single unit, which is the
+expected outcome of a deliberate trade-off. Merging is bounded by two floors: a
+fidelity floor, beyond which the consensus stops faithfully summarising its members
+and the eMLG loses its meaning, and a pairwise-correlation floor below which pieces
+are already near-independent. Where merging stops --- most often against the fidelity
+floor, inside a large coherent block --- the residual correlation between the
+neighbouring clusters lands at $r^2\lesssim 0.3$. That ceiling is at least as strict
+as the fixed $r^2=0.2$ that conventional LD pruning imposes, and it is measured on a
+fairer scale: a relatedness-corrected correlation between consensus units that each
+summarise many markers, rather than a raw correlation between single SNPs. The
+residual is also purely local, so the one thing it could still distort --- counting a
+single co-sorting event several times because each side is represented by a few
+correlated clusters --- is removed for the long-range screens by the $10$~cM distance
+threshold, which is itself supported by the observed decay of among-population LD to
+the inter-chromosomal baseline. Bounded local dependence and long-range
+de-duplication are thus handled by two separate devices rather than either alone.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../Figures/moduleD_emmax_independence_summary.png}
+\caption{LD-cluster independence, read from the focal chromosome (self-locus omitted;
+dashed red line = its position; grey band = $\pm 10$~cM; dashed grey line = the
+Bonferroni threshold expressed in $r^2$; blue = significant within $10$~cM, orange =
+beyond). \textbf{(a)} A locus whose local block is split into several correlated
+clusters, all at $r^2\lesssim 0.35$ and all within $10$~cM. \textbf{(b)} A locally
+independent locus: a single self-position, no significant neighbour. \textbf{(c)}
+Across the focal loci, most have no or few significant same-chromosome neighbours
+within $10$~cM.}
+\label{fig:independence}
+\end{figure}
+
 \section{Synthesis and what the simulation will settle}
 
 Three structure-corrected views now agree on the shape of the problem. The
