@@ -31,6 +31,8 @@ source("dev/R/moduleD_paralogy.R")
 Q_FDR      <- 0.01   # global Benjamini-Hochberg threshold across all unlinked tests
 LINK_CM    <- 10     # same-chromosome merge window (matches the unlinked definition)
 MERGE_R    <- 0.5    # |consensus r| above which two within-window clusters are one region
+MERGE_METHOD <- "average"   # linkage for the third-level merge; "single" = old connected-components (chains)
+MODULE_R   <- 0.4    # cross-chromosome correlation MODULES: average-linkage cut at |consensus r| (display grouping)
 PARALOGY_R <- 0.9    # |within-pop r| duplicate threshold
 MIN_MAF    <- 0.05   # near-fixed floor: consensus MAF below this cannot carry real LD (Step 3a)
 LEV_LOO    <- 0.3    # leverage: keep an edge only if its among-pop |r| survives leave-one-pop-out (Step 3b)
@@ -86,17 +88,30 @@ cat(sprintf("[paralogy] dropped %d paralogous pairs (|within-pop r| > %.2f)\n", 
 d <- d[paralog == FALSE]
 nodes <- unique(c(d$focal, d$partner))
 
-## ---- (3) third-level merge: same chr, <= LINK_CM, |consensus r| > MERGE_R -
+## ---- (3) third-level merge: cluster within-chromosome nodes by |consensus r| ---
+## Connected components of the |r|>MERGE_R graph (the old default) is SINGLE linkage: a
+## chain A-B-C merges even when A and C are uncorrelated. Instead cluster each chromosome's
+## nodes hierarchically on distance 1-|r| with MERGE_METHOD linkage (default "complete",
+## which requires the whole merged group to be mutually correlated) and cut at 1-MERGE_R.
+## Pairs farther than LINK_CM cM apart are given an un-mergeable distance (1), so a merged
+## region is both correlated AND proximal, and cannot chain across a >LINK_CM gap.
 cr <- function(a, b) abs(cor(eMLG[, a], eMLG[, b], use = "pairwise.complete.obs"))
-mp <- CJ(a = nodes, b = nodes)[a < b][chr_of[a] == chr_of[b]]
-mp[, dcM := abs(cmv[a] - cmv[b])]; mp <- mp[dcM <= LINK_CM]; mp[, r := mapply(cr, a, b)]
-mg <- graph_from_data_frame(mp[r > MERGE_R, .(a, b)], directed = FALSE, vertices = data.frame(name = nodes))
-comp <- components(mg)$membership
+comp <- setNames(integer(length(nodes)), nodes); nid <- 0L
+for (ch in unique(chr_of[nodes])) {
+  nc <- nodes[chr_of[nodes] == ch]
+  if (length(nc) == 1L) { nid <- nid + 1L; comp[nc] <- nid; next }
+  D <- matrix(10, length(nc), length(nc), dimnames = list(nc, nc))   # 10 = un-mergeable (>LINK_CM)
+  for (i in seq_len(length(nc) - 1L)) for (j in (i + 1L):length(nc))
+    D[i, j] <- D[j, i] <- if (abs(cmv[nc[i]] - cmv[nc[j]]) <= LINK_CM) 1 - cr(nc[i], nc[j]) else 10
+  diag(D) <- 0
+  ct <- cutree(hclust(as.dist(D), method = MERGE_METHOD), h = 1 - MERGE_R)
+  comp[nc] <- nid + ct; nid <- nid + max(ct)
+}
 odeg <- table(c(d$focal, d$partner))                       # pre-merge degree -> pick representative
 rep_of <- tapply(names(comp), comp, function(mem) mem[order(-as.integer(odeg[mem]), cmv[mem])][1])
 meta_of <- setNames(rep_of[as.character(comp)], names(comp))
-cat(sprintf("[merge] %d nodes -> %d meta-nodes (%d clusters absorbed into %d multi-cluster meta-nodes)\n",
-            length(nodes), length(unique(meta_of)),
+cat(sprintf("[merge:%s] %d nodes -> %d meta-nodes (%d clusters absorbed into %d multi-cluster meta-nodes)\n",
+            MERGE_METHOD, length(nodes), length(unique(meta_of)),
             length(nodes) - length(unique(meta_of)), sum(tabulate(comp) > 1)))
 
 ## ---- collapse edges onto meta-nodes --------------------------------------
@@ -142,12 +157,23 @@ meta_nodes <- rbindlist(lapply(names(memb_of), function(rep) {
              MAF = min(sapply(ids, maf_of)), rec_pct = min(sapply(ids, rec_pct))) }))
 meta_nodes[, structure := rec_pct < STRUCT_PCT]              # (3c) low-recomb structure LABEL (kept)
 meta_nodes <- meta_nodes[meta %in% c(meta_edges$ma, meta_edges$mb)]   # keep connected meta-nodes only
+## cross-chromosome correlation MODULES: average-linkage clustering of the meta-node
+## consensuses (across chromosomes), cut at |r| > MODULE_R. Unlike the within-chromosome
+## merge, this groups co-varying regions genome-wide, so each module is one coherent
+## co-ancestry block (used to give a single-module heatmap and within-module circos links).
+mcons <- sapply(meta_nodes$meta, function(mt) {
+  ids <- strsplit(meta_nodes[meta == mt, members], ";")[[1]]; rowMeans(eMLG[, ids, drop = FALSE], na.rm = TRUE) })
+mcons <- apply(mcons, 2, function(v) { v[!is.finite(v)] <- mean(v, na.rm = TRUE); v })
+hm <- hclust(as.dist(1 - abs(cor(mcons))), method = "average")
+meta_nodes[, module := cutree(hm, h = 1 - MODULE_R)[meta]]
 setorder(meta_nodes, -degree)
+cat(sprintf("[modules] %d cross-chromosome modules at |r|>%.2f (largest %d meta-nodes)\n",
+            uniqueN(meta_nodes$module), MODULE_R, max(table(meta_nodes$module))))
 
 saveRDS(list(meta_nodes = meta_nodes, meta_edges = meta_edges,
-             params = list(Q_FDR = Q_FDR, LINK_CM = LINK_CM, MERGE_R = MERGE_R, PARALOGY_R = PARALOGY_R,
-                           MIN_MAF = MIN_MAF, LEV_LOO = LEV_LOO, STRUCT_PCT = STRUCT_PCT,
-                           m_tests = m_tests, clustering = CLUSTERING)),
+             params = list(Q_FDR = Q_FDR, LINK_CM = LINK_CM, MERGE_R = MERGE_R, MERGE_METHOD = MERGE_METHOD,
+                           MODULE_R = MODULE_R, PARALOGY_R = PARALOGY_R, MIN_MAF = MIN_MAF, LEV_LOO = LEV_LOO,
+                           STRUCT_PCT = STRUCT_PCT, m_tests = m_tests, clustering = CLUSTERING)),
         "data/moduleD_network.rds")
 cat(sprintf("[out] %d meta-edges over %d meta-nodes (trans %d / cis %d); %d hubs (deg>=10); %d structure-labelled\n",
             nrow(meta_edges), nrow(meta_nodes), meta_edges[coupling=="trans",.N],

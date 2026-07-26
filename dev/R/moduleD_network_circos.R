@@ -83,15 +83,19 @@ widen <- function(bed, min_span) { bed <- as.data.frame(bed); if (min_span <= 0)
   s <- which((bed$end - bed$start) < min_span); mid <- (bed$start[s] + bed$end[s]) / 2
   bed$start[s] <- pmax(0, mid - min_span / 2); bed$end[s] <- mid + min_span / 2; bed }
 
-draw_circos <- function(esub, file, subtitle, hub_beds = NULL, flat_alpha = FALSE, min_span = 0) {
+draw_circos <- function(esub, file, subtitle, hub_beds = NULL, flat_alpha = FALSE, min_span = 0,
+                        edge_col = NULL, node_col = NULL) {
   esub <- copy(esub); d2 <- table(c(esub$ma, esub$mb))
   wv <- pmax(d2[esub$ma], d2[esub$mb]); mx <- max(wv)
   alpha <- if (flat_alpha) rep(1, nrow(esub)) else pmin(0.95, pmax(0.18, 0.18 + 0.77 * (wv - 1) / max(1, mx - 1)))
   esub[, col := paste0(ifelse(coupling == "trans", "#D55E00", "#0072B2"),
                        sprintf("%02X", as.integer(round(255 * alpha))))]
+  if (!is.null(edge_col)) esub[, col := edge_col]            # override cis/trans colour (e.g. by module)
   bA <- widen(sp[esub, on = c(meta = "ma")][, .(chr, start, end)], min_span)
   bB <- widen(sp[esub, on = c(meta = "mb")][, .(chr, start, end)], min_span)
-  nsub <- sp[meta %in% unique(c(esub$ma, esub$mb))][chr %in% chr_lv, .(chr, start, end, col = ifelse(structure, "#BBBBBB", "#E69F00"))]
+  ns <- sp[meta %in% unique(c(esub$ma, esub$mb)) & chr %in% chr_lv]
+  nsub <- data.table(chr = ns$chr, start = ns$start, end = ns$end,
+    col = if (!is.null(node_col)) node_col[ns$meta] else ifelse(ns$structure, "#BBBBBB", "#E69F00"))
   png(file, width = 1700, height = 1700, res = 200)
   circos.clear(); circos.par(gap.degree = 1.4, start.degree = 90, cell.padding = c(0, 0, 0, 0))
   circos.genomicInitialize(chrdf, plotType = NULL)
@@ -108,9 +112,13 @@ draw_circos <- function(esub, file, subtitle, hub_beds = NULL, flat_alpha = FALS
   circos.genomicLink(bA[ordv, ], bB[ordv, ], col = esub$col[ordv], border = NA)
   if (!is.null(hub_beds)) circos.genomicLink(hub_beds$a, hub_beds$b, col = "black", lwd = 2.4, border = NA)
   title(subtitle, cex.main = 0.64, line = -0.6)
-  legend("bottomright", legend = c("trans", "cis", if (!is.null(hub_beds)) "heatmap hub"),
-         col = c("#D55E00", "#0072B2", if (!is.null(hub_beds)) "black"), lwd = c(3, 3, if (!is.null(hub_beds)) 2.4), bty = "n", cex = 0.7)
-  legend("topleft", legend = c("structure (low-recomb)", "candidate"), fill = c("#BBBBBB", "#E69F00"), border = NA, bty = "n", cex = 0.7, title = "meta-node")
+  if (is.null(edge_col)) {                                   # cis/trans + structure/candidate legends
+    legend("bottomright", legend = c("trans", "cis", if (!is.null(hub_beds)) "heatmap hub"),
+           col = c("#D55E00", "#0072B2", if (!is.null(hub_beds)) "black"), lwd = c(3, 3, if (!is.null(hub_beds)) 2.4), bty = "n", cex = 0.7)
+    legend("topleft", legend = c("structure (low-recomb)", "candidate"), fill = c("#BBBBBB", "#E69F00"), border = NA, bty = "n", cex = 0.7, title = "meta-node")
+  } else {
+    legend("bottomright", legend = "within-module link (colour = module)", col = "grey40", lwd = 3, bty = "n", cex = 0.7)
+  }
   legend("bottomleft", legend = c("aquilonia", "polyctena", "bidirectional", "unsorted"), title = "sorting",
          fill = sortcol[c("aquilonia","polyctena","bidirectional","unsorted")], border = NA, bty = "n", cex = 0.7)
   dev.off()
@@ -125,4 +133,17 @@ draw_circos(me[a_str == FALSE & b_str == FALSE], "Figures/moduleD_candidate_circ
   flat_alpha = TRUE, min_span = 3e6)
 draw_circos(me[a_str == TRUE & b_str == TRUE], "Figures/moduleD_structure_circos.png",
   "Module D structure / co-ancestry module: low-recomb admixture-block association bands", hub_beds)
-cat("wrote network + 3 circos (combined, candidate, structure)\n")
+
+## within-module circos: only links whose two meta-nodes are in the SAME correlation module,
+## coloured by module (so each co-ancestry module reads as its own coherent block of links)
+mod_of <- setNames(mn$module, mn$meta); me[, `:=`(moda = mod_of[ma], modb = mod_of[mb])]
+wm <- me[moda == modb]
+modpal <- grDevices::hcl.colors(12, "Dark 3"); mods_u <- sort(unique(wm$moda))
+modcol <- setNames(modpal[(seq_along(mods_u) - 1) %% length(modpal) + 1], mods_u)
+node_modcol <- setNames(modcol[as.character(mn$module)], mn$meta)
+draw_circos(wm, "Figures/moduleD_module_circos.png",
+  sprintf("Module D within-module links only (|r|>%.1f modules): %d of %d links; node & link colour = module",
+          N$params$MODULE_R, nrow(wm), nrow(me)),
+  flat_alpha = TRUE, min_span = 2e6,
+  edge_col = paste0(modcol[as.character(wm$moda)], "CC"), node_col = node_modcol)
+cat(sprintf("wrote network + 4 circos (combined, candidate, structure, within-module: %d/%d links)\n", nrow(wm), nrow(me)))

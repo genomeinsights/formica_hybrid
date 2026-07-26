@@ -452,21 +452,24 @@ $q<0.01$ (which reproduces the earlier count, ${\sim}276$ pairs, but as one
 whole-experiment error rate rather than $51$ independent ones). We then (i) removed
 cross-locus paralogues ($|r_{\mathrm{within}}|>0.9$; $-29$ pairs); (ii) applied a
 \emph{third-level merge} --- for this network only, not the canonical clustering ---
-collapsing same-chromosome clusters within $10$~cM that remain correlated at $|r|>0.5$
-into a single meta-node, so that one low-recombination region stops masquerading as a
-swarm of interacting loci (the worst case, a $16$-cluster block on Chr26, becomes one
-node; $156\to121$ meta-nodes); and (iii) dropped edges whose among-population
+grouping same-chromosome clusters within $10$~cM by \emph{average-linkage} clustering of
+their consensus correlation (cut at $|r|>0.5$), so that one low-recombination region stops
+masquerading as a swarm of interacting loci. Average linkage requires the whole merged
+group to be mutually correlated; connected components (the naive choice) is single linkage
+and chains uncorrelated ends together, so a $16$-cluster block on Chr26 that single linkage
+swallows whole instead resolves into a few mutually-correlated sub-blocks
+($156\to127$ meta-nodes). We then (iii) dropped edges whose among-population
 allele-frequency correlation does not survive leave-one-population-out
 ($|r|_{\mathrm{LOO}}<0.3$; $-50$ edges), which by itself dissolved a spurious degree-$19$
 hub on Chr4 built from a single deme --- exactly the near-fixed / leverage artifact the
 MAF--LD bound predicts. Low-recombination meta-nodes (recombination percentile $<0.1$)
-were \emph{labelled} ``structure'' rather than removed. What remains is $100$ meta-edges
-over $77$ meta-nodes ($17$ trans, $83$ cis; Fig.~\ref{fig:metanet}).
+were \emph{labelled} ``structure'' rather than removed. What remains is $110$ meta-edges
+over $83$ meta-nodes ($18$ trans, $92$ cis; Fig.~\ref{fig:metanet}).
 
 The network splits cleanly into two kinds of object. The dominant one is a single grey
 \emph{structure} complex --- the low-recombination hubs of Section~\ref{sec:transhubs}
 (the merged F33028/F33095 anchor and F27700, plus F57361) wired almost entirely to one
-another: $58$ of the $100$ edges are structure--structure. A PCA over the $87$ loci of
+another: $66$ of the $110$ edges are structure--structure. A PCA over the $87$ loci of
 this module (Fig.~\ref{fig:structpca}) shows what it is \emph{not}. These loci separate
 individuals by population \emph{less} than a random draw of differentiated loci (mean
 per-locus among-population $R^{2}=0.43$, against $0.54$ for random differentiated and
@@ -478,6 +481,34 @@ individuals and, in low-recombination regions, not yet broken up --- carried wit
 populations. This is the conclusion of Section~\ref{sec:transhubs} reached again, now
 from the genotypes rather than the recombination map, and it is why these hubs persist
 through PC-conditioning.
+
+That the structure ``module'' is not one block but several is confirmed directly. An
+average-linkage clustering of the meta-node consensuses \emph{across} chromosomes (cut at
+$|r|>0.4$; distinct from the within-chromosome merge, which only collapses redundant
+neighbours) resolves the network into $23$ co-ancestry modules, of which a handful are
+substantial: a dominant module of $16$ meta-nodes spanning $12$ chromosomes, and secondary
+modules of $14$, $9$ and $7$ meta-nodes. Plotted one module at a time
+(Fig.~\ref{fig:modhm}), each is a single coherent block --- across all its SNPs on six or
+more chromosomes the individuals take one of the three dosages \emph{together}, exactly as
+a co-inherited admixture haplotype block should, and unrelated to the other modules the
+all-structure view had mixed in. Drawing only the within-module links on the circos (79 of
+the 110 edges) makes the same point genome-wide: the co-ancestry resolves into a few
+disjoint colour-coded bundles, not one hairball. The candidate F33454 aquilonia module
+below falls out as its own module here too.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\textwidth]{../Figures/moduleD_module_13_heatmap.png}
+\caption{One cross-chromosome co-ancestry module ($9$ clusters / $7$ meta-nodes across
+Chr8/10/11/13/15/21), as a genotype heatmap of its member SNPs (columns ward.D2-clustered;
+colour bars: cluster, meta-node, sorting, DI; rows = individuals along the module's
+co-ancestry PC1). The module behaves as a \emph{single} co-inherited haplotype block: an
+individual is homozygous-reference (blue), heterozygous (pale), or homozygous-alternate
+(red) consistently across all $2926$ SNPs on all six chromosomes, and the three groups do
+not coincide with populations --- individual-level admixture-block co-ancestry, not
+geographic structure or a pairwise incompatibility.}
+\label{fig:modhm}
+\end{figure}
 
 The gold \emph{candidate} nodes are the residue of interest, and they are not merely
 isolated pairs. Thirteen edges have both endpoints outside the structure module
