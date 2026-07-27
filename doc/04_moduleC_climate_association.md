@@ -183,6 +183,16 @@ sorting against the recombination-matched neutral null (Module E) remain the dec
 next steps; the intrinsic alternative is pursued separately through among-population LD
 between unlinked diagnostic clusters (Module D).
 
+**The DI-enrichment does not survive a dependence-aware confidence interval.** The 878
+clusters lie on only 27 chromosomes and the enrichment is spatially clumped, so the
+model-based interval — which treats the clusters as independent — overstates its
+precision. Under the shared block bootstrap ([doc 05](05_sensitivity_block_bootstrap.md)),
+the enrichment coefficient widens ~5× and **includes 0 on both axes** (PC1 chromosome-block
+95% [−4.0, 13.1]; PC2 [−0.7, 17.8]), with strongly right-skewed tails carried by a few
+blocks. The static enrichment above should therefore be read as *weak and spatially
+concentrated at most*: the one positive climate signal in these data does not clearly
+separate from 0 once among-cluster dependence is respected.
+
 > **A methodological note worth carrying forward:** never binarise on a size-gated
 > count. The eligibility of a "≥ N significant members" rule scales with cluster size
 > in a hard, non-linear way that no size covariate can undo. Use a rate
@@ -191,6 +201,7 @@ between unlinked diagnostic clusters (Module D).
 
 ---
 
-*This completes the descriptive arc (Stage 0 → A → B → C). The neutral null (Module E)
-and the intrinsic-DMI screen (Module D) are separate workstreams — see the
-[index](README.md#the-scientific-question).*
+*Next: [Sensitivity — block bootstrap of the main coefficients](05_sensitivity_block_bootstrap.md),
+which qualifies the precision of the A/B/C effects (and is where the caveat above is
+quantified). The neutral null (Module E) and the intrinsic-DMI screen (Module D) are
+separate workstreams — see the [index](README.md#the-scientific-question).*

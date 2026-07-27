@@ -30,7 +30,7 @@ urlcolor: RoyalBlue
 YAML
 
 # --- body: each source file, with figures embedded after their caption line ---
-for f in README.md 01_*.md 02_*.md 03_*.md 04_*.md; do
+for f in README.md 01_*.md 02_*.md 03_*.md 04_*.md 05_*.md; do
   awk '{
     print
     # match only concrete single-file paths: excludes {..} grids and Chr*.. shorthands

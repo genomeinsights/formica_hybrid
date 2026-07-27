@@ -232,6 +232,12 @@ pursued separately — **intrinsic** incompatibilities via among-population LD b
 unlinked diagnostic units (Module D), and **extrinsic**, climate-driven selection via
 overlap with genotype–environment outliers (Module C).
 
+The governing DI → direction effect is **robust to a dependence-aware confidence
+interval**: under the shared block bootstrap ([doc 05](05_sensitivity_block_bootstrap.md)),
+the unit-level DI coefficient (+1.46 per SD) has a chromosome-block 95% interval of
+[1.41, 1.52] — far from 0 despite a 2–4× widening — so the diagnosticity axis is not an
+artifact of the large marker count.
+
 ---
 
 *Next: [Module B — genomic architecture](03_moduleB_genomic_architecture.md).*

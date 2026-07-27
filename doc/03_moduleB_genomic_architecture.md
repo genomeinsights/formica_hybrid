@@ -155,6 +155,13 @@ extrinsic drivers are then discriminated, respectively, by among-population LD b
 unlinked diagnostic units (Module D) and by overlap with climate genotype–environment
 outliers (Module C, next).
 
+Both recombination effects are **robust to a dependence-aware confidence interval**: under
+the shared block bootstrap ([doc 05](05_sensitivity_block_bootstrap.md)) the magnitude
+slope (+0.052) and — notably — the weak direction lead (−0.091) both still exclude 0
+(chromosome-block 95% [0.046, 0.057] and [−0.145, −0.037]). So the low-recombination
+→ *aquilonia* lead is real in the data, not a large-*N* precision artifact (still
+descriptive pending the Module E null).
+
 ---
 
 *Next: [Module C — association with climate](04_moduleC_climate_association.md).*
