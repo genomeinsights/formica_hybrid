@@ -3,8 +3,8 @@
 ## BayPass PC1/PC2 climate-association outliers?
 ## =========================================================
 ## The extrinsic-side test of the headline question. Companion scripts:
-##   C1  R/analyse_baypass.R              -- outlier definition + Manhattans
-##   C2  R/diagnostic_index_enrichment.R  -- DI-enrichment of outlier clusters
+##   C1  R/moduleC_analyse_baypass.R              -- outlier definition + Manhattans
+##   C2  R/moduleC_diagnostic_index_enrichment.R  -- DI-enrichment of outlier clusters
 ##   this file (C3)                       -- sorting x outlier overlap
 ##   C4  (later)                          -- PC1/PC2 axis identity + reconciliation
 ##                                           (needs the climate-variable loadings)
@@ -42,7 +42,7 @@ DI_AGG <- "max"; CORES <- 8
 ## the chance of >=5 members crossing grows with cluster size and is amplified by
 ## within-cluster LD -- and cluster size independently predicts DI, so they can ADD
 ## spurious enrichment rather than merely dilute it. Read the SIZE-ADJUSTED
-## estimates, not the naive ones. MUST match R/diagnostic_index_enrichment.R (C2),
+## estimates, not the naive ones. MUST match R/moduleC_diagnostic_index_enrichment.R (C2),
 ## or Fig 3a and 3b describe different outlier sets.
 SIG_THR <- 15; MIN_N_SIG <- 5
 TAG <- sprintf("%d_%d", MIN_N_SIG, SIG_THR)   # output suffix so both settings coexist

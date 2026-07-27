@@ -1,18 +1,18 @@
 # Build BayPass input files for the Sielva-excluded comparison analyses --
 # Sielva is a very young population with unusually high heterozygosity
 # genome-wide, a similar potential confound to Aland (see
-# R/prepare_aland_excluded.R). Writes TWO configurations, both repeating
+# R/moduleC_prepare_aland_excluded.R). Writes TWO configurations, both repeating
 # the existing with_aland/ vs. aland_excluded/ comparison but with Sielva
 # also excluded from each side:
 #   - ./sielva_excluded/       -- Sielva out, Aland IN  (parallel to with_aland/)
 #   - ./aland_sielva_excluded/ -- Sielva out, Aland OUT (parallel to aland_excluded/)
 #
-# See write_baypass_inputs.R for the shared logic (including the
+# See moduleC_write_baypass_inputs.R for the shared logic (including the
 # poolsize-ordering fix). Uses the SAME pruned marker set
 # (./data/pruned_markers.rds) as with_aland/ and aland_excluded/ so all
 # four population-exclusion configurations stay directly comparable.
 
-source("./R/write_baypass_inputs.R")
+source("./R/moduleC_write_baypass_inputs.R")
 
 load("./data/hybrids_only_maf005.Rdata")
 pruned_markers <- readRDS("./data/pruned_markers.rds")

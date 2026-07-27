@@ -1,9 +1,9 @@
 # Build BayPass input files for the Aland-excluded comparison analysis.
-# See write_baypass_inputs.R for the shared logic (including the
-# poolsize-ordering fix) and R/prepare_with_aland.R for the full-dataset
+# See moduleC_write_baypass_inputs.R for the shared logic (including the
+# poolsize-ordering fix) and R/moduleC_prepare_with_aland.R for the full-dataset
 # counterpart used for comparison.
 
-source("./R/write_baypass_inputs.R")
+source("./R/moduleC_write_baypass_inputs.R")
 
 load("./data/hybrids_only_maf005.Rdata")
 pruned_markers <- readRDS("./data/pruned_markers.rds")

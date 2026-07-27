@@ -233,7 +233,7 @@ build_sorted_eMLG <- function(groups, eMLG, GTs_hybrids, markers, cores = 1,
 
 
 ## ---------------------------------------------------------
-## Example usage (not run) -- see dev/R/moduleA_sorting_phenomenon.R for the
+## Example usage (not run) -- see R/moduleA_sorting_phenomenon.R for the
 ## full A1/A2/A3 runner; this is the essence.
 ## ---------------------------------------------------------
 if (FALSE) {

@@ -5,7 +5,7 @@ library(ggplot2)
 # DiagnosticIndex enrichment in BayPass outlier association regions
 # ------------------------------------------------------------
 # Checks whether the "outlier" LD clusters identified from BayPass PC1/PC2
-# association results (see R/analyse_baypass.R: clusters with >=10
+# association results (see R/moduleC_analyse_baypass.R: clusters with >=10
 # individually significant, BF(dB)>=20, member loci) are enriched for
 # high-DiagnosticIndex loci relative to the rest of the (eMLG-filtered)
 # genome.

@@ -6,8 +6,8 @@ library(ggplot2)
 # ------------------------------------------------------------
 # Moved out of ld_pruning_DIEM.R (formerly baypass.R), which is now scoped
 # to LD-pruning/eMLG generation only. Input-file generation for BayPass
-# itself lives in write_baypass_inputs.R / prepare_with_aland.R /
-# prepare_aland_excluded.R; the actual BayPass runs happen via
+# itself lives in moduleC_write_baypass_inputs.R / moduleC_prepare_with_aland.R /
+# moduleC_prepare_aland_excluded.R; the actual BayPass runs happen via
 # with_aland/run_baypass.sh and aland_excluded/run_baypass.sh, each
 # producing PC1_DIEM_noOmega_*, PC2_DIEM_noOmega_*, PC1_DIEM_withOmega_*,
 # PC2_DIEM_withOmega_* summary files. This file analyses whichever of

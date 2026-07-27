@@ -40,40 +40,40 @@ Everything downstream reads these. `data/` is git-ignored (large, regenerable).
 
 ## Module A — sorting phenomenon
 
-**`dev/R/moduleA_sorting_phenomenon.R`** - reads: `hybrids_and_parents_maf005.Rdata`, `hybrids_only_maf005.Rdata`, `eMLG_5loci_0025_cM05.rds`; sources `dev/R/{Ohta,parallelism_stats,eMLG_parallelism}.R` - writes: `data/moduleA_snp.rds`, `data/moduleA_clusters.rds`, `data/moduleA_dilution.rds`, `data/eMLG_sorted_cM05.rds` - per-SNP and cluster-level parallelism; gate = pooled-parental MAF ≥ 0.15.
+**`R/moduleA_sorting_phenomenon.R`** - reads: `hybrids_and_parents_maf005.Rdata`, `hybrids_only_maf005.Rdata`, `eMLG_5loci_0025_cM05.rds`; sources `dev/R/{Ohta,parallelism_stats,eMLG_parallelism}.R` - writes: `data/moduleA_snp.rds`, `data/moduleA_clusters.rds`, `data/moduleA_dilution.rds`, `data/eMLG_sorted_cM05.rds` - per-SNP and cluster-level parallelism; gate = pooled-parental MAF ≥ 0.15.
 
-**`dev/R/moduleA_di_asymmetry.R`** - reads: `data/moduleA_snp.rds`, `data/moduleA_clusters.rds` - writes: `data/moduleA_di_asymmetry.rds`, `Figures/moduleA_fig1.{pdf,png}` - DI-governs-direction and cluster-size analyses.
+**`R/moduleA_di_asymmetry.R`** - reads: `data/moduleA_snp.rds`, `data/moduleA_clusters.rds` - writes: `data/moduleA_di_asymmetry.rds`, `Figures/moduleA_fig1.{pdf,png}` - DI-governs-direction and cluster-size analyses.
 
 ## Module B — genomic architecture
 
-**`dev/R/moduleB_architecture.R`** - reads: `hybrids_and_parents_maf005.Rdata`, `hybrids_only_maf005.Rdata`, `eMLG_5loci_0025_cM05.rds`, recmap; sources `Ohta`, `parallelism_stats` - writes: `data/moduleB_architecture.rds`, `Figures/moduleB_fig2.{pdf,png}` - DI vs recombination / π / d_xy / F_ST; sorting vs recombination; direction × architecture.
+**`R/moduleB_architecture.R`** - reads: `hybrids_and_parents_maf005.Rdata`, `hybrids_only_maf005.Rdata`, `eMLG_5loci_0025_cM05.rds`, recmap; sources `Ohta`, `parallelism_stats` - writes: `data/moduleB_architecture.rds`, `Figures/moduleB_fig2.{pdf,png}` - DI vs recombination / π / d_xy / F_ST; sorting vs recombination; direction × architecture.
 
-**`dev/R/moduleB_eMLG_vs_rep.R`** (validation) - reads: `moduleA_clusters.rds`, `moduleA_snp.rds`, `eMLG_5loci_0025_cM05.rds`, `eMLG_sorted_cM05.rds`, `hybrids_only_maf005.Rdata` - writes: `data/moduleB_eMLG_vs_rep.rds`, `Figures/eMLG_vs_rep_cor.png` - eMLG consensus vs representative SNP: direction robust to unit choice; consensus needed for magnitude/LD.
+**`R/moduleB_eMLG_vs_rep.R`** (validation) - reads: `moduleA_clusters.rds`, `moduleA_snp.rds`, `eMLG_5loci_0025_cM05.rds`, `eMLG_sorted_cM05.rds`, `hybrids_only_maf005.Rdata` - writes: `data/moduleB_eMLG_vs_rep.rds`, `Figures/eMLG_vs_rep_cor.png` - eMLG consensus vs representative SNP: direction robust to unit choice; consensus needed for magnitude/LD.
 
 ## Module C — climate association
 
-BayPass inputs and runs are upstream (HPC): `R/prepare_{with_aland,aland_excluded,sielva_excluded}.R` → `R/write_baypass_inputs.R` → `<set>/run_baypass.sh` → `<set>/*_summary_betai_reg.out`. Covariates PC1/PC2 are per-population climate axes.
+BayPass inputs and runs are upstream (HPC): `R/moduleC_prepare_{with_aland,aland_excluded,sielva_excluded}.R` → `R/moduleC_write_baypass_inputs.R` → `<set>/run_baypass.sh` → `<set>/*_summary_betai_reg.out`. Covariates PC1/PC2 are per-population climate axes.
 
-**`R/analyse_baypass.R`** — reads clustering + BayPass `.out` → `Figures/manhattan_*.png` (outlier definition + Manhattans).
+**`R/moduleC_analyse_baypass.R`** — reads clustering + BayPass `.out` → `Figures/manhattan_*.png` (outlier definition + Manhattans).
 
-**`R/diagnostic_index_enrichment.R`** — reads clustering, `hybrids_only`, BayPass `.out` → `data/diagnostic_index_enrichment<tag>.csv`, `Figures/diagnostic_index_enrichment_{forest,proportions}*.png` (DI-enrichment of outlier clusters).
+**`R/moduleC_diagnostic_index_enrichment.R`** — reads clustering, `hybrids_only`, BayPass `.out` → `data/diagnostic_index_enrichment<tag>.csv`, `Figures/diagnostic_index_enrichment_{forest,proportions}*.png` (DI-enrichment of outlier clusters).
 
-**`dev/R/moduleC_ancestry_confound.R`** — reads `hybrids_and_parents` → `data/moduleC_ancestry_confound.rds`, `Figures/moduleC_ancestry_confound.{pdf,png}` (PC↔ancestry confound; motivates Ω + Åland-excluded controls).
+**`R/moduleC_ancestry_confound.R`** — reads `hybrids_and_parents` → `data/moduleC_ancestry_confound.rds`, `Figures/moduleC_ancestry_confound.{pdf,png}` (PC↔ancestry confound; motivates Ω + Åland-excluded controls).
 
-**`dev/R/moduleC_sorting_climate.R`** — reads `hybrids_and_parents`, `hybrids_only`, clustering, `moduleA_snp.rds`, BayPass `.out`; sources shared stats → `data/moduleC_C3_cl.rds` (**consensus checkpoint, reused across threshold settings**), `data/moduleC_sorting_climate_<tag>.rds`, `Figures/moduleC_fig3_<tag>.{pdf,png}` (sorting × outlier overlap; threshold/binary version).
+**`R/moduleC_sorting_climate.R`** — reads `hybrids_and_parents`, `hybrids_only`, clustering, `moduleA_snp.rds`, BayPass `.out`; sources shared stats → `data/moduleC_C3_cl.rds` (**consensus checkpoint, reused across threshold settings**), `data/moduleC_sorting_climate_<tag>.rds`, `Figures/moduleC_fig3_<tag>.{pdf,png}` (sorting × outlier overlap; threshold/binary version).
 
-**`dev/R/moduleC_rate_based.R`** (**primary Module C analysis**) — reads `data/moduleC_C3_cl.rds`, clustering, `hybrids_and_parents`, BayPass `.out`, `data/diagnostic_index_enrichment<tag>.csv` → `data/moduleC_rate_based_<tag>.rds`, `Figures/moduleC_dose_response_<tag>.{pdf,png}` — size-normalised, cluster-level enrichment (replaces the size-gated outlier count).
+**`R/moduleC_rate_based.R`** (**primary Module C analysis**) — reads `data/moduleC_C3_cl.rds`, clustering, `hybrids_and_parents`, BayPass `.out`, `data/diagnostic_index_enrichment<tag>.csv` → `data/moduleC_rate_based_<tag>.rds`, `Figures/moduleC_dose_response_<tag>.{pdf,png}` — size-normalised, cluster-level enrichment (replaces the size-gated outlier count).
 
 ## Module D — intrinsic (DMI) arm
 
-**`dev/R/moduleD_ohta_dmi.R`** — reads `eMLG_5loci_0025_cM05.rds`, `hybrids_only_maf005.Rdata` (`sample_data`), `moduleC_C3_cl.rds` (differentiated / DI gate); sources `dev/R/Ohta.R` — writes `data/moduleD_ohta.rds`, `Figures/moduleD_fig4.{pdf,png}` — among-population two-locus Ohta LD on **unlinked** eMLG-cluster pairs (the intrinsic test: correlated among-replicate ancestry sorting = candidate DMIs, vs the generic per-locus sorting of A/B). *Unlinked* is defined on the genetic map — different chromosome, or same chromosome > 10 cM (≈99% admixture-LD decay in ~50 generations; validated empirically by the LD-vs-cM decay to the inter-chromosomal baseline). Scope = all *differentiated* clusters (parent MAF ≥ 0.15) with a cheap among-population frequency-correlation (`R_st`) pre-filter; exact Ohta decomposition only on the `|R_st| ≥ 0.7` unlinked tail. Primary statistic = the among-population component `R_st` / `D2st`. **Descriptive**: unlinked ≈ linked (`D2st` ≫ `D2is`, `Dp2st` ≈ 0 ⇒ correlated allele-frequency divergence / shared ancestry axis, not systematic epistasis), so candidate DMIs are defined downstream as pairs whose among-population LD *exceeds* Module E's null. The reusable `moduleD_pop_freq_matrix()` / `moduleD_prefilter()` / `moduleD_scan()` functions let E run the identical pre-filter + scan on simulated genotypes.
+**`dev/R/moduleD_ohta_dmi.R`** — reads `eMLG_5loci_0025_cM05.rds`, `hybrids_only_maf005.Rdata` (`sample_data`), `moduleC_C3_cl.rds` (differentiated / DI gate); sources `dev/R/Ohta.R` — writes `data/moduleD_ohta.rds`, `Figures/moduleD_fig4.{pdf,png}` — among-population two-locus Ohta LD on **unlinked** eMLG-cluster pairs (the intrinsic test: correlated among-replicate ancestry sorting = candidate DMIs, vs the generic per-locus sorting of A/B). *Unlinked* is defined on the genetic map — different chromosome, or same chromosome \> 10 cM (≈99% admixture-LD decay in \~50 generations; validated empirically by the LD-vs-cM decay to the inter-chromosomal baseline). Scope = all *differentiated* clusters (parent MAF ≥ 0.15) with a cheap among-population frequency-correlation (`R_st`) pre-filter; exact Ohta decomposition only on the `|R_st| ≥ 0.7` unlinked tail. Primary statistic = the among-population component `R_st` / `D2st`. **Descriptive**: unlinked ≈ linked (`D2st` ≫ `D2is`, `Dp2st` ≈ 0 ⇒ correlated allele-frequency divergence / shared ancestry axis, not systematic epistasis), so candidate DMIs are defined downstream as pairs whose among-population LD *exceeds* Module E's null. The reusable `moduleD_pop_freq_matrix()` / `moduleD_prefilter()` / `moduleD_scan()` functions let E run the identical pre-filter + scan on simulated genotypes.
 
 ## Shared code and helpers
 
 - `dev/R/Ohta.R` — `ohta_fast_prepare()` (per-population allele-frequency prep).
 - `dev/R/parallelism_stats.R` — the core sorting statistic (`parallelism_stats()`).
 - `dev/R/eMLG_parallelism.R` — `build_sorted_eMLG()`, `build_group_consensus()`, `cluster_DI()`.
-- `dev/R/fig_ld_tracks.R` — reads `data/ld_tracks_{a_windows,ldw_persnp}.rds` + recmap → `Figures/ld_tracks_chr26_chr10.{pdf,png}`.
+- `R/fig_ld_tracks.R` — reads `data/ld_tracks_{a_windows,ldw_persnp}.rds` + recmap → `Figures/ld_tracks_chr26_chr10.{pdf,png}`.
 - `LDscnR` package (`~/gitlab/LDscnR`) — LD decay, complexity reduction, consensus construction.
 
 ## Conventions

@@ -181,7 +181,7 @@ ld_w_095 <- as.vector(compute_ld_w(0.95,ld_decay = ld_decay))
 map_hyb_005[,ld_w_095:=ld_w_095]
 save(GTs_hybrids_005,map_hyb_005,sample_data,ld_decay,file = "./data/hybrids_only_maf005.Rdata")
 
-## --- lean inputs for the ld_w track figure (dev/R/fig_ld_tracks.R) ---
+## --- lean inputs for the ld_w track figure (R/fig_ld_tracks.R) ---
 ## Saved here so that figure need not reload this 966 MB decay object or the
 ## genotype matrices: per-SNP ld_w, and the windowed decay rate a.
 saveRDS(map_hyb_005[, .(Chr, Pos, ld_w_095)], "./data/ld_tracks_ldw_persnp.rds")

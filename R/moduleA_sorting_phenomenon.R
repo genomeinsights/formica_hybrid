@@ -34,7 +34,7 @@
 ## files -- Ohta.R (ohta_fast_prepare), parallelism_stats.R (parallelism_stats),
 ## eMLG_parallelism.R (build_sorted_eMLG, build_group_consensus, cluster_DI) --
 ## and defines score_eMLG() inline. Run top-to-bottom from the repo root
-## (~/gitlab/formica_hybrid): `Rscript dev/R/moduleA_sorting_phenomenon.R` or
+## (~/gitlab/formica_hybrid): `Rscript R/moduleA_sorting_phenomenon.R` or
 ## interactively. Writes data/eMLG_sorted_cM05.rds and data/moduleA_*.rds.
 
 suppressPackageStartupMessages({
