@@ -1,4 +1,12 @@
-# Sensitivity — block bootstrap of the main coefficients
+# Sensitivity analyses
+
+Two sensitivity analyses qualify the descriptive A/B/C results without changing any
+point estimate: **(1)** a block bootstrap giving dependence-aware confidence
+intervals for the main coefficients (*precision*), and **(2)** a Module C check of
+whether its climate → diagnostic enrichment is a BayPass-power / allele-frequency
+artifact (*confounding*).
+
+## 1 — Block bootstrap of the main coefficients (precision)
 
 **Question.** The headline A/B/C coefficients are fitted across very large numbers
 of observations, so their model-based *z*-statistics are enormous (|z| up to
@@ -110,6 +118,63 @@ climate association in these data is, at most, weak and spatially concentrated.
 As with the modules themselves, this is about precision, not causal licence: wider
 intervals qualify how confidently an effect is distinguished from 0, while the
 neutral-null comparison (Module E) remains what any *selection* reading requires.
+
+---
+
+## 2 — Module C: is the DI-enrichment a power / allele-frequency artifact? (confounding)
+
+**Question.** BayPass evidence scales with among-population variation in hybrid allele
+frequency: a cluster near-fixed genome-wide in the hybrids has little among-population
+variance and little power (low `p_sig`); one segregating at intermediate frequency has
+more. If those higher-power clusters are also more ancestry-diagnostic, the enrichment
+`frac_hi ~ p_sig` could reflect a shared dependence on allele-frequency variation rather
+than a climate–diagnostic link. This is a *confounding* check, complementary to the
+*precision* check above.
+
+**Code:** `R/moduleC_maf_power_sensitivity.R` (primary config, n_loci ≥ 50, PC1 & PC2;
+leaves the finalized `moduleC_rate_based.R` untouched).
+
+**Method.** Add simple per-cluster power / variation covariates to the primary
+cluster-level model and watch the `p_sig` (enrichment) coefficient:
+`M0: frac_hi ~ p_sig + log(n_loci)` (published) → `+ maf_hyb` (hybrid MAF) → `+ recomb`
+→ `+ xtx` (BayPass **XtX**, the direct among-population-differentiation / power measure).
+The coefficient is reported per +10 pp significance rate; M0 self-validates against the
+published +4.5 / +3.7. The fully-adjusted (M3) coefficient additionally carries a
+chromosome block-bootstrap 95% CI.
+
+**Results.** (`p_sig` coefficient = pp high-DI per +10 pp climate rate; 878 clusters)
+
+| | M0 baseline | + maf_hyb | + recomb | + xtx (M3) |
+|---|---|---|---|---|
+| **PC1** | +4.46 (p=0.0008) | +3.48 (p=0.005) | +3.44 (p=0.005) | **+1.82 (p=0.16)** |
+| **PC2** | +3.72 (p=0.013) | +2.46 (p=0.078) | +2.77 (p=0.046) | **+1.69 (p=0.23)** |
+
+M3 chromosome block-bootstrap 95% CI: PC1 **[−3.9, 10.0]**, PC2 **[−2.5, 15.5]** (both
+include 0).
+
+Hybrid MAF alone removes ~22% (PC1) / ~34% (PC2) of the effect; recombination adds
+little; **XtX roughly halves it** (to +1.8 / +1.7) and removes significance on both
+axes. So a large share of the apparent enrichment is generic among-population
+differentiation: differentiated clusters carry both more BayPass signal and more
+diagnostic content, and the *climate-covariate-specific* association explains little
+diagnostic content beyond that differentiation.
+
+**Caveat.** XtX and the covariate Bayes factor come from the same BayPass run and are
+not independent (the climate association is a structured projection of differentiation),
+so M3 is a strong, arguably conservative control and its residual is a lower bound. But
+the simpler MAF-only control (M1) already attenuates the effect and drops PC2 below
+significance, so the direction of the conclusion is robust to how hard one controls.
+
+### Figure
+
+**`../Figures/moduleC_maf_power_sensitivity.png`** (also `.pdf`). The `p_sig` coefficient
+across the covariate ladder, per PC; blue = naive 95% CI, orange (M3) = chromosome
+block-bootstrap 95% CI. The estimate falls from ~+4.5 / +3.7 to ~+1.7 and its interval
+crosses 0 once differentiation (XtX) is controlled.
+
+**Together with the block bootstrap**, Module C's static DI-enrichment is best read as
+weak and largely a differentiation / power byproduct, not a clean climate–diagnostic
+link.
 
 ---
 

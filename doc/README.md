@@ -17,7 +17,7 @@ in `R/`:
 | [02 — Module A: the sorting phenomenon](02_moduleA_sorting_phenomenon.md) | Whether ancestry sorts *predictably* across replicate populations, and what governs its direction | `moduleA_sorting_phenomenon.R`, `moduleA_di_asymmetry.R` |
 | [03 — Module B: genomic architecture](03_moduleB_genomic_architecture.md) | How sorting relates to recombination, diversity, divergence and cluster size | `moduleB_architecture.R`, `moduleB_eMLG_vs_rep.R` |
 | [04 — Module C: association with climate](04_moduleC_climate_association.md) | Whether ancestry-diagnostic and directionally sorted regions coincide with genotype–environment (climate) association | `moduleC_analyse_baypass.R`, `moduleC_diagnostic_index_enrichment.R`, `moduleC_ancestry_confound.R`, `moduleC_sorting_climate.R`, `moduleC_rate_based.R` |
-| [05 — Sensitivity: block bootstrap](05_sensitivity_block_bootstrap.md) | Dependence-aware confidence intervals for the main A/B/C coefficients (chromosome + 10 cM blocks) | `sensitivity_block_bootstrap.R` |
+| [05 — Sensitivity analyses](05_sensitivity_block_bootstrap.md) | (1) Dependence-aware CIs for the main A/B/C coefficients (chromosome + 10 cM block bootstrap); (2) a Module C power/allele-frequency confound check on the DI-enrichment | `sensitivity_block_bootstrap.R`, `moduleC_maf_power_sensitivity.R` |
 
 ## The scientific question
 

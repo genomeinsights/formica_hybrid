@@ -193,6 +193,15 @@ blocks. The static enrichment above should therefore be read as *weak and spatia
 concentrated at most*: the one positive climate signal in these data does not clearly
 separate from 0 once among-cluster dependence is respected.
 
+**It is also largely a power / allele-frequency byproduct.** BayPass evidence scales
+with among-population allele-frequency variation, and controlling for it attenuates the
+enrichment sharply: adding a cluster hybrid-MAF summary and especially the
+among-population differentiation (BayPass **XtX**) roughly halves the coefficient
+(PC1 +4.5→+1.8, PC2 +3.7→+1.7) and removes its significance on both axes ([doc 05](05_sensitivity_block_bootstrap.md)).
+Much of the apparent enrichment is thus generic differentiation — differentiated
+clusters carry both more BayPass signal and more diagnostic content — rather than a
+climate-covariate-specific signal.
+
 > **A methodological note worth carrying forward:** never binarise on a size-gated
 > count. The eligibility of a "≥ N significant members" rule scales with cluster size
 > in a hard, non-linear way that no size covariate can undo. Use a rate
