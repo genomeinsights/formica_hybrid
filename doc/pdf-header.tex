@@ -1,0 +1,10 @@
+% PDF-only preamble (used by build_pdf.sh).
+% Long file paths / code identifiers in table cells otherwise overflow into the
+% next column because LaTeX will not break \texttt at underscores. Make the
+% (pandoc-escaped) underscore a permitted breakpoint; it is used only when a
+% line would otherwise overrun, so short inline code is unaffected. Filenames
+% here are underscore-separated, so this is where they need to wrap.
+\AtBeginDocument{%
+  \let\pkOrigUnderscore\_%
+  \renewcommand{\_}{\pkOrigUnderscore\allowbreak}%
+}
