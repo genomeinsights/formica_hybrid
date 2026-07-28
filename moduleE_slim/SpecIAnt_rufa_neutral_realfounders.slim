@@ -40,13 +40,20 @@ initialize() {
 	if (!exists("sampleEvery")) defineConstant("sampleEvery", 20); // sample interval
 	if (!exists("sampleSize"))  defineConstant("sampleSize", 100);  // n sampled per output
 
-	// founder DRAW (the diversity knob). Pool = 30 aq haploid + 13 pol diploid.
-	if (!exists("N_AQ"))      defineConstant("N_AQ", 30);        // aq founder MALES  (<= 30)
-	if (!exists("N_POL"))     defineConstant("N_POL", 13);       // pol founder QUEENS (<= 13)
-	defineConstant("N_AQ_POOL", 30);
-	defineConstant("N_POL_POOL", 13);
+	// founder DRAW (the diversity/bottleneck knob). Pool = the founder-VCF sample
+	// count. With the REAL pool (30 aq haploid + 13 pol diploid) N_AQ/N_POL <= 30/13.
+	// With an INFLATED pool (each real haplotype copied C times, see
+	// make_founders_inflated.R) the pool is 30*C / 13*C, so a random subsample WITHOUT
+	// replacement from it is a resample-WITH-replacement from the 30/13 real founders --
+	// this lets N_AQ/N_POL exceed the real count to make the founding bottleneck SHALLOW
+	// (large N -> low founding F_ST / less drift-LD), diversity still capped at 30/13.
+	if (!exists("N_AQ_POOL"))  defineConstant("N_AQ_POOL", 30);  // aq columns in the founder VCF
+	if (!exists("N_POL_POOL")) defineConstant("N_POL_POOL", 13); // pol columns in the founder VCF
+	if (!exists("N_AQ"))       defineConstant("N_AQ", N_AQ_POOL);   // aq founder MALES  drawn
+	if (!exists("N_POL"))      defineConstant("N_POL", N_POL_POOL); // pol founder QUEENS drawn
 	if (N_AQ > N_AQ_POOL | N_POL > N_POL_POOL)
-		stop("N_AQ/N_POL exceed the founder pool (30 aq / 13 pol)");
+		stop("N_AQ/N_POL (" + N_AQ + "/" + N_POL + ") exceed the founder pool (" +
+		     N_AQ_POOL + "/" + N_POL_POOL + ") -- inflate the pool with more copies");
 
 	defineConstant("verbose", F);
 	defineGlobal("MU", 0.0);                 // no new mutations

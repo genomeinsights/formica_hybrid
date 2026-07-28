@@ -211,28 +211,109 @@ high-dimensional (sampling-confounded at these sample sizes).}
 \label{fig:decomp}
 \end{figure}
 
-\section{Supporting diagnostic: the LD landscape}
+\section{The residual null--data LD mismatch is a founder-diversity ceiling}
+\label{sec:ceiling}
 
-Local LD ($ld_w$, median $r^2$ in a 100~kb window) along the genome
-(Fig.~\ref{fig:ldw}) shows that the null reproduces the recombination-driven LD
-\emph{landscape} well --- peaks co-localise on the same chromosomes, per-chromosome
-Spearman 0.94--0.95, robust across generations --- but carries a diffuse genome-wide
-LD \emph{floor} the data lack (mean $\sim$0.17--0.21 vs 0.09), decaying only slowly
-from gen20 to gen160. A within-group analysis (removing the between-population
-component) showed the founders themselves carry within-species LD matching the
-empirical within-population LD, so the excess floor is not founder-inherited; it is
-the between-population (Wahlund) component, i.e.\ the same over-differentiation
-(too-small $N_e$) seen in the $F_{ST}$ analysis. This independently corroborates
-that the null over-differentiates the demes and motivates the large-$N_e$
-calibration.
+The null reproduces the recombination-driven LD \emph{landscape} well: local LD
+($ld_w$, median $r^2$ in a 100~kb window) peaks on the same chromosomes as the data,
+per-chromosome Spearman $0.92$--$0.93$, and this is robust across generations,
+foundings, and $K$ (Fig.~\ref{fig:ldw}). What it does \emph{not} reproduce is the
+\emph{level}: the null's local LD sits about $2\times$ above the data (mean $ld_w$
+$\sim$0.20 vs 0.09; median 0.10 vs 0.02). We traced this excess to its source by
+elimination, and the answer is not a knob we can turn in the model.
+
+\paragraph{Not the founding bottleneck.} Seeding each deme from only $\sim$43 real
+founders and growing to $K$ is a severe bottleneck. We made it shallow by resampling
+founders \emph{with replacement} from an inflated pool (each real haplotype written
+$40\times$), so the founder census --- and hence the founding $F_{ST}$ --- became a
+free knob while genetic diversity stayed capped at the real 30/13 haplotypes.
+A shallower founding roughly halves the neutral $F_{ST}$ ($0.15\to0.076$) and recovers
+most of the $\pi$ deficit ($0.40\to0.437$), confirming the bottleneck was a genuine
+contributor to over-differentiation (Table~\ref{tab:found}). But the local-LD level
+does not shift \emph{at all} across foundings, and a residual neutral $F_{ST}$ (0.076
+vs data 0.048) and $\pi$ deficit persist even at the whole-pool limit.
+
+\paragraph{Not drift / too-small $N_e$.} We then swept $K$ \emph{downward}
+(781--6250) at fixed founding (450/195). Neutral $F_{ST}$ scales cleanly with $1/K$
+--- confirming it is partly drift --- but its $K\to\infty$ intercept is 0.073, still
+above the data's 0.048; and the local-LD level is essentially \emph{flat} across the
+entire $K$ range at every quantile (median $ld_w$ $0.103\to0.100$ over an $8\times$
+change in $K$; Fig.~\ref{fig:kpred}). Background (inter-chromosomal, unlinked) LD
+\emph{does} scale with $1/K$ as drift theory predicts, but it is already \emph{below}
+the empirical value. So neither the local-LD excess nor the residual $F_{ST}$ is a
+large-$N_e$ target: raising $K$ would not close them. This supersedes an earlier
+reading of the LD floor as a Wahlund / too-small-$N_e$ effect.
+
+\paragraph{Not the recombination map.} The map is high, not low --- 15.7~cM/Mb
+genome-wide (4{,}696~cM over 300~Mb; $1$~cM~$\approx64$~kb), correctly scaled. And the
+null and data LD-decay curves \emph{converge to the same background} ($r^2\approx0.033$)
+by $\sim$1~Mb (Fig.~\ref{fig:decay}); too-low recombination would leave the null
+elevated at long range, which it is not. The excess is confined to \emph{short} range
+($2\times$ at 65~kb, gone by 1~Mb), exactly where founder LD is immune to
+recombination: at 4~kb the recombination fraction is only $\sim$0.06~cM, so $\sim$96\%
+of founder LD survives 60 generations regardless of the rate.
+
+\paragraph{What it is.} By elimination, the residual short-range LD excess (and the
+associated $\pi$ deficit and residual $F_{ST}$) is the \emph{finite founder-haplotype
+panel}: with only 30 \textit{aquilonia} and 13 \textit{polyctena} founding
+haplotypes, nearby markers carry more LD than a founding drawn from the large,
+many-haplotype real parental populations, and no amount of population size, founder
+census, or recombination can manufacture the missing haplotype diversity. It is
+liftable only by sequencing more parents or adding variation (mutation and burn-in)
+--- the very thing the conditional design deliberately avoids. Crucially this is a
+\emph{short-range LD} artefact: it leaves the DI dose-response (Sec.~2) and the
+sorting classification unchanged, and the null's diagnostic-marker $F_{ST}$ stays
+flat across every one of these manipulations, so the calibrated-null sorting test is
+unaffected by it.
+
+\begin{table}[htbp]\centering
+\caption{Founder-number sweep at $K=6250$ (15k DI-stratified markers, 20 demes,
+gen~60). Making the founding shallow (resampling to a larger census from the same
+30/13 haplotypes) removes about half the neutral $F_{ST}$ excess and most of the
+$\pi$ deficit, then plateaus; the local-LD level (last column) does not respond.}
+\label{tab:found}\small
+\begin{tabular}{lrrr}
+\toprule
+founding ($N_{aq}/N_{pol}$) & neutral $F_{ST}$ & neutral $\pi$ & mean $ld_w$\\
+\midrule
+30/13 \ (deep, baseline)      & 0.15  & 0.40  & 0.197\\
+150/65                        & 0.091 & 0.429 & 0.196\\
+450/195                       & 0.079 & 0.436 & 0.197\\
+1200/520 \ (whole pool)       & 0.076 & 0.437 & 0.196\\
+\midrule
+\textbf{empirical}            & \textbf{0.048} & \textbf{0.450} & \textbf{0.089}\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[htbp]\centering
-\includegraphics[width=\textwidth]{../Figures/moduleE_ldw_manhattan.pdf}
-\caption{Local LD along the genome, empirical vs neutral null over generations
-(K=6250, pooled, matched $N$). The recombination-driven landscape is reproduced
-(peaks co-localise); the null carries a diffuse excess floor between peaks --- the
-between-population (Wahlund) component of the over-differentiation.}
+\includegraphics[width=\textwidth]{../Figures/moduleE_ldw_manhattan_foundersweep.pdf}
+\caption{Local LD ($ld_w$) along the genome, empirical vs the founder-number sweep
+(K=6250, gen~60, pooled, per-deme $N$ matched to the data). The recombination-driven
+landscape is reproduced (peaks co-localise, per-chr Spearman $0.92$--$0.93$); the
+null curves for all foundings lie on top of one another well above the empirical
+level --- the excess does not respond to the founding bottleneck.}
 \label{fig:ldw}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.9\textwidth]{../Figures/moduleE_ksweep_predict.pdf}
+\caption{Sweeping $K$ downward at fixed founding (450/195, gen~60), each statistic
+against $1/K$. Left: mean local $ld_w$ is flat across an $8\times$ change in $K$ (the
+$K\to\infty$ floor sits far above the empirical line) --- the LD excess is not
+drift. Right: neutral $F_{ST}$ is linear in $1/K$ (partly drift) but extrapolates to
+0.073 at $K\to\infty$, still above the empirical 0.048.}
+\label{fig:kpred}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.78\textwidth]{../Figures/decay_emp_vs_sim.pdf}
+\caption{LD decay versus physical distance, empirical vs null (450/195, K=6250,
+gen~60; same markers, within-chromosome pairs, matched $N$). The two curves converge
+to the same background by $\sim$1~Mb --- large-scale recombination matches the data
+--- while the null carries excess LD only at short range, the signature of the finite
+founder-haplotype panel.}
+\label{fig:decay}
 \end{figure}
 
 \section{Where this stands, and next steps \wip{(WIP)}}
@@ -248,11 +329,15 @@ at which point the diagnostic excess is read against $\approx0$.
 
 \begin{enumerate}\itemsep2pt
 \item \textbf{Calibrated-null $p$-value.} Run the sorting statistic
-(\texttt{parallelism\_stats}) through the null calibrated on the neutral markers,
-extending carrying capacity upward until neutral $F_{ST}\approx0$. This puts a
+(\texttt{parallelism\_stats}) through the null at the best-achievable calibration
+--- shallow founding and $K$ near the empirical $N_e$ (Sec.~\ref{sec:ceiling}). The
+null's neutral differentiation is bounded below by the founder-diversity ceiling
+(sampling plus limited founder haplotypes, not drift), so the neutral floor is used
+as the reference rather than driven to zero; the diagnostic dose-response, which is
+invariant to founding, $K$, and recombination, carries the test. This puts a
 $p$-value on the excess and separates the parallel (mean) from the divergent
-(variance) components properly. \wip{Higher-$K$ simulations are running on a
-larger machine.}
+(variance) components. \wip{Lifting the ceiling itself (more sequenced parents, or
+adding mutation with a burn-in) is a separate, larger undertaking.}
 \item \textbf{Divergent vs parallel.} Characterise the residual structure with
 individual-level data (controlling sampling), and test whether it aligns with
 climate (reconciling with Modules~A and~C: parallel direction vs divergent
