@@ -59,6 +59,23 @@ associations are interpreted as conditional and exploratory.
 
 \section*{Results}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/main_ancestry_sorting.pdf}
+\caption{\textbf{Predictability and genomic organisation of ancestry sorting.}
+(\textbf{A}) Sort-class proportions among oriented parent-polymorphic loci:
+near-fixation is predominantly unidirectional, with bidirectional fixation almost
+absent. (\textbf{B}) Among unidirectionally sorted loci, the fraction fixing toward
+\Faq{} rises across diagnostic-index deciles, crossing parity near the centre.
+(\textbf{C}) Fraction sorted versus recombination at the SNP and LD-reduced-unit
+levels; the unit-level collapse in low recombination reflects removal of spatial
+pseudoreplication. (\textbf{D}) Diagnostic-index enrichment of climate-associated
+clusters (percentage points per +10 percentage-point climate rate) for PC1 and PC2,
+with model-based and chromosome block-bootstrap 95\% intervals; the nominal
+enrichment is not robust to genomic dependence.}
+\label{fig:main}
+\end{figure}
+
 \subsection*{Ancestry sorting is predominantly directional across hybrid populations}
 
 To determine whether hybrid genome evolution repeatedly favoured the same
@@ -73,7 +90,7 @@ Among SNPs that remained polymorphic in the pooled parental samples, 67.96\%
 were not near-fixed in at least half of the hybrid populations. Of those that
 did show repeated sorting, 17.50\% sorted toward \Fpo{} and 14.40\% toward
 \Faq{}, whereas only 0.14\% showed strong sorting in opposing directions among
-populations (Fig.~X, panel A). Thus, the main feature of the data was not
+populations (Fig.~\ref{fig:main}A). Thus, the main feature of the data was not
 near-fixation itself, but the consistency of its parental direction across
 populations. Because the populations may share aspects of their demographic
 history, these proportions describe repeatability across the sampled panel
@@ -101,7 +118,7 @@ reversal in direction along the diagnostic-index axis. Among
 unidirectionally sorted loci, the fraction sorting toward \Faq{} increased
 monotonically from approximately 0.15 in the least diagnostic decile to 0.74
 in the most diagnostic decile, crossing parity near the centre of the DI
-distribution (Spearman \(\rho=0.31\); Fig.~X, panel B). In a logistic model
+distribution (Spearman \(\rho=0.31\); Fig.~\ref{fig:main}B). In a logistic model
 including pooled parental MAF, DI strongly increased the probability of
 \Faq-directed sorting (DI coefficient \(=0.082\), \(z=181\)), whereas higher
 parental MAF weakly shifted sorting toward \Fpo{}.
@@ -129,7 +146,7 @@ The importance of representing LD-correlated markers once was clearest in
 regions of lowest recombination. In the lowest recombination decile, 17\% of SNPs
 were classified as sorted, but only 6\% of LD-reduced units were sorted,
 compared with approximately 42\% of units across the remaining deciles
-(Fig.~X, panel C). The excess marker-level signal in low recombination
+(Fig.~\ref{fig:main}C). The excess marker-level signal in low recombination
 therefore largely reflected spatial pseudoreplication. Consistent with this
 interpretation, aggregate sorting increased rather than decreased with
 recombination rate.
@@ -169,7 +186,7 @@ points for PC1 (\(P=8\times10^{-4}\)) and 3.7 percentage points for PC2
 (\(P=0.013\)) in the proportion of diagnostic markers. This nominal enrichment
 was not robust to genomic dependence: chromosome block-bootstrap 95\%
 intervals were \(-4.0\) to 13.1 for PC1 and \(-0.7\) to 17.8 for PC2, with
-similar conclusions from 10-cM blocks (Fig.~X, panel D).
+similar conclusions from 10-cM blocks (Fig.~\ref{fig:main}D).
 
 The estimates were also attenuated after accounting for variables related to
 allele-frequency variation and power. Adding mean hybrid MAF reduced the PC1
@@ -260,38 +277,10 @@ candidate regions require independent biological scrutiny.
 The main figure should carry the central narrative rather than the validation
 machinery. A four-panel figure is sufficient:
 
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[
-  panel/.style={draw=Accent, thick, rounded corners=2pt, fill=LightBlue,
-    minimum width=72mm, minimum height=43mm, text width=64mm,
-    align=left, inner sep=5mm},
-  title/.style={font=\bfseries\color{Accent}}
-]
-\node[panel] (a) {\textbf{A. Directional sorting}\\[2mm]
-\textcolor{Pol}{17.50\% \Fpo{}} \quad
-\textcolor{Aqu}{14.40\% \Faq{}}\\
-0.14\% bidirectional; 67.96\% unsorted\\[2mm]
-\footnotesize Stacked proportions among parent-polymorphic SNPs.};
-\node[panel, right=8mm of a] (b) {\textbf{B. Direction reverses with DI}\\[2mm]
-\(\Pr(\Faq{}\mid\mathrm{unidirectional})\) rises from
-\(\sim0.15\) to \(\sim0.74\) across DI deciles.\\[2mm]
-\footnotesize Line and uncertainty across deciles; parity at 0.5.};
-\node[panel, below=8mm of a] (c) {\textbf{C. LD reveals pseudoreplication}\\[2mm]
-Lowest recombination decile:\\
-17\% sorted SNPs versus 6\% sorted units.\\[2mm]
-\footnotesize SNP and LD-reduced-unit estimates across recombination deciles.};
-\node[panel, right=8mm of c] (d) {\textbf{D. Climate effects are not robust}\\[2mm]
-Nominal diagnostic effects: \(+4.5\) and \(+3.7\) pp,\\
-but block intervals include zero.\\
-Sorting: OR \(0.99\) and \(1.03\).\\[2mm]
-\footnotesize Model-based and block-robust intervals for PC1/PC2.};
-\end{tikzpicture}
-\caption{\textbf{Wireframe for the main ancestry-sorting figure.} The panels
-progress from the phenomenon (A), to its principal predictor (B), to the effect
-of genomic linkage on its apparent abundance (C), and finally to its
-relationship with environmental association (D).}
-\end{figure}
+\noindent This layout is realised in Figure~\ref{fig:main} (shown in the Results),
+which progresses from the phenomenon (A), to its principal predictor (B), to the
+effect of genomic linkage on its apparent abundance (C), and finally to its
+relationship with environmental association (D).
 
 Panel A establishes the phenomenon. Panel B is the biological centre of the
 figure and should receive the most visual space. Panel C demonstrates why the
