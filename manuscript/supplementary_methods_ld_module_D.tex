@@ -1,0 +1,394 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{NoteBlue}{HTML}{EAF2F8}
+\definecolor{NoteBorder}{HTML}{7BA5C4}
+\definecolor{Muted}{HTML}{5B6570}
+
+\hypersetup{
+  pdftitle={Materials and Methods: structure-corrected two-locus association for intrinsic incompatibilities},
+  pdfauthor={Poikela et al.},
+  pdfsubject={Hybrid genome evolution in Formica wood ants}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\color{Muted}Materials and Methods --- Module D}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+\setlist[itemize]{leftmargin=1.5em,itemsep=0.2em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=1.7em,itemsep=0.25em,topsep=0.25em}
+\renewcommand{\arraystretch}{1.15}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\rsq}{\ensuremath{r^{2}}}
+\newcommand{\Rst}{\ensuremath{R_{\mathrm{st}}}}
+\newcommand{\todo}[1]{%
+  \par\noindent
+  \fcolorbox{NoteBorder}{NoteBlue}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      \textbf{Open item.} #1}}%
+  \par}
+
+\title{\vspace{-3em}
+  \textbf{\color{Accent}Materials and Methods}\\[0.3em]
+  \Large Structure-corrected two-locus association for intrinsic
+  incompatibilities between unlinked LD-reduced units}
+\author{Poikela et al.}
+\date{\small Draft prepared from the current \texttt{/doc} pipeline documentation}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+\begin{center}
+\small\color{Muted}
+This is a self-contained working draft for integration into the full Supplementary
+Materials, describing the intrinsic (Dobzhansky--Muller) arm that complements the
+ancestry-sorting and climate analyses documented separately. Blue boxes identify items
+that remain open; in particular the neutral, recombination-matched null (Section~\ref{sec:null})
+is still required to convert the descriptive leads into excess-over-neutral statements.
+\end{center}
+
+\section{Scope and analytical principles}\label{sec:scope}
+
+These methods describe a screen for pair-specific, two-locus incompatibilities between
+\emph{unlinked} LD-reduced units, complementary to the per-locus ancestry-sorting analyses
+(which measure the \emph{direction} and extent of sorting) and to the climate analyses
+(which test the extrinsic axis). The same LD-reduced units, expected multi-locus genotype
+(eMLG) consensus dosages, and parental gate are reused; the methods for their construction
+are given in the companion document.
+
+An intrinsic incompatibility can leave three traces in replicate hybrids, and separating
+them organises the analysis. (1)~\emph{Unidirectional} sorting, in which one parental
+combination is fitter, drives the same ancestry toward fixation repeatedly; this is the
+per-locus signal of the sorting analyses and is, by construction, invisible to any
+two-locus test, because linkage disequilibrium is bounded by the allele frequencies and
+vanishes as either locus approaches fixation. (2)~\emph{Bidirectional} sorting, expected
+under an equal-fitness incompatibility, fixes opposite compatible combinations in different
+replicates; its single-locus parallelism test is null by construction, and its signal lives
+at the pair level. (3)~\emph{Coupling maintained within populations} is elevated two-locus
+LD inside demes, which is badly confounded by cryptic relatedness among nestmates. A
+two-locus screen must therefore condition on both the genome-wide ancestry gradient and the
+colony structure before any residual association can be read as pair-specific.
+
+Three principles guided the analysis, consistent with the companion methods. First, the
+LD-reduced units are treated as complexity-reduced analytical units, not as strictly
+independent tests; residual dependence is controlled or annotated where it matters. Second,
+a variable used as a predictor was not also used to select the analysed data. Third, the
+twenty hybrid populations are not assumed to be fully independent replicates; analyses using
+among-population variation either condition on it or are interpreted descriptively, and the
+final intrinsic call is deferred to a neutral simulation.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[
+  node distance=7.5mm and 12mm,
+  box/.style={draw=Accent, rounded corners=2pt, very thick, fill=NoteBlue,
+    align=center, text width=52mm, minimum height=11mm, inner sep=4pt},
+  result/.style={draw=NoteBorder, rounded corners=2pt, thick, fill=white,
+    align=center, text width=52mm, minimum height=11mm, inner sep=4pt},
+  arrow/.style={-{Stealth[length=2.4mm]}, thick, draw=Accent}
+]
+\node[box] (units) {eMLG consensus dosages\\(164 hybrids $\times$ differentiated units)};
+\node[box, below=of units] (scan) {EMMAX two-locus scan\\double-LOCO GRM $+$ genome-PC conditioning};
+\node[result, below=of scan] (tests) {Signed cis/trans associations\\between unlinked unit pairs};
+\node[box, below=of tests] (filter) {Read-out: global FDR $\to$ paralogy $\to$\\average-linkage merge $\to$ leverage};
+\node[result, below=of filter, xshift=-30mm, text width=48mm] (struct)
+  {Low-recombination \emph{structure} module\\(annotation, not a filter)};
+\node[result, below=of filter, xshift=30mm, text width=48mm] (cand)
+  {Candidate residue\\(co-sorting module; trans pairs)};
+\node[box, below right=8mm and -22mm of struct] (null)
+  {Neutral, \emph{local}-recombination-matched null\\(Module E) $+$ replicate parallelism};
+\node[result, below=of null] (call) {Excess-over-neutral call\\for each candidate / module};
+
+\draw[arrow] (units) -- (scan);
+\draw[arrow] (scan) -- (tests);
+\draw[arrow] (tests) -- (filter);
+\draw[arrow] (filter) -- (struct);
+\draw[arrow] (filter) -- (cand);
+\draw[arrow] (struct) -- (null);
+\draw[arrow] (cand) -- (null);
+\draw[arrow] (null) -- (call);
+\end{tikzpicture}
+\caption{\textbf{Analytical workflow for the intrinsic arm.} A single
+structure-corrected scan is read out by one reproducible procedure into a
+low-recombination co-ancestry module and a short candidate residue. Low recombination is
+annotated, never used to discard loci; every unit is carried into the neutral,
+local-recombination-matched null that provides the final call.}
+\label{figD:workflow}
+\end{figure}
+\clearpage
+
+\section{Units, orientation, and the unlinked definition}\label{sec:units}
+
+The analytical unit is the eMLG consensus dosage of an LD cluster (continuous, on an
+\Faq-oriented $0$--$2$ scale; no hard-calling), restricted to the parent-differentiated
+units used as informative markers throughout. Consensus orientation and the parental gate
+(pooled parental MAF $\geq0.15$) follow the companion methods, so that a unit's dosage and
+its diagnostic index (DI) are on consistent scales.
+
+Two units were treated as \emph{unlinked} when they lay on different chromosomes, or on the
+same chromosome more than $\mathrm{LINK}_{\mathrm{cM}}=10$~cM apart on the genetic map.
+Distance was taken on the map rather than in base pairs because admixture LD decays with the
+recombination fraction, not with physical distance: at the recombination rates of this
+genome, $10$~cM corresponds to $\sim$99\% decay of admixture LD over the $\sim$50
+generations since contact. Per-unit map positions were the median member-marker position
+interpolated from the recombination map. This is the same threshold used to define the
+LD-reduced units, so ``unlinked'' pairs are those the clustering already treats as distinct
+regions.
+
+\section{Structure-corrected two-locus association (EMMAX)}\label{sec:emmax}
+
+\subsection{Rationale and model}
+
+To ask whether two units are associated \emph{beyond} what shared ancestry and relatedness
+predict, we treat one unit's consensus dosage as a quantitative trait and test its
+association against every other differentiated unit in a linear mixed model,
+\begin{equation}
+  y_i = \mu + \beta\,x_j + u + \varepsilon,\qquad
+  u\sim N(0,\sigma_g^2 K),\quad \varepsilon\sim N(0,\sigma_e^2 I),
+  \label{eq:emmax}
+\end{equation}
+where $y_i$ is the focal unit's dosage across the 164 individuals, $x_j$ a candidate
+partner, and $K$ a genomic-relationship matrix (EMMAX; Li, Kemppainen, Rastas \& Meril\"a).
+This is a genome scan in which the ``phenotype'' is one unit and the ``markers'' are all the
+others; variance components are estimated once under the null and reused for every partner.
+
+\subsection{Why one random effect handles both confounds}
+
+The leading eigenvectors of $K$ are the ancestry/structure principal components, so
+conditioning on $K$ removes the genome-wide ancestry gradient at the individual level; and
+because $K$ also encodes sibling relatedness among nestmates, the Wahlund inflation of
+within-population LD is regressed out in the \emph{same} term. Three choices are load-bearing:
+\begin{enumerate}
+  \item \textbf{Basis of $K$.} $K$ was built from the ancestry-\emph{informative}
+        (differentiated) units, not a neutral, LD-pruned background. The confound to be
+        absorbed is the \emph{selected} ancestry-sorting axis carried by those units; a
+        neutral basis dilutes that eigenvector and under-corrects, inflating the genomic
+        control factor to $\lambda\sim1.2$ and leaking the ancestry gradient back as spurious
+        positive associations.
+  \item \textbf{Double leave-one-chromosome-out.} Because the scan is symmetric, both the
+        focal and the partner chromosome are dropped from $K$, so neither tested unit's own
+        region deflates its association. This keeps the test calibrated ($\lambda\approx
+        0.98$--$1.05$; Fig.~\ref{figD:emmax}).
+  \item \textbf{Genome-PC conditioning.} Each focal trait was residualised on the top ten
+        genome-wide principal components before the mixed model, because $K$ cannot remove a
+        \emph{secondary} structure axis concentrated on the very chromosomes double-LOCO
+        drops. After this step the random-focal control returns essentially no significant
+        partner, while calibration holds.
+\end{enumerate}
+Each association is signed by its structure-corrected generalised-least-squares coefficient
+(coupling, $+$; repulsion, $-$), recovering both cis and trans hits. A first, targeted run
+scanned 51 focal units (bidirectional candidates, extreme among-population-covariance units,
+and controls including a random-focal set for calibration).
+
+\todo{An unbiased genome-wide focal scan (or a larger random focal sample) is required to
+report an honest genome-wide hit rate rather than the enrichment of a targeted focal set; a
+full all-versus-all scan ($\sim10^{9}$ tests) is unnecessary and the random control fixes the
+scale. This is scheduled with the Module~E run.}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../Figures/moduleD_emmax_writeup.png}
+\caption{\textbf{Calibration and read-out of the structure-corrected scan.} Diagnostic
+summary of the double-LOCO, genome-PC-conditioned EMMAX scan: quantile--quantile calibration
+of the association statistic ($\lambda\approx0.98$--$1.05$), an example focal Manhattan with
+its self-locus and linked block removed, and the signed (cis/trans) genome-wide hits. The
+scan is calibrated and its strongest associations are cross-chromosome, motivating the
+paralogy filter of Section~\ref{sec:paralogy}.}
+\label{figD:emmax}
+\end{figure}
+
+\section{Cross-chromosome paralogy, and why distance cannot remove it}\label{sec:paralogy}
+
+The genetic-distance rule cannot catch cross-chromosome duplicates: two units on different
+chromosomes are at infinite recombinational distance yet can be genotype-near-identical when
+the same reads map to two assembly locations. These pairs are the loudest inter-chromosomal
+``LD'' and are technical rather than epistatic. Both the among-population and the
+structure-corrected read-outs therefore apply a signal-based filter.
+
+The discriminant is the individual-level \emph{within-population} correlation of the two
+units' consensus dosages, taken as the median over populations. Within-population correlation
+removes the among-population (ancestry-axis) component, which is not what paralogy is about;
+real long-range coupling in these data is moderate ($|r|\lesssim0.6$), whereas a duplication
+sits at $|r|\approx1$ (a flipped duplicate gives $r\approx-1$, which $|r|$ still catches). A
+pair was flagged as paralogous when the median within-population $|r|$ exceeded
+$\mathrm{PARALOGY}_r=0.9$. Genotype concordance and per-unit excess observed heterozygosity
+(a duplicated region inflates $H_o$) are stored alongside as corroboration (Fig.~\ref{figD:paralogy}).
+The flag is treated as a paralogy \emph{candidate} rather than a proof, because an extremely
+strong genuine within-deme incompatibility could also approach $|r|=1$; the grey zone
+$0.6$--$0.9$ is retained as clean, conservatively.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../Figures/moduleD_paralogy_writeup.png}
+\caption{\textbf{The paralogy discriminant.} Distribution of median within-population $|r|$
+for unlinked pairs, with the $0.9$ flag; the corroborating rise in genotype concordance and
+per-unit excess heterozygosity toward $|r|=1$; and the separation of flagged (technical) from
+retained (candidate) pairs. Distance filtering is orthogonal to this signal-based filter, so
+both are applied.}
+\label{figD:paralogy}
+\end{figure}
+
+\section{A single reproducible read-out of the scan}\label{sec:readout}
+
+The scan was read out by one procedure rather than per-focal thresholds, so that the
+structural and pair-specific components separate under a single criterion.
+
+\begin{enumerate}
+  \item \textbf{Global false-discovery control.} All unlinked (focal, partner) tests
+        ($1.38\times10^{6}$) were pooled and controlled at a global Benjamini--Hochberg
+        $q<Q_{\mathrm{FDR}}=0.01$ --- one whole-experiment error rate rather than 51
+        independent per-focal corrections.
+  \item \textbf{Paralogy filter} (Section~\ref{sec:paralogy}).
+  \item \textbf{Third-level, context-only merge.} For this network alone (not the canonical
+        clustering), same-chromosome units within $\mathrm{LINK}_{\mathrm{cM}}$ that remain
+        correlated were collapsed into meta-nodes by \emph{average-linkage} clustering on
+        $1-|r|$, cut at $|r|>\mathrm{MERGE}_r=0.5$, with pairs beyond
+        $\mathrm{LINK}_{\mathrm{cM}}$ given an un-mergeable distance. Average linkage requires
+        the \emph{whole} merged group to be mutually correlated; single linkage
+        (connected components) chains uncorrelated ends and is not used. This prevents one
+        low-recombination region from reading as many interacting loci.
+  \item \textbf{Single-population leverage filter.} An edge was retained only if its
+        among-population allele-frequency correlation survived leave-one-population-out
+        ($\min_k|r_{-k}|\geq\mathrm{LEV}_{\mathrm{LOO}}=0.3$). Because a rare-allele edge that
+        one deme drives fails this test, it subsumes any near-fixed / low-MAF cutoff, and no
+        separate MAF filter is applied on the MAF-gated data.
+\end{enumerate}
+
+Cross-chromosome correlation \emph{modules} were then defined by average-linkage clustering
+of the meta-node consensuses \emph{across} chromosomes, cut at $|r|>\mathrm{MODULE}_r=0.4$.
+Unlike the within-chromosome merge, this groups co-varying regions genome-wide, so each
+module is one coherent co-ancestry block used for display and for the single-module genotype
+views.
+
+\section{Recombination annotation, not a filter}\label{sec:recomb}
+
+Each meta-node was annotated by its recombination percentile against the differentiated
+background; units below the tenth percentile ($\mathrm{STRUCT}_{\mathrm{pct}}=0.10$;
+centromeric and pericentromeric) were labelled \emph{structure}. This label is used only as
+an annotation and \emph{never} as a filter, for a specific reason. Low recombination is not
+evidence of neutrality: it is where coadapted and epistatic complexes are expected to
+accumulate and persist, since recombination suppression is itself a hallmark of coadaptation.
+For an unlinked pair the between-region recombination fraction is $0.5$ regardless of local
+rate, so low local recombination does not ``hold'' cross-chromosome LD; it makes each region a
+clean, low-noise ancestry block, i.e.\ the highest-signal marker of whatever residual
+covariation remains after genome-PC conditioning --- finer neutral structure \emph{or}
+selection. Every unit, low-recombination included, is therefore carried into the null of
+Section~\ref{sec:null} and judged against a baseline matched to its own local recombination.
+
+\section{Neutral, recombination-matched null}\label{sec:null}
+
+Every filter above removes structure \emph{aligned} with what it conditions on; none can say
+whether a residual pair, or a low-recombination module, exceeds what neutral,
+recombination-matched drift would produce in twenty replicate populations of this size and
+design. That is the role of the neutral simulation (Module~E), and two features are required.
+
+\begin{itemize}
+  \item \textbf{Local-recombination matching.} Neutral admixture is simulated on the
+        \emph{real} recombination map, with matched founder ancestries, generations, and
+        sampling, and the identical scan and read-out (Sections~\ref{sec:emmax}--\ref{sec:readout})
+        are applied to the simulated genotypes. A pair or module is a candidate only if its
+        observed LD exceeds the neutral null \emph{at its own local recombination rate}, so a
+        low-recombination pair is compared against a legitimately high baseline and can still
+        surface.
+  \item \textbf{Replicate-population parallelism.} Neutral relic co-ancestry drifts in random
+        directions across the twenty populations, whereas epistatic selection maintains the
+        same combination reproducibly; a module whose direction is parallel across many
+        populations, or that exceeds the general low-recombination background, is corroborated
+        as selection independently of the simulation.
+\end{itemize}
+
+\todo{Module E is not yet run. Decide whether local matching is achieved by simulating
+directly on the real per-chromosome map (preferred; no binning artefacts) or by binning
+observed pairs on local cM/Mb and comparing to rate-matched simulated pairs.}
+
+\section{Statistical interpretation}\label{sec:interp}
+
+The analyses are descriptive and conditional on the sampled populations, quality gates, and
+analysis definitions. Structure correction removes covariation aligned with the ancestry axis
+and colony relatedness; the recombination annotation flags where the neutral LD baseline is
+high; and the genotype-level PCA characterises the structure module without proving its
+neutrality (parallel or stabilising selection can also lower among-population differentiation).
+No pair is called an incompatibility on the basis of the association scan alone. The
+excess-over-neutral statements are made only against the recombination-matched null, and
+individual candidates then require independent biological scrutiny.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\raggedright\arraybackslash}p{0.40\textwidth}
+                  >{\raggedright\arraybackslash}p{0.25\textwidth}}
+\caption{Principal parameter settings for the intrinsic (two-locus) arm.}
+\label{tabD:parameters}\\
+\toprule
+Analysis & Parameter & Value \\
+\midrule
+\endfirsthead
+\toprule
+Analysis & Parameter & Value \\
+\midrule
+\endhead
+Units & Analytical unit & eMLG consensus dosage (differentiated) \\
+      & Parental MAF gate & $\geq0.15$ \\
+\midrule
+Unlinked & Genetic-distance rule & different chr, or same chr $>10$~cM \\
+\midrule
+EMMAX & Model & LMM, one unit as trait vs all others \\
+      & Genomic-relationship matrix $K$ & VanRaden, differentiated units \\
+      & Leave-one-out & double (focal $+$ partner chromosome) \\
+      & Genome-PC conditioning & top 10 PCs residualised from the focal \\
+      & Sign & structure-corrected GLS coefficient \\
+      & Calibration & $\lambda\approx0.98$--$1.05$ \\
+\midrule
+Paralogy & Discriminant & median within-population $|r|$ \\
+         & Flag threshold & $>0.9$ \\
+\midrule
+Read-out & Multiple testing & global Benjamini--Hochberg $q<0.01$ \\
+         & Third-level merge & average linkage, $|r|>0.5$, $\leq10$~cM \\
+         & Leverage & leave-one-population-out $|r|\geq0.3$ \\
+         & Modules & average linkage across chr, $|r|>0.4$ \\
+\midrule
+Annotation & Structure label (not a filter) & recombination percentile $<0.10$ \\
+\midrule
+Null (Module E) & Matching & local recombination (real map) \\
+                & Corroboration & replicate-population parallelism \\
+\bottomrule
+\end{longtable}
+
+\begin{thebibliography}{2}
+\bibitem{kang2010}
+Kang HM, Sul JH, Service SK, Zaitlen NA, Kong S-Y, Freimer NB, Sabatti C, Eskin E.
+Variance component model to account for sample structure in genome-wide association studies.
+\textit{Nature Genetics}. 2010;42:348--354.
+\bibitem{nouhaud2022}
+Nouhaud P, Martin SH, Portinha B, Sousa VC, Kulmuni J. Rapid and predictable genome evolution
+across three hybrid ant populations. \textit{PLoS Biology}. 2022;20:e3001914.
+\href{https://doi.org/10.1371/journal.pbio.3001914}{doi:10.1371/journal.pbio.3001914}.
+\end{thebibliography}
+
+\end{document}

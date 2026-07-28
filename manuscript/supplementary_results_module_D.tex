@@ -1,0 +1,254 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+
+\hypersetup{pdftitle={Supplementary Results --- Module D}, pdfauthor={Poikela et al.}}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}Supplementary Results --- Module D}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parindent}{0pt}\setlength{\parskip}{0.65em}
+\renewcommand{\arraystretch}{1.15}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\Rst}{\ensuremath{R_{\mathrm{st}}}}
+
+\title{\vspace{-3em}\textbf{\color{Accent}Supplementary Results --- Module D}\\[0.3em]
+  \Large A structure-corrected two-locus screen for intrinsic incompatibilities}
+\author{Poikela et al.}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+\begin{center}\small\color{Muted}
+This note reports the intrinsic (two-locus) arm. All results are structure-corrected but
+pre-simulation: the neutral, recombination-matched null (Methods, \emph{Neutral,
+recombination-matched null}) is still required to convert the leads below into
+excess-over-neutral statements. Figures and tables are collected here.
+\end{center}
+
+% =====================================================================
+\section{The scan is calibrated and its strongest signal is not pair-specific}\label{srD:scan}
+
+Treating each differentiated LD-reduced unit's consensus dosage as a trait and testing it
+against every other unit in a double-LOCO, genome-PC-conditioned mixed model gives a
+calibrated scan (genomic control $\lambda\approx0.98$--$1.05$; Methods,
+\emph{Structure-corrected two-locus association}). Read out as one procedure --- all
+$1.38\times10^{6}$ unlinked tests pooled at global false-discovery rate $q<0.01$ (276 pairs),
+then paralogy-filtered ($-29$ pairs), region-merged (156 to 127 meta-nodes), and
+leverage-filtered ($-50$ edges) --- the scan yields \textbf{110 associations among 83
+meta-nodes} (18 trans, 92 cis; Table~\ref{tabRD:cascade}; Fig.~\ref{figRD:network}).
+
+The signal is dominated not by pair-specific incompatibility but by two removable or
+structural components. First, the loudest cross-chromosome associations are \emph{technical}:
+pairs whose median within-population $|r|$ approaches one are assembly paralogues, corroborated
+by genotype concordance and excess heterozygosity (Methods, \emph{Cross-chromosome paralogy}).
+Second, of the 110 surviving edges, \textbf{66 join two low-recombination ``structure''
+meta-nodes} and only 13 join two candidate units (Table~\ref{tabRD:cascade}); the network is a
+small number of high-degree hubs (four with degree $\geq10$) sitting in the lowest
+recombination percentiles, rather than a field of isolated pairs (Fig.~\ref{figRD:network}).
+
+\begin{table}[t]
+\centering
+\caption{Read-out of the structure-corrected scan. The pooled scan is reduced by one ordered
+procedure; the surviving edges are classified by the recombination annotation of their two
+endpoints (structure $=$ recombination percentile $<0.10$).}
+\label{tabRD:cascade}
+\small
+\begin{tabular}{lr}
+\toprule
+Stage & Pairs / edges \\
+\midrule
+Unlinked (focal, partner) tests & 1{,}381{,}804 \\
+Global Benjamini--Hochberg $q<0.01$ & 276 \\
+$-$ cross-chromosome paralogues ($|r|_{\mathrm{within}}>0.9$) & 247 \\
+Region-merged meta-nodes (from 156 units) & 127 \\
+$-$ single-population leverage ($|r|_{\mathrm{LOO}}<0.3$) & 110 edges \\
+\midrule
+\textbf{Final network} & \textbf{110 edges / 83 meta-nodes} \\
+\quad trans (repulsion) / cis (coupling) & 18 / 92 \\
+\quad structure--structure / candidate--structure / candidate--candidate & 66 / 31 / 13 \\
+\quad hubs (degree $\geq10$) / structure-labelled nodes & 4 / 59 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{../Figures/moduleD_trans_network.png}
+\caption{\textbf{The structure-corrected two-locus network.} Meta-nodes sized by degree;
+grey $=$ low-recombination ``structure'' annotation, gold $=$ candidate; blue edges cis
+(coupling), orange trans (repulsion). The network resolves into a large grey structure
+complex (the low-recombination hubs), a gold candidate hub (the F33454 co-sorting module), and
+scattered candidate pairs.}
+\label{figRD:network}
+\end{figure}
+
+% =====================================================================
+\section{The structure module is individual-level admixture-block co-ancestry}\label{srD:structure}
+
+The dominant object in the network is a single low-recombination complex whose members are
+wired almost entirely to one another. A principal-component analysis over the 87 member loci
+shows what it is \emph{not} (Fig.~\ref{figRD:structpca}). These loci separate individuals by
+population \emph{less} than a random draw of differentiated loci: the mean per-locus
+among-population $R^2$ is $0.43$, against $0.54$ for random differentiated loci and $0.64$ for
+the candidate loci. They also load only weakly on the genome-wide principal components
+($|r|\leq0.23$). Their cross-genome correlation is therefore neither among-population
+geographic differentiation nor the dominant ancestry axis, but individual-level
+admixture-block covariance: ancestral haplotype blocks co-inherited within individuals and,
+because these regions recombine slowly, not yet broken up. This is why the hubs persist through
+genome-PC conditioning, and it is read here directly from the genotypes rather than from the
+recombination map.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.74\textwidth]{../Figures/moduleD_structure_pca.png}
+\caption{\textbf{The structure module carries less among-population structure than baseline.}
+PCA over the 87 loci of the structure module, individuals coloured by population. Real
+between-population structure is present (some populations, e.g.\ J\"arvenp\"a\"a, form coherent
+clusters), but mean per-locus among-population $R^2$ ($0.43$) is below that of a random draw of
+differentiated loci ($0.54$) and of the candidate loci ($0.64$), and the module's axes
+correlate only weakly with the genome-wide PCs. The pattern is consistent with individual-level
+admixture-block co-ancestry rather than geographic differentiation.}
+\label{figRD:structpca}
+\end{figure}
+
+% =====================================================================
+\section{The co-ancestry resolves into several cross-chromosome modules}\label{srD:modules}
+
+The structure ``module'' is not one block but several. Average-linkage clustering of the
+meta-node consensuses across chromosomes (cut at $|r|>0.4$; Methods, \emph{A single
+reproducible read-out}) resolves the network into 23 co-ancestry modules --- a dominant module
+of 16 meta-nodes spanning 12 chromosomes and secondary modules of 14, 9 and 7 meta-nodes.
+Plotted one module at a time, each is a single coherent block: across all of a module's SNPs on
+six or more chromosomes an individual takes one of the three dosages \emph{together}, exactly as
+a co-inherited admixture haplotype block should, and unrelated to the other modules that the
+all-structure view mixes in (Fig.~\ref{figRD:modhm}). Drawing only the within-module edges on
+the genome shows the same point: the co-ancestry resolves into a few disjoint, colour-coded
+bundles (79 of the 110 edges) rather than one hairball (Fig.~\ref{figRD:modcirc}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.94\textwidth]{../Figures/moduleD_module_13_heatmap.png}
+\caption{\textbf{One cross-chromosome co-ancestry module behaves as a single haplotype block.}
+Genotype heatmap of a module's member SNPs (9 clusters / 7 meta-nodes across
+Chr8/10/11/13/15/21; columns clustered; colour bars: cluster, meta-node, sorting, DI; rows
+$=$ individuals along the module's co-ancestry PC1). An individual is homozygous-reference
+(blue), heterozygous (pale), or homozygous-alternate (red) consistently across all 2{,}926 SNPs
+on all six chromosomes, and the three groups do not coincide with populations.}
+\label{figRD:modhm}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\textwidth]{../Figures/moduleD_module_circos.png}
+\caption{\textbf{Within-module associations.} Only edges whose two meta-nodes fall in the same
+cross-chromosome correlation module (79 of 110), coloured by module; node ring coloured to
+match. Each co-ancestry module reads as its own bundle of links across chromosomes. Outer
+track: local LD support ($\mathrm{ld}_w>0.2$) per marker; inner ring: the genome-wide sorting
+classification.}
+\label{figRD:modcirc}
+\end{figure}
+
+% =====================================================================
+\section{The candidate residue}\label{srD:candidates}
+
+Thirteen edges join two candidate meta-nodes (Table~\ref{tabRD:cand}; Fig.~\ref{figRD:candcirc}),
+and they organise into three kinds. (i)~An aquilonia \emph{co-sorting} module anchored on
+F33454 (Chr10; degree 12): its partners on Chr3/4/5/9/11/13/19 are almost all aquilonia-sorted,
+i.e.\ coordinated ancestry co-selection toward the minor (aquilonia) background rather than an
+obvious pairwise incompatibility --- this module belongs with the ancestry-sorting arms.
+(ii)~A single strong, ancestry-\emph{independent} trans pair, F11431--F49480 (Chr3--Chr16;
+$q=2.2\times10^{-10}$; both loci unsorted), the cleanest pairwise-incompatibility candidate the
+network contains. (iii)~A few same-ancestry cis pairs (polyctena: F17114--F49429,
+F15820--F26284; aquilonia: F22294--F39587), i.e.\ co-sorting, not repulsion. Stripped of
+structure and of ancestry co-sorting, the pair-specific residue is F11431--F49480 together with
+a couple of weak, leverage-stable trans pairs --- a handful of edges reached by one reproducible
+criterion.
+
+\begin{table}[t]
+\centering
+\caption{The 13 candidate--candidate edges (both endpoints outside the structure module), with
+chromosomes, coupling, false-discovery $q$, and the ancestry-sorting class of each endpoint.
+The F33454 anchor and its aquilonia-sorted partners form a co-sorting module;
+F11431--F49480 is the one strong ancestry-independent trans pair.}
+\label{tabRD:cand}
+\small
+\begin{tabular}{llccl}
+\toprule
+Pair & Chr & coupling & $q$ & sorting (a/b) \\
+\midrule
+F11431--F49480 & 3/16  & trans & $2.2\times10^{-10}$ & unsorted/unsorted \\
+F10974--F33454 & 3/10  & trans & $2.7\times10^{-4}$  & aqu/aqu \\
+F32802--F33454 & 9/10  & trans & $1.1\times10^{-3}$  & aqu/aqu \\
+F11265--F33454 & 3/10  & trans & $6.2\times10^{-3}$  & pol/aqu \\
+F15419--F33454 & 4/10  & cis   & $2.8\times10^{-11}$ & aqu/aqu \\
+F33454--F57178 & 10/19 & cis   & $8.8\times10^{-5}$  & aqu/aqu \\
+F33454--F41301 & 10/13 & cis   & $1.2\times10^{-4}$  & aqu/aqu \\
+F33454--F35575 & 10/11 & cis   & $2.2\times10^{-4}$  & aqu/aqu \\
+F17114--F49429 & 4/15  & cis   & $9.2\times10^{-4}$  & pol/pol \\
+F15820--F26284 & 4/7   & cis   & $2.3\times10^{-3}$  & pol/pol \\
+F21099--F33454 & 5/10  & cis   & $3.0\times10^{-3}$  & aqu/aqu \\
+F22294--F39587 & 6/12  & cis   & $4.7\times10^{-3}$  & aqu/aqu \\
+F45183--F45504 & 14/14 & cis   & $5.0\times10^{-3}$  & unsorted/unsorted \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\textwidth]{../Figures/moduleD_candidate_circos.png}
+\caption{\textbf{Candidate associations on the genome.} Each association drawn as a band
+spanning the two meta-nodes it joins (cis blue, trans orange; full opacity, minimum width for
+visibility). The Chr10 anchor F33454 fans out to aquilonia-sorted partners on
+Chr3/4/5/9/11/13/19 (the aquilonia co-sorting module), while the single orange band
+F11431--F49480 (Chr3--Chr16) is the one ancestry-independent trans pair.}
+\label{figRD:candcirc}
+\end{figure}
+
+% =====================================================================
+\section{Low recombination is a caveat, not a verdict}\label{srD:null}
+
+The interpretation above is descriptive and stops short of an intrinsic call, for one reason.
+Low recombination is not evidence of neutrality: it is where coadapted complexes are expected
+to accumulate, so the ``structure'' annotation is used as context, never as a filter, and every
+unit --- low-recombination included --- is carried into the neutral null. Because for an
+unlinked pair the between-region recombination fraction is $0.5$ regardless of local rate, low
+local recombination does not hold cross-chromosome LD; it makes each region a clean, low-noise
+ancestry marker that lights up for whatever residual covariation remains after conditioning,
+neutral or selected. The PCA above is consistent with neutral relic co-ancestry but does not
+exclude selection, which parallel or stabilising forms can also render weakly differentiated
+(Methods, \emph{Recombination annotation, not a filter}).
+
+The clean discriminant is a neutral null matched to \emph{local} recombination (Methods,
+\emph{Neutral, recombination-matched null}): every pair is judged against a baseline simulated
+at its own recombination rate, so a low-recombination pair can still surface if its LD exceeds
+that high baseline. Two corroborations are available before the simulation and both separate
+selection from neutral relic co-ancestry: replicate-population parallelism (neutral drift takes
+random directions across the twenty populations, whereas selection maintains the same
+combination reproducibly) and specific exceedance of a module over the general
+low-recombination background. The coherent multi-chromosome blocks (Fig.~\ref{figRD:modhm}) are
+therefore the first coadaptation candidates to test, not the ones to set aside. Until the null
+gives them a scale, the intrinsic screen reports a largely negative result --- the apparent
+two-locus signal is structure, assembly, or single-deme leverage --- with a short, explicit list
+of candidates to resolve.
+
+\end{document}
