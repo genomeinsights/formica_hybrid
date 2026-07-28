@@ -1,0 +1,176 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+
+\hypersetup{pdftitle={Supplementary Figures}, pdfauthor={Poikela et al.}}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}Supplementary Figures}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parindent}{0pt}\setlength{\parskip}{0.6em}
+
+\renewcommand{\thefigure}{S\arabic{figure}}
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\ldw}{\ensuremath{\mathrm{ld}_w}}
+
+\title{\vspace{-3em}\textbf{\color{Accent}Supplementary Figures}\\[0.3em]
+  \Large LD decay, complexity reduction, ancestry sorting, architecture, and climate}
+\author{Poikela et al.}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+\begin{center}\small\color{Muted}
+The analytical workflow is shown in the Materials and Methods. Figures are ordered
+following the Methods sections. All analyses are descriptive and conditional; see the
+Methods for interpretation.
+\end{center}
+
+% ---- LD decay and local LD support -------------------------------------
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.86\textwidth]{figures/figS02_ld_decay.png}
+\caption{\textbf{LD decay and local LD support.} Genome-wide linkage-disequilibrium
+decay and the per-marker local LD support statistic \ldw{}, computed as the median
+\(r^2\) between a marker and its neighbours within the \(\rho=0.95\) window. \ldw{} is
+measured directly from the genotypes at marker resolution and is used to flag clusters
+for reconsideration during complexity reduction.}
+\label{figS:lddecay}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.9\textwidth]{figures/figS03_roc_low_recomb.png}
+\caption{\textbf{Discrimination of low-recombination regions.} Receiver-operating
+characteristic curves for the local LD support \ldw{} and the window-level decay rate
+\(a\), evaluated against map-based recombination rate at three definitions of low
+recombination (lowest 5\%, 10\%, 25\% of windows). The area under the curve is
+0.91--0.98 for \(a\) and 0.73--0.86 for \ldw{}; the decay rate is the stronger
+window-level indicator, whereas \ldw{} supplies the marker-resolution measure.}
+\label{figS:roc}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{figures/figS04_ld_tracks.pdf}
+\caption{\textbf{Local LD support along example chromosomes.} Per-marker \ldw{} (grey)
+along Chr26 and Chr10, each with a pronounced low-recombination region, shown against
+the window decay rate \(a\) (left) and map-based recombination rate (right); all series
+are min--max scaled. \ldw{} is elevated exactly where both \(a\) and recombination are
+reduced.}
+\label{figS:tracks}
+\end{figure}
+
+% ---- complexity reduction ----------------------------------------------
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.82\textwidth]{figures/figS05_stage1_vs_combined.png}
+\caption{\textbf{Two-stage complexity reduction.} Stage 1 clustering compared with the
+combined two-stage result for Chr26, restricted to markers with high local LD support.
+Fragmented Stage-1 clusters within each low-recombination region are consolidated into
+single coherent clusters, the intended effect of the Stage 2 quality-gated merge.}
+\label{figS:stage}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.9\textwidth]{figures/figS06_fidelity_hist.png}
+\caption{\textbf{Consensus fidelity.} Distribution of consensus round-trip fidelity
+(\(\mathrm{score}_{\mathrm{eMLG}}=\mathrm{cor}\{\mathrm{round}(x),x\}^2\)) across five
+\ldw{} flagging thresholds, separating single-marker clusters (no merge possible) from
+genuine multi-marker merges. The separation clarifies that mass near the upper limit at
+permissive thresholds reflects isolated markers rather than merges stopping early.}
+\label{figS:fidelity}
+\end{figure}
+
+% ---- architecture -------------------------------------------------------
+% (The extent and direction of sorting are shown in main-text Figure~1A,B; sort-class
+% counts in Table~S1 and size-stratified aggregation in Table~S3.)
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.78\textwidth]{figures/figS08_architecture.pdf}
+\caption{\textbf{Genomic architecture of sorting.}
+(A) Standardised relative differentiation (\(F_{ST}\)), between-parent allelic
+difference (\(d_{xy}\)) and parental expected heterozygosity (\(\pi\)) across
+recombination deciles: the differentiation signature is confined to the
+lowest-recombination decile. (B) Direction of sorting versus recombination at the
+LD-reduced-unit level, showing no strong recombination gradient. (The abundance
+comparison of SNP- versus unit-level sorting is shown in main-text Figure~1C.)}
+\label{figS:arch}
+\end{figure}
+
+% (Consensus-versus-representative validation, ~99% direction agreement, is reported
+%  numerically in the Materials and Methods rather than as a figure.)
+
+% ---- climate ------------------------------------------------------------
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.8\textwidth]{figures/figS10_ancestry_confound.pdf}
+\caption{\textbf{Ancestry--climate association.} Per-population mean \Faq{} ancestry
+against the climate axes PC1 and PC2. PC1 is weakly correlated with ancestry
+(\(\rho=-0.23\)); PC2 shows a moderate positive correlation (\(\rho=0.57\)) strongly
+influenced by {\AA}land, motivating the use of the covariance matrix \(\Omega\) and the
+{\AA}land-excluded configuration as primary.}
+\label{figS:confound}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.86\textwidth]{figures/figS11_dose_response.pdf}
+\caption{\textbf{Diagnostic content versus climate association.} Proportion of
+ancestry-diagnostic members against the cluster climate-significance rate, in
+size-comparable strata (clusters with \(\geq20\) and \(\geq50\) markers), for PC1 and
+PC2 in the primary configuration. Point size scales with the number of clusters; the
+dashed line is the genome-wide baseline.}
+\label{figS:dose}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.86\textwidth]{figures/figS12_maf_power.pdf}
+\caption{\textbf{Allele-frequency and differentiation sensitivity of the enrichment.}
+The diagnostic-enrichment coefficient (percentage points per +10 percentage-point
+climate rate) across nested models adding hybrid MAF, recombination, and BayPass XtX
+(M0--M3), for PC1 and PC2. Blue intervals are model-based 95\% intervals; the dark M3
+interval is the chromosome block bootstrap. The coefficient roughly halves and loses
+significance once differentiation (XtX) is included: PC1 M0--M3 \(=+4.46,\,+3.48,\,
++3.44,\,+1.82\) (\(P=8\times10^{-4}\) to \(0.16\)); PC2 \(=+3.72,\,+2.46,\,+2.77,\,+1.69\)
+(\(P=0.013\) to \(0.23\)). The M3 chromosome block-bootstrap intervals are
+\([-3.9,\,10.0]\) (PC1) and \([-2.5,\,15.5]\) (PC2).}
+\label{figS:mafxtx}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.8\textwidth]{figures/figS13a_manhattan_PC1.png}\\[1mm]
+\includegraphics[width=0.8\textwidth]{figures/figS13b_manhattan_PC2.png}
+\caption{\textbf{Cluster-level climate association along the genome.} Bayes factors for
+association with PC1 (top) and PC2 (bottom) in the primary configuration
+({\AA}land-excluded, fixed-\(\Omega\)), with outlier clusters shown over the genome-wide
+background.}
+\label{figS:manhattan}
+\end{figure}
+
+% ---- dependence-aware uncertainty --------------------------------------
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.72\textwidth]{figures/figS14_block_bootstrap.pdf}
+\caption{\textbf{Dependence-aware uncertainty.} Genomic block-bootstrap 95\% intervals
+(10,000 replicates) for the five central coefficients, from whole-chromosome and 10-cM
+blocks, against the model-based intervals. The three sorting/architecture coefficients
+exclude zero under both block definitions; the two climate coefficients do not.
+Estimate [chromosome 95\%]: DI\,$\to$\,direction \(1.46\) \([1.41,1.52]\);
+recombination\,$\to$\,direction \(-0.091\) \([-0.145,-0.037]\);
+recombination\,$\to$\,magnitude \(0.052\) \([0.046,0.057]\);
+climate\,$\to$\,diagnostic PC1 \(4.46\) \([-4.0,13.1]\) and PC2 \(3.72\)
+\([-0.7,17.8]\). Every reconstructed model reproduced its full-data estimate before
+resampling.}
+\label{figS:boot}
+\end{figure}
+
+\end{document}

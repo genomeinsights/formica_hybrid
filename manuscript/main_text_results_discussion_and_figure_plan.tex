@@ -1,0 +1,353 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes.geometric}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{LightBlue}{HTML}{EAF2F8}
+\definecolor{MidBlue}{HTML}{8EB4CE}
+\definecolor{Muted}{HTML}{5B6570}
+\definecolor{Aqu}{HTML}{3A7D77}
+\definecolor{Pol}{HTML}{D08A45}
+\definecolor{Grey}{HTML}{C7CDD2}
+
+\hypersetup{
+  pdftitle={Draft main-text Results and Discussion with figure plan},
+  pdfauthor={Poikela et al.}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\color{Muted}Main-text planning draft}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.7em}
+\renewcommand{\arraystretch}{1.18}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+
+\title{\vspace{-3em}
+\textbf{\color{Accent}Draft main-text Results and Discussion}\\[0.3em]
+\Large Predictability and genomic organisation of ancestry sorting}
+\author{Poikela et al.}
+\date{\small Working draft excluding the epistasis screen and simulations}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+\begin{center}
+\small\color{Muted}
+The first two sections are written as candidate manuscript text. The final
+section is an editorial figure and supplementary-material plan. Climate
+associations are interpreted as conditional and exploratory.
+\end{center}
+
+\section*{Results}
+
+\subsection*{Ancestry sorting is predominantly directional across hybrid populations}
+
+To determine whether hybrid genome evolution repeatedly favoured the same
+parental ancestry, we quantified near-fixation across twenty geographically
+separated \Faq{} $\times$ \Fpo{} populations. The analysis extends the
+three-population comparison of Nouhaud et al. (2022) in two respects: it
+separates repeated fixation in the same parental direction from fixation in
+opposing directions, and it accounts for local linkage rather than assigning
+equal weight to fixed physical windows.
+
+Among SNPs that remained polymorphic in the pooled parental samples, 67.96\%
+were not near-fixed in at least half of the hybrid populations. Of those that
+did show repeated sorting, 17.50\% sorted toward \Fpo{} and 14.40\% toward
+\Faq{}, whereas only 0.14\% showed strong sorting in opposing directions among
+populations (Fig.~X, panel A). Thus, the main feature of the data was not
+near-fixation itself, but the consistency of its parental direction across
+populations. Because the populations may share aspects of their demographic
+history, these proportions describe repeatability across the sampled panel
+rather than proving independent evolutionary replication.
+
+Marker-level summaries can overstate the genomic extent of repeated sorting
+when many correlated markers report the same event. We therefore reduced
+1,114,340 markers to 474,014 LD clusters and represented each cluster once.
+Among clusters selected because they contained at least one SNP-level sorting
+signal, aggregation removed the sorting classification increasingly often as
+cluster size increased: 74.7\% of clusters containing at least five markers
+were unsorted after aggregation, compared with 5.0\% of the smallest units.
+This comparison is conditional on the presence of a marker-level signal and
+does not estimate the genome-wide fraction of unsorted clusters. The loss of
+the aggregate call was unlikely to result primarily from poor consensus
+construction, because consensus fidelity remained high (median 0.856) and only
+7 of 16,597 multi-marker unsorted clusters fell below the predefined fidelity
+threshold. Repeated sorting was therefore distributed mainly across numerous
+small genomic units rather than a limited set of large LD regions.
+
+\subsection*{The parental direction of sorting changes along the diagnostic-index axis}
+
+The modest genome-wide excess of sorting toward \Fpo{} concealed a strong
+reversal in direction along the diagnostic-index axis. Among
+unidirectionally sorted loci, the fraction sorting toward \Faq{} increased
+monotonically from approximately 0.15 in the least diagnostic decile to 0.74
+in the most diagnostic decile, crossing parity near the centre of the DI
+distribution (Spearman \(\rho=0.31\); Fig.~X, panel B). In a logistic model
+including pooled parental MAF, DI strongly increased the probability of
+\Faq-directed sorting (DI coefficient \(=0.082\), \(z=181\)), whereas higher
+parental MAF weakly shifted sorting toward \Fpo{}.
+
+Larger LD clusters were both more diagnostic and more likely to sort toward
+\Faq{} in unadjusted summaries. This relationship did not reflect an
+independent effect of cluster size. After DI and parental MAF were included,
+the size coefficient reversed direction
+\(\{\log_2(\mathrm{size})=-0.20,\ z=-22\}\), whereas the DI coefficient
+remained nearly unchanged (\(0.083,\ z=120\)). Parental diagnosticity, rather
+than the physical extent of a correlated region, was therefore the principal
+axis organising the direction of repeated sorting.
+
+\subsection*{Linkage changes the apparent abundance, but not the main direction, of sorting}
+
+DI was nearly orthogonal to recombination rate
+(\(\rho=-0.03\)) and pooled parental MAF (\(\rho=-0.02\)). At the analysed
+SNPs, high DI was associated most strongly with lower parental expected
+heterozygosity (\(\rho=-0.46\)) and only weakly with the between-parent
+allelic-difference summary (\(\rho=0.13\)). The diagnostic-index gradient
+therefore cannot be reduced to a low-recombination gradient or to elevated
+between-parent difference alone.
+
+The importance of representing LD-correlated markers once was clearest in
+regions of lowest recombination. In the lowest recombination decile, 17\% of SNPs
+were classified as sorted, but only 6\% of LD-reduced units were sorted,
+compared with approximately 42\% of units across the remaining deciles
+(Fig.~X, panel C). The excess marker-level signal in low recombination
+therefore largely reflected spatial pseudoreplication. Consistent with this
+interpretation, aggregate sorting increased rather than decreased with
+recombination rate.
+
+Among unidirectionally sorted units, DI remained by far the strongest predictor
+of parental direction in a model including recombination, parental MAF, and
+cluster size (standardised DI coefficient \(=1.46,\ z=125\)). Recombination
+made a much smaller contribution
+(\(-0.09,\ z=-7.6\)), corresponding to a weak tendency toward \Faq{} ancestry
+at lower recombination rates. This residual association is descriptive and is
+not sufficient on its own to identify its evolutionary cause. Nevertheless,
+both relationships were robust to residual genomic dependence. A chromosome
+block bootstrap gave 95\% intervals of 1.41--1.52 for the DI coefficient and
+\(-0.145\) to \(-0.037\) for the recombination coefficient; intervals from
+10-cM genetic-map blocks were similar. The positive relationship between
+recombination and sorting magnitude was likewise retained
+(coefficient \(=0.052\), chromosome-block 95\% interval 0.046--0.057).
+
+\subsection*{Climate association does not robustly explain diagnosticity or repeated directional sorting}
+
+The hybrid populations span marked climatic variation. The first two
+principal components of nineteen bioclimatic variables jointly explained 86\%
+of this variation. PC1 primarily captured a temperature and seasonality
+gradient, with the high-altitude Swiss population resembling colder northern
+populations, whereas PC2 primarily separated populations by precipitation.
+Genotype--environment associations were evaluated while accounting for
+among-population covariance; because PC2 covaried with genome-wide ancestry and
+this relationship was strongly influenced by \AA{}land, the
+\AA{}land-excluded analysis with a fixed covariance matrix was treated as
+primary.
+
+Under model-based uncertainty, climate-associated LD clusters appeared to
+contain a higher proportion of ancestry-diagnostic markers. Among clusters
+with at least fifty markers, a 10-percentage-point increase in the proportion
+of climate-associated members corresponded to increases of 4.5 percentage
+points for PC1 (\(P=8\times10^{-4}\)) and 3.7 percentage points for PC2
+(\(P=0.013\)) in the proportion of diagnostic markers. This nominal enrichment
+was not robust to genomic dependence: chromosome block-bootstrap 95\%
+intervals were \(-4.0\) to 13.1 for PC1 and \(-0.7\) to 17.8 for PC2, with
+similar conclusions from 10-cM blocks (Fig.~X, panel D).
+
+The estimates were also attenuated after accounting for variables related to
+allele-frequency variation and power. Adding mean hybrid MAF reduced the PC1
+and PC2 coefficients to 3.5 and 2.5 percentage points, respectively. After
+further adjustment for mean recombination rate and BayPass XtX, a measure of
+among-population differentiation, the corresponding coefficients were 1.8 and
+1.7 percentage points (\(P=0.16\) and 0.23); chromosome block-bootstrap
+intervals again included zero. Because XtX and the climate Bayes factor are
+derived from the same allele-frequency data, this is a conservative
+sensitivity analysis rather than an estimate of an independently adjusted
+climate effect. Together, the analyses show that the nominal enrichment is
+compatible with shared dependence on allele-frequency differentiation and
+cannot be identified as a climate-specific association.
+
+The same climate-association rate did not predict repeated directional
+sorting. In clusters with at least fifty markers, the odds ratios were 0.99
+for PC1 and 1.03 for PC2, with \(P>0.95\) for both. This absence of enrichment
+should be interpreted cautiously: genotype--environment association requires
+allele-frequency variation among populations, whereas repeated sorting toward
+the same parent removes that variation. Nevertheless, the contrast is
+informative: the measured climatic gradients did not robustly explain either
+diagnostic content beyond general differentiation or the repeated direction
+of ancestry sorting.
+
+\section*{Discussion}
+
+Across twenty hybrid populations, ancestry sorting was strikingly asymmetric:
+loci that repeatedly approached fixation almost always did so toward the same
+parent, while strong fixation in opposing directions was rare. This extends
+the repeatable sorting described across three populations by Nouhaud et al.
+(2022) to a much broader population panel. The additional populations also
+allow repeatability to be decomposed explicitly into consistent and opposing
+directions, although we remain cautious about treating all populations as
+fully independent evolutionary replicates.
+
+The central result is not a uniform bias toward one parent. Instead, the
+parental direction of sorting reverses along the diagnostic-index axis:
+low-DI loci tend to sort toward \Fpo{}, whereas high-DI loci tend to sort
+toward \Faq{}. This explains why analyses restricted to strongly diagnostic
+loci can yield an apparent \Faq{} excess while the broader marker set shows a
+slight \Fpo{} excess. DI is not simply a proxy for recombination or cluster
+size. At the analysed SNPs it is associated mainly with reduced parental
+expected heterozygosity, suggesting that the direction of sorting is organised
+by the parental frequency landscape rather than by a single class of large,
+low-recombination regions.
+
+Accounting for LD changes the biological picture. Marker-level analyses make
+sorting appear concentrated in low-recombination regions because many nearby
+markers repeat the same ancestry signal. Once each LD cluster contributes once,
+sorting is least frequent in the lowest-recombination decile and is carried
+primarily by numerous small units. The weak residual association between low
+recombination and \Faq-directed sorting is therefore secondary to the much
+stronger diagnostic-index gradient. More generally, this comparison shows that
+the apparent genomic extent of repeatable evolution can depend strongly on
+whether markers or correlated genomic units are counted.
+
+Climate association did not provide a robust explanation for repeated
+sorting. Directionally sorted units were not enriched in climate-associated
+regions, and the nominal enrichment of ancestry-diagnostic markers disappeared
+once residual genomic dependence was respected. Its attenuation after
+accounting for hybrid MAF and XtX further indicates that it could arise from
+the allele-frequency differentiation that contributes to both diagnosticity
+and BayPass evidence. XtX is a deliberately strong control and may remove
+biologically relevant as well as confounding variation, so this sensitivity
+analysis does not demonstrate that climate is irrelevant. Moreover, locally
+varying selection could drive populations in different directions, whereas
+repeated near-fixation reduces the among-population variation used to detect
+genotype--environment association. The present data nevertheless provide no
+robust evidence that the measured climatic gradients organise the repeated
+direction of ancestry sorting.
+
+Together, the results identify diagnosticity as the main organising axis of
+early hybrid genome evolution in this system. Recombination determines how
+many markers repeat a signal and makes smaller but block-robust contributions
+to sorting magnitude and direction. In contrast, neither diagnostic content
+nor repeated directional near-fixation showed a robust climate-specific
+association. The emerging picture is therefore one of many small ancestry
+units sorting in a highly structured parental direction, rather than a few
+large genomic regions responding uniformly to linkage or the measured
+climatic gradients. These conclusions remain associative: shared population
+history and conditional testing limit causal interpretation, and individual
+candidate regions require independent biological scrutiny.
+
+\section*{Editorial figure plan}
+
+\subsection*{Recommended main figure: one integrated ancestry-sorting figure}
+
+The main figure should carry the central narrative rather than the validation
+machinery. A four-panel figure is sufficient:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  panel/.style={draw=Accent, thick, rounded corners=2pt, fill=LightBlue,
+    minimum width=72mm, minimum height=43mm, text width=64mm,
+    align=left, inner sep=5mm},
+  title/.style={font=\bfseries\color{Accent}}
+]
+\node[panel] (a) {\textbf{A. Directional sorting}\\[2mm]
+\textcolor{Pol}{17.50\% \Fpo{}} \quad
+\textcolor{Aqu}{14.40\% \Faq{}}\\
+0.14\% bidirectional; 67.96\% unsorted\\[2mm]
+\footnotesize Stacked proportions among parent-polymorphic SNPs.};
+\node[panel, right=8mm of a] (b) {\textbf{B. Direction reverses with DI}\\[2mm]
+\(\Pr(\Faq{}\mid\mathrm{unidirectional})\) rises from
+\(\sim0.15\) to \(\sim0.74\) across DI deciles.\\[2mm]
+\footnotesize Line and uncertainty across deciles; parity at 0.5.};
+\node[panel, below=8mm of a] (c) {\textbf{C. LD reveals pseudoreplication}\\[2mm]
+Lowest recombination decile:\\
+17\% sorted SNPs versus 6\% sorted units.\\[2mm]
+\footnotesize SNP and LD-reduced-unit estimates across recombination deciles.};
+\node[panel, right=8mm of c] (d) {\textbf{D. Climate effects are not robust}\\[2mm]
+Nominal diagnostic effects: \(+4.5\) and \(+3.7\) pp,\\
+but block intervals include zero.\\
+Sorting: OR \(0.99\) and \(1.03\).\\[2mm]
+\footnotesize Model-based and block-robust intervals for PC1/PC2.};
+\end{tikzpicture}
+\caption{\textbf{Wireframe for the main ancestry-sorting figure.} The panels
+progress from the phenomenon (A), to its principal predictor (B), to the effect
+of genomic linkage on its apparent abundance (C), and finally to its
+relationship with environmental association (D).}
+\end{figure}
+
+Panel A establishes the phenomenon. Panel B is the biological centre of the
+figure and should receive the most visual space. Panel C demonstrates why the
+LD reduction changes the interpretation. Panel D closes the extrinsic-climate
+branch without requiring separate Manhattan plots in the main text.
+
+\subsection*{Material better placed in supplementary figures and tables}
+
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.28\textwidth}
+                >{\raggedright\arraybackslash}p{0.62\textwidth}}
+\toprule
+Supplementary item & Recommended content \\
+\midrule
+LD decay diagnostics &
+Chromosome-specific decay fits, ROC evaluation of local LD support, and
+example genomic tracks. \\
+\addlinespace
+Complexity-reduction validation &
+Stage 1 versus combined clustering in extended-LD regions, fidelity
+distributions, threshold sensitivity, residual inter-unit LD, and a concise
+parameter table. \\
+\addlinespace
+Sorting robustness &
+Full class counts, conditional aggregation by cluster size, fidelity check for
+apparently diluted clusters, exact-test summaries, and sensitivity to sorting
+thresholds. \\
+\addlinespace
+Genomic architecture &
+Full parental-summary and recombination decile plots, complete regression
+tables, and consensus-versus-representative validation. \\
+\addlinespace
+Climate association &
+Ancestry--climate confounding check, nested cluster-size strata, the MAF/XtX
+sensitivity ladder, block-aware uncertainty, and full model tables. \\
+\addlinespace
+Dependence-aware uncertainty &
+Chromosome- and 10-cM-block confidence intervals for the principal sorting,
+architecture, and climate coefficients, with the reconstruction checks and
+bootstrap diagnostics. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Suggested order in the full paper}
+
+The co-authors' sampling, ancestry, and climate overview should establish the
+system first. The text drafted here can then enter as one continuous section:
+(1) directional repeatability, (2) diagnostic-index polarity, (3) genomic
+architecture after LD reduction, and (4) overlap with climate association.
+This order lets the main figure function as a bridge from the descriptive
+population overview to the later mechanistic analyses without exposing the
+internal analysis-module structure.
+
+\section*{Reference}
+
+Nouhaud P, Martin SH, Portinha B, Sousa VC, Kulmuni J. Rapid and predictable
+genome evolution across three hybrid ant populations. \textit{PLoS Biology}.
+2022;20:e3001914. \url{https://doi.org/10.1371/journal.pbio.3001914}.
+
+\end{document}

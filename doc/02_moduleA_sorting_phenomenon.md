@@ -154,14 +154,15 @@ generalisation of the three-population parallelism of Nouhaud et al. (2022).
 
 **Most differentiated loci do not sort; those that do are directional, not
 bidirectional.** Restricting to parent-polymorphic loci (pooled-parental MAF ≥ 0.15;
-**~660,000 loci** at the SNP level):
+661,312 loci at the SNP level, of which 655,537 have a defined parental orientation —
+proportions below are among these oriented loci):
 
-| Class | Fraction of gated loci |
+| Class | Fraction of oriented loci |
 |---|---|
-| unsorted | **67.4%** |
-| unidirectional → *polyctena* | **17.3%** |
-| unidirectional → *aquilonia* | **14.3%** |
-| bidirectional | **0.1%** |
+| unsorted | **67.96%** |
+| unidirectional → *polyctena* | **17.50%** |
+| unidirectional → *aquilonia* | **14.40%** |
+| bidirectional | **0.14%** |
 
 Bidirectional near-fixation — the signature expected under drift or an equal-fitness
 incompatibility — is **vanishingly rare**. The consistency of direction across
@@ -211,8 +212,8 @@ governing axis of directional sorting.
 ### Figure
 
 - **Fig. 1 — `../Figures/moduleA_fig1.png`** (also `.pdf`). Three panels:
-  - **(a)** Genome-wide sort-class proportions among parent-polymorphic loci
-    (unsorted 67.4%; polyctena 17.3%; aquilonia 14.3%; bidirectional 0.1%).
+  - **(a)** Genome-wide sort-class proportions among oriented parent-polymorphic loci
+    (unsorted 67.96%; polyctena 17.50%; aquilonia 14.40%; bidirectional 0.14%).
   - **(b)** Fraction of unidirectionally sorted loci fixing toward *aquilonia* across
     DI deciles (rises ~0.15 → ~0.74; crosses parity mid-range).
   - **(c)** Proportion of independent units that are unsorted as a function of
