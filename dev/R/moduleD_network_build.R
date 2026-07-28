@@ -16,13 +16,16 @@
 ##      can appear as several correlated clusters -- which then reads as "multiple
 ##      independent interacting loci". For THIS network only, clusters on the same
 ##      chromosome within LINK_CM that remain correlated (|consensus r| > MERGE_R)
-##      are collapsed into one meta-node (connected components). This is NOT a change
-##      to the canonical clustering; it is a display/interpretation grouping.
+##      are collapsed into one meta-node (average-linkage clustering, MERGE_METHOD; single
+##      linkage / connected components chains uncorrelated ends -- do not use). This is NOT a
+##      change to the canonical clustering; it is a display/interpretation grouping.
+##  Then: a single-population LEVERAGE filter (leave-one-pop-out |r| >= LEV_LOO, which subsumes
+##  any near-fixed/MAF cutoff); a low-recombination ANNOTATION (STRUCT_PCT) that is carried to
+##  Module E's local-recomb-matched null, NOT used as a filter; and cross-chromosome MODULES
+##  (MODULE_R). See manuscript_notes/moduleD_plan.md for the minimal-pipeline rationale.
 ##
 ## Emits data/moduleD_network.rds = list(meta_nodes, meta_edges, params), consumed by
-## dev/R/moduleD_network_circos.R. Run from the repo root.
-## TODO (Step 3): attach downstream false-positive flags (near-fixed / leverage /
-## low-recomb structure) to meta_nodes and filter, once the criteria are agreed.
+## dev/R/moduleD_network_circos.R and moduleD_module_heatmaps.R. Run from the repo root.
 
 suppressPackageStartupMessages({ library(data.table); library(igraph) })
 source("dev/R/moduleD_paralogy.R")
@@ -34,9 +37,10 @@ MERGE_R    <- 0.5    # |consensus r| above which two within-window clusters are 
 MERGE_METHOD <- "average"   # linkage for the third-level merge; "single" = old connected-components (chains)
 MODULE_R   <- 0.4    # cross-chromosome correlation MODULES: average-linkage cut at |consensus r| (display grouping)
 PARALOGY_R <- 0.9    # |within-pop r| duplicate threshold
-MIN_MAF    <- 0.05   # near-fixed floor: consensus MAF below this cannot carry real LD (Step 3a)
-LEV_LOO    <- 0.3    # leverage: keep an edge only if its among-pop |r| survives leave-one-pop-out (Step 3b)
-STRUCT_PCT <- 0.10   # low-recomb 'structure' LABEL (not removed): recomb percentile below this (Step 3c)
+LEV_LOO    <- 0.3    # leverage: keep an edge only if its among-pop |r| survives leave-one-pop-out
+STRUCT_PCT <- 0.10   # low-recomb 'structure' ANNOTATION (never a filter): recomb percentile below this.
+                     # Low recomb is where coadaptation lives, so these are carried to the null (Module E),
+                     # judged against a LOCAL-recomb-matched neutral baseline -- not discarded. See moduleD_plan.md.
 EMMAX      <- "data/moduleD_emmax.rds"
 CLUSTERING <- "data/eMLG_5loci_0025_cM05.rds"
 CL_GATE    <- "data/moduleC_C3_cl.rds"
@@ -65,7 +69,7 @@ cmv <- setNames(cpos$cM, cpos$group_id)
 ## recombination percentile of each cluster vs the differentiated-cluster background (structure label)
 crate <- setNames(cpos$rate, cpos$group_id); bg_rate <- crate[cl[differentiated == TRUE, group_id]]
 rec_pct <- function(id) mean(bg_rate < crate[id], na.rm = TRUE)
-## consensus minor-allele frequency of a cluster (near-fixed filter)
+## consensus minor-allele frequency of a cluster (for the meta-node MAF column / diagnostics)
 maf_of <- function(id) { p <- mean(eMLG[, id], na.rm = TRUE) / 2; min(p, 1 - p) }
 
 ## ---- (1) global FDR over all unlinked tests ------------------------------
@@ -122,21 +126,17 @@ meta_edges <- d[ma != mb][, .(
   focal_pairs = paste(sprintf("%s-%s", focal, partner), collapse = ";")), by = .(mkey)]
 meta_edges[, c("ma", "mb") := tstrsplit(mkey, " ", fixed = TRUE)]
 
-## ---- (3) false-positive filtering (keep + LABEL structure hubs) -----------
+## ---- (3) leverage filter (structure loci are LABELLED, not removed -- see below) ---
 memb_of <- tapply(names(meta_of), meta_of, c)              # meta rep -> member cluster ids
-node_maf <- sapply(names(memb_of), function(rep) min(sapply(memb_of[[rep]], maf_of)))  # rarest member
-## (3a) near-fixed: drop meta-nodes whose rarest member is below the MAF-LD floor
-nearfixed <- names(which(node_maf < MIN_MAF))
-n0 <- nrow(meta_edges); meta_edges <- meta_edges[!(ma %in% nearfixed | mb %in% nearfixed)]
-cat(sprintf("[3a near-fixed] %d meta-nodes below MAF %.2f -> %d edges dropped\n",
-            length(nearfixed), MIN_MAF, n0 - nrow(meta_edges)))
-## (3b) single-population leverage: drop edges whose among-pop |r| does not survive leave-one-pop-out
+## single-population leverage: drop edges whose among-pop |r| does not survive leave-one-pop-out.
+## This subsumes any near-fixed / low-MAF cutoff (a rare-allele edge that a single deme drives
+## fails here), so no separate MIN_MAF filter is needed on the maf005-gated data.
 popm <- function(id) tapply(eMLG[, id], pops_all, mean, na.rm = TRUE)
 loo_min <- function(a, b) { pa <- popm(a); pb <- popm(b); ok <- is.finite(pa) & is.finite(pb)
   pa <- pa[ok]; pb <- pb[ok]; min(abs(sapply(seq_along(pa), function(k) cor(pa[-k], pb[-k])))) }
 meta_edges[, loo_min := mapply(loo_min, ma, mb)]
 n_lev <- meta_edges[loo_min < LEV_LOO, .N]; meta_edges <- meta_edges[loo_min >= LEV_LOO]
-cat(sprintf("[3b leverage] dropped %d edges with leave-one-pop-out |r| < %.2f\n", n_lev, LEV_LOO))
+cat(sprintf("[leverage] dropped %d edges with leave-one-pop-out |r| < %.2f\n", n_lev, LEV_LOO))
 
 ## ---- meta-node table (span = union of member-cluster extents; for Step-4 bands) ----
 memb_of <- memb_of[names(memb_of) %in% c(meta_edges$ma, meta_edges$mb)]   # surviving meta-nodes
@@ -155,7 +155,7 @@ meta_nodes <- rbindlist(lapply(names(memb_of), function(rep) {
              n_clusters = length(ids), members = paste(ids, collapse = ";"),
              degree = as.integer(mdeg[rep] %||% 0L), sort_class = sort_cat(ids),
              MAF = min(sapply(ids, maf_of)), rec_pct = min(sapply(ids, rec_pct))) }))
-meta_nodes[, structure := rec_pct < STRUCT_PCT]              # (3c) low-recomb structure LABEL (kept)
+meta_nodes[, structure := rec_pct < STRUCT_PCT]  # low-recomb ANNOTATION (kept + carried to E, not a filter)
 meta_nodes <- meta_nodes[meta %in% c(meta_edges$ma, meta_edges$mb)]   # keep connected meta-nodes only
 ## cross-chromosome correlation MODULES: average-linkage clustering of the meta-node
 ## consensuses (across chromosomes), cut at |r| > MODULE_R. Unlike the within-chromosome
@@ -172,7 +172,7 @@ cat(sprintf("[modules] %d cross-chromosome modules at |r|>%.2f (largest %d meta-
 
 saveRDS(list(meta_nodes = meta_nodes, meta_edges = meta_edges,
              params = list(Q_FDR = Q_FDR, LINK_CM = LINK_CM, MERGE_R = MERGE_R, MERGE_METHOD = MERGE_METHOD,
-                           MODULE_R = MODULE_R, PARALOGY_R = PARALOGY_R, MIN_MAF = MIN_MAF, LEV_LOO = LEV_LOO,
+                           MODULE_R = MODULE_R, PARALOGY_R = PARALOGY_R, LEV_LOO = LEV_LOO,
                            STRUCT_PCT = STRUCT_PCT, m_tests = m_tests, clustering = CLUSTERING)),
         "data/moduleD_network.rds")
 cat(sprintf("[out] %d meta-edges over %d meta-nodes (trans %d / cis %d); %d hubs (deg>=10); %d structure-labelled\n",
