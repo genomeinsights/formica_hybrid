@@ -13,8 +13,8 @@
 \newcommand{\rsq}{\ensuremath{r^{2}}}
 
 \title{\vspace{-3em}Screening the \textit{Formica} hybrid zone for intrinsic
-incompatibilities: structure-corrected two-locus association and the
-bidirectional-sorting test\\[0.3em]\large(work in progress)}
+incompatibilities: a structure-corrected two-locus
+association scan\\[0.3em]\large(work in progress)}
 \author{}
 \date{}
 
@@ -53,8 +53,8 @@ replicate independently fixes one or the other compatible combination, chosen by
 drift. Per locus this looks like strong sorting in \emph{random} directions --- some
 populations toward \Faq, some toward \Fpo{} --- i.e.\ bidirectional sorting. Its
 single-locus parallelism test is null by construction ($n_{\mathrm{aqu}}\approx
-n_{\mathrm{pol}}$), so Module A cannot flag it. The signal lives at the pair level
-(Section~\ref{sec:bidir}). Note that the among-population component of two-locus LD
+n_{\mathrm{pol}}$), so Module A cannot flag it. The signal lives at the pair level,
+which is what the structure-corrected scan below is built to catch. Note that the among-population component of two-locus LD
 is \emph{maximised} exactly here: a locus fixed in the same direction everywhere has
 no among-population variance, whereas one fixed in different directions across
 replicates has a great deal --- so bidirectional loci are the natural home of the
@@ -73,11 +73,10 @@ test of this trace must therefore control for relatedness.
 \noindent The descriptive among-population screen reported separately established
 that the \emph{raw} among-population LD between unlinked clusters is dominated by a
 single genome-wide ancestry gradient (drift/structure), with no pair specificity.
-The two analyses below remove that confound in two complementary ways --- a mixed
-model that conditions on genome-wide relatedness (Section~\ref{sec:emmax}), and a
-restriction to bidirectional loci that are orthogonal to the ancestry axis by
-construction (Section~\ref{sec:bidir}) --- and both surface the same methodological
-obstacle first: cross-chromosome paralogy (Section~\ref{sec:paralogy}).
+The analysis below removes that confound with a mixed model that conditions on
+genome-wide relatedness (Section~\ref{sec:emmax}), addressing traces (2) and (3) at the
+individual level, but must first clear a methodological obstacle: cross-chromosome
+paralogy (Section~\ref{sec:paralogy}).
 
 \section{Structure-corrected two-locus association (EMMAX)}
 \label{sec:emmax}
@@ -119,7 +118,7 @@ $\sim\!1.2$ and leaking the ancestry gradient back as spurious positive associat
 Finally, each focal trait is residualised on the top ten genome-wide PCs before the
 mixed model: $K$ cannot remove a \emph{secondary} structure axis that is concentrated
 on the very chromosomes double-LOCO drops, and such axes otherwise surface as hubs
-(Section~\ref{sec:transhubs}). Conditioning on the PCs strips the dominant, climate-aligned
+(Section~\ref{sec:metanet}). Conditioning on the PCs strips the dominant, climate-aligned
 axes --- after it the random-focal control gives essentially no significant partner ---
 while calibration holds. A first, targeted run scanned 51 focal loci (bidirectional
 candidates, extreme among-population-covariance loci, and controls); peaks were called at
@@ -221,232 +220,13 @@ moderate $|r|$ are genuine).}
 \label{fig:paralogy}
 \end{figure}
 
-\section{The bidirectional-sorting test, and cis/trans coupling}
-\label{sec:bidir}
-
-\paragraph{Why bidirectional loci, and why at the SNP level.} An equal-fitness
-incompatibility (trace~2) is exactly the case the among-population statistic is built
-for, and it has a decisive advantage: bidirectional loci do \emph{not} track the
-genome-wide ancestry gradient --- that is what makes them bidirectional --- so the
-confound that dominated the general screen is largely absent, and their co-sorting is
-a comparatively clean signal. Bidirectional sorting is real at the SNP level (911
-SNPs) but is averaged \emph{below} the sorting threshold at the eMLG consensus (no
-cluster qualifies): averaging member markers pulls the fixation fraction toward the
-middle. We therefore work at the SNP level, taking each LD cluster's most
-bidirectional member SNP as its representative (599 reps), which de-redundifies
-without losing the signal. One chromosome stands out --- Chr24 carries 176 of the 911
-bidirectional SNPs, but these collapse to only 13 clusters, i.e.\ a single large LD
-block (supergene-like).
-
-\paragraph{The cis/trans logic.} Consider two loci $A$ and $B$, each carrying \Faq{}
-or \Fpo{} ancestry. There are two parental combinations, (\Faq$_A$,\Faq$_B$) and
-(\Fpo$_A$,\Fpo$_B$), and two recombinant ones, (\Faq$_A$,\Fpo$_B$) and
-(\Fpo$_A$,\Faq$_B$). A Dobzhansky--Muller incompatibility makes some of these unfit,
-and each replicate, as it sorts, fixes a \emph{compatible} pair. Two architectures
-follow:
-\begin{itemize}
-\item If the two \emph{parental} combinations are the compatible ones (the classic
-case: derived alleles from the two lineages are mutually incompatible, so the
-recombinants are unfit), each population fixes both-\Faq{} or both-\Fpo{}. Across
-replicates the two loci fix the \emph{same} ancestry direction, so their
-per-population frequencies are positively correlated: \textbf{cis} coupling,
-$\Rst>0$.
-\item If instead the \emph{recombinant} combinations are the compatible ones
-(co-adapted heterospecific alleles, so each parental pairing is unfit), populations
-fix \Faq{} at one locus with \Fpo{} at the other. The per-population frequencies are
-\emph{negatively} correlated: \textbf{trans} coupling, $\Rst<0$.
-\end{itemize}
-
-\paragraph{Why the sign matters for the confound.} A shared ancestry gradient makes
-\emph{every} locus track overall ancestry, which produces \emph{positive}
-correlations between loci. So among general loci, cis ($\Rst>0$) co-sorting is
-indistinguishable from the gradient and cannot on its own indicate an incompatibility.
-\emph{Trans} co-sorting ($\Rst<0$) is the opposite of what the gradient produces ---
-it requires two loci to fix \emph{opposite} ancestries in the same populations --- so
-it cannot arise from the shared gradient at all. Negative among-population covariance
-between unlinked loci is therefore the most confound-resistant DMI signature we have.
-Restricting to bidirectional loci additionally rescues the cis direction: because
-these loci do not track the gradient, even their positive co-sorting is
-pair-specific rather than a by-product of overall ancestry.
-
-\paragraph{Test and null.} For each bidirectional representative we compute its
-\Faq-oriented allele frequency in each of the twenty populations, and for every
-unlinked pair (different chromosome, or same chromosome $>10$~cM) the correlation
-\Rst{} of those twenty-value vectors. Because bidirectional loci are approximately
-orthogonal to the ancestry axis, a per-locus \emph{permutation} null --- independently
-shuffling each locus's twenty per-population values, which preserves each locus's
-marginal sorting but destroys any co-sorting between loci --- is a reasonable
-pre-simulation calibration here (it would not be, for the ancestry-tracking loci of
-the general screen). We compare the observed number of strongly co-sorting unlinked
-pairs to that null. Cross-chromosome duplicates are filtered as in
-Section~\ref{sec:paralogy} (only 3 of 178{,}067 pairs --- bidirectional loci are
-essentially never paralogs).
-
-\paragraph{Result: a real but modest, diffuse excess.} There are 276 unlinked pairs
-at $|\Rst|\ge 0.7$, against a permutation-null mean of 165 (95\% $\le 186$),
-empirical $p<0.001$ (Fig.~\ref{fig:bidir}b) --- about $2.3\times$ the general
-differentiated-pair rate. Three features make this the most incompatibility-consistent
-result in Module D so far: it is orthogonal to the ancestry axis; $117$ of the $276$
-are \emph{trans} (negative \Rst, which the gradient cannot produce; $159$ cis); and it
-is genome-wide, not driven by the Chr24 block (only $6/276$ pairs involve Chr24, and
-the non-Chr24 rate is identical). The honest caveats are equally clear: the
-\emph{distribution} of \Rst{} barely shifts from the null (Fig.~\ref{fig:bidir}a) ---
-the excess is a tail-count effect of order a hundred pairs; the candidate network is
-diffuse (a hairball, not a few sharp modules, Fig.~\ref{fig:bidir}c); and the
-permutation null does not model the shared drift among populations, so it
-\emph{overstates} significance. The true excess-over-neutral is smaller and awaits
-the simulation. This is a lead consistent with a weak, distributed contribution of
-equal-fitness incompatibilities, not a resolved set of strong pairwise DMIs.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{../Figures/moduleD_bidirectional.png}
-\caption{Bidirectional co-sorting test. \textbf{(a)} The observed distribution of
-per-pair \Rst{} (blue) is only slightly heavier-tailed than the permutation null
-(grey). \textbf{(b)} But the count of unlinked pairs at $|\Rst|\ge 0.7$ (orange line)
-sits far beyond the permutation-null distribution of that count, $p<0.001$.
-\textbf{(c)} The candidate network's hub loci are spread across chromosomes; the
-Chr24 block (orange) is not special.}
-\label{fig:bidir}
-\end{figure}
-
-\section{Cluster independence: a by-product of the Manhattans}
-\label{sec:independence}
-
-The mixed-model Manhattans double as a direct test of whether the complexity
-reduction produced \emph{independent} units. If it did, a focal cluster should give
-a single local peak --- its self-association --- with flat neighbours; several
-significant peaks in the same region, as individual SNPs would give, would mean the
-local LD block had been split into clusters that remain correlated. Because the
-random effect is fitted leave-one-chromosome-out, the focal chromosome is not in its
-own $K$, so this local structure is seen honestly. We read it off the focal
-chromosome with the self-locus omitted (its self-$r^2\approx 1$ would compress the
-scale) and its position marked, plotting the relatedness-corrected $r^2$ of every
-other cluster (Fig.~\ref{fig:independence}).
-
-About half of the focal loci are locally clean --- a single self-position with no
-significant neighbour (Fig.~\ref{fig:independence}b). The remainder carry one to
-eight same-chromosome clusters that clear genome-wide significance within $\sim\!1$~cM
-of the focal (Fig.~\ref{fig:independence}a,c), but at \emph{moderate}
-relatedness-corrected $r^2$ --- at most $\approx 0.3$, never near one. The clustering
-has therefore broken each local block apart substantially (these neighbours are far
-from duplicates of the focal) without reducing it to a single unit, which is the
-expected outcome of a deliberate trade-off. Merging is bounded by two floors: a
-fidelity floor, beyond which the consensus stops faithfully summarising its members
-and the eMLG loses its meaning, and a pairwise-correlation floor below which pieces
-are already near-independent. Where merging stops --- most often against the fidelity
-floor, inside a large coherent block --- the residual correlation between the
-neighbouring clusters lands at $r^2\lesssim 0.3$. That ceiling is at least as strict
-as the fixed $r^2=0.2$ that conventional LD pruning imposes, and it is measured on a
-fairer scale: a relatedness-corrected correlation between consensus units that each
-summarise many markers, rather than a raw correlation between single SNPs. The
-residual is also purely local, so the one thing it could still distort --- counting a
-single co-sorting event several times because each side is represented by a few
-correlated clusters --- is removed for the long-range screens by the $10$~cM distance
-threshold, which is itself supported by the observed decay of among-population LD to
-the inter-chromosomal baseline. Bounded local dependence and long-range
-de-duplication are thus handled by two separate devices rather than either alone.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{../Figures/moduleD_emmax_independence_summary.png}
-\caption{LD-cluster independence, read from the focal chromosome (self-locus omitted;
-dashed red line = its position; grey band = $\pm 10$~cM; dashed grey line = the
-Bonferroni threshold expressed in $r^2$; blue = significant within $10$~cM, orange =
-beyond). \textbf{(a)} A locus whose local block is split into several correlated
-clusters, all at $r^2\lesssim 0.35$ and all within $10$~cM. \textbf{(b)} A locally
-independent locus: a single self-position, no significant neighbour. \textbf{(c)}
-Across the focal loci, most have no or few significant same-chromosome neighbours
-within $10$~cM.}
-\label{fig:independence}
-\end{figure}
-
-\section{Following the trans signal: hubs, structure, and the pair-specific residue}
-\label{sec:transhubs}
-
-The confound-free part of the signal is the \emph{trans} associations
-(Section~\ref{sec:bidir}), so we followed the strongest of them to their source. Most
-do not come from isolated pairs. They come from \emph{hubs}: a single focal cluster
-that anti-sorts with many unlinked partners which, in turn, co-vary strongly with one
-another. The clearest is F33028 (Chr10), with 34 trans partners that correlate among
-themselves at mean $|r| = 0.66$ --- one coherent axis with F33028 at one pole and the
-partner module at the other, not thirty-four independent incompatibilities. Two
-properties place it: it is robust to leaving out any single population (so it is not a
-Karsikas / single-colony artifact), and it survives conditioning on the top genome PCs
-(so it is not one of the dominant, climate-aligned structure axes --- its loading on
-those is only $r\approx 0.27$). It is instead a \emph{specific, lower-variance}
-co-sorting module with a broad footprint (a ${\sim}5.5$~Mb Chr26 block in trans-LD with
-a Chr10 anchor; Fig.~\ref{fig:trans}). Its source is the recombination landscape.
-F33028 sits at $0.4$~cM/Mb --- the first recombination percentile against a genome-wide
-median of $20.5$ --- and 33 of its 37 module clusters fall in the low-recombination
-tail, the centromeric and pericentromeric regions the map makes plain. That argues
-\emph{against} a segregating inversion, whose recombination suppression would be its
-own rather than the reference centromere's, and for a simpler mechanism: low-recombination
-regions retain the founding admixture co-ancestry that recombination has long since erased
-elsewhere, so centromeric blocks on different chromosomes stay correlated in ancestry --- in
-whichever direction they were founded, hence the trans sign. The hub is the genome's
-low-recombination fraction co-retaining ancestral structure, neither a point
-incompatibility nor a rearrangement. (The genuine pair-specific candidates below are, by
-contrast, in normal-to-high recombination, consistent with real signal rather than a
-low-recombination artifact.)
-
-The genuine pair-specific candidates are therefore the trans edges whose \emph{both}
-endpoints have low connectivity. Of 78 clean trans pairs, 73 run through a hub. Scoring
-the remaining five on within-hybrid minor allele frequency and leverage
-(Table~\ref{tab:dmi}) removes the rest of the illusion: the strongest of them are
-\emph{near-fixed} loci, where the minor allele frequency is too low for real
-disequilibrium (the MAF--LD bound) and a handful of individuals manufacture the
-correlation --- one pair's $r=-0.44$ collapses to $-0.03$ when five individuals are
-dropped. Only two survive as robust, appreciable-frequency, leverage-stable
-pair-specific edges, and both are weak ($r\approx -0.25$). After every structure
-control the two-locus screen can apply, that is the entire pair-specific residue.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.9\textwidth]{../Figures/moduleD_trans_01_F27700_F33028.png}\\[2pt]
-\includegraphics[width=0.9\textwidth]{../Figures/moduleD_trans_04_F51717_F57289.png}
-\caption{Two of the strongest trans pairs, as genotype heatmaps of the two clusters' member
-markers (individuals in rows, ordered by the first cluster's ancestry; each cluster's
-markers polarised to its own consensus so a trans pair renders as a mirror image, not a
-flipped-together block). In the sorted individuals (the coloured band) the two unlinked
-clusters fix \emph{opposite} ancestries --- blue at one, red at the other --- while the
-heterozygous majority sits pale below. These are strong and clean, but both belong to the
-low-recombination hub structure (top: F33028), not to the pair-specific residue: they show
-what co-retained ancestral co-ancestry looks like, not an incompatibility.}
-\label{fig:trans}
-\end{figure}
-
-\begin{table}[h]
-\centering
-\caption{Putative pair-specific (non-hub) trans-DMI pairs from the structure-conditioned
-scan, with per-cluster diagnostic index (DI), parental allele frequencies (the aqu-oriented
-allele's frequency in each parent species), within-hybrid minor allele frequency (MAF),
-the consensus correlation $r$, and its value after dropping the five most influential
-individuals. Values are given as (first cluster / second cluster). ``candidate'' = both
-loci appreciably polymorphic in the hybrids and $r$ leverage-stable; ``near-fixed'' =
-MAF too low for real LD; ``leverage'' = correlation not stable to individual removal.}
-\label{tab:dmi}
-\small\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lccccccrc}
-\toprule
-Pair & Chr & $n_{\mathrm{loci}}$ & DI & $p_{\mathrm{aqu}}$ & $p_{\mathrm{pol}}$ & MAF & $r$ ($r_{-5}$) & disposition \\
-\midrule
-F12448--F30042 & 3/9 & 6/5 & $-62/-26$ & 0.59/0.85 & 0.42/0.17 & 0.28/0.32 & $-0.26$ ($-0.27$) & candidate \\
-F67262--F38669 & 26/12 & 7/8 & $-29/-42$ & 1.00/0.81 & 0.65/0.46 & 0.40/0.17 & $-0.23$ ($-0.24$) & candidate \\
-F22685--F32802 & 6/9 & 5/9 & $-42/-15$ & 0.99/0.88 & 0.55/0.34 & 0.07/0.09 & $-0.70$ ($-0.55$) & near-fixed \\
-F26284--F58007 & 7/20 & 5/6 & $-52/-42$ & 0.30/1.00 & 0.00/0.64 & 0.05/0.09 & $-0.44$ ($+0.03$) & near-fixed \\
-F37861--F973 & 11/1 & 5/32 & $-95/-37$ & 0.50/0.75 & 0.12/0.47 & 0.21/0.18 & $-0.27$ ($-0.18$) & leverage \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \section{A systematic pass: global FDR, region-merging, and the candidate modules}
 \label{sec:metanet}
 
-The account above was built one focal Manhattan at a time, under a per-focal Bonferroni
-threshold. To put every association on one footing --- and to let the hubs and the
-pair-specific residue separate themselves rather than by hand --- we re-read the whole
-EMMAX scan as a single procedure. All $1.38\times10^{6}$ unlinked $(\text{focal},
+The first, targeted run (Section~\ref{sec:emmax}) called peaks one focal Manhattan at a
+time under a per-focal Bonferroni threshold. To put every association on one footing ---
+and to let the hubs and the pair-specific residue separate themselves under a single
+criterion --- we re-read the whole EMMAX scan as one procedure. All $1.38\times10^{6}$ unlinked $(\text{focal},
 \text{partner})$ tests were pooled and controlled at a global Benjamini--Hochberg
 $q<0.01$ (which reproduces the earlier count, ${\sim}276$ pairs, but as one
 whole-experiment error rate rather than $51$ independent ones). We then (i) removed
@@ -467,7 +247,7 @@ were \emph{labelled} ``structure'' rather than removed. What remains is $110$ me
 over $83$ meta-nodes ($18$ trans, $92$ cis; Fig.~\ref{fig:metanet}).
 
 The network splits cleanly into two kinds of object. The dominant one is a single grey
-\emph{structure} complex --- the low-recombination hubs of Section~\ref{sec:transhubs}
+\emph{structure} complex --- the low-recombination hubs
 (the merged F33028/F33095 anchor and F27700, plus F57361) wired almost entirely to one
 another: $66$ of the $110$ edges are structure--structure. A PCA over the $87$ loci of
 this module (Fig.~\ref{fig:structpca}) shows what it is \emph{not}. These loci separate
@@ -478,9 +258,23 @@ $0.64$ for the candidate loci), and they load only weakly on the genome-wide PCs
 geographic differentiation nor the dominant ancestry axis; it is \emph{individual-level
 admixture-block covariance} --- ancestral haplotype blocks co-inherited within
 individuals and, in low-recombination regions, not yet broken up --- carried within
-populations. This is the conclusion of Section~\ref{sec:transhubs} reached again, now
-from the genotypes rather than the recombination map, and it is why these hubs persist
-through PC-conditioning.
+populations. These loci also sit in the lowest recombination percentile (centromeric and
+pericentromeric), which is why they persist through PC-conditioning.
+
+\paragraph{Low recombination is a caveat, not a verdict.} We label these regions
+``structure'' as an \emph{annotation}, never a filter, because low recombination does not
+imply neutrality --- it is exactly where coadapted/epistatic complexes are expected to
+accumulate and persist (recombination suppression is a hallmark of coadaptation). For an
+unlinked pair the between-region recombination fraction is $0.5$ regardless of local rate,
+so low local recombination does not ``hold'' cross-chromosome LD; it makes each region a
+clean, low-noise ancestry \emph{block}, i.e.\ the highest-signal marker of whatever
+residual covariation exists after PC-conditioning --- finer neutral structure \emph{or}
+selection. The PCA above is \emph{consistent with} neutral relic co-ancestry but does not
+exclude selection (parallel or stabilising selection also lowers differentiation). The
+only clean discriminant is a recombination-matched neutral null (Module E,
+Section~\ref{sec:synth}): every locus, low-recombination included, is carried into that
+null and judged against its own local-rate baseline, so a low-recombination pair whose LD
+\emph{exceeds} even that high baseline earns its way back as a coadaptation candidate.
 
 That the structure ``module'' is not one block but several is confirmed directly. An
 average-linkage clustering of the meta-node consensuses \emph{across} chromosomes (cut at
@@ -521,9 +315,8 @@ toward the minor (aquilonia) background rather than an obvious pairwise incompat
 candidate the network contains; and (c) a handful of same-ancestry \emph{cis} pairs
 (polyctena: F17114--F49429, F15820--F26284; aquilonia: F22294--F39587), i.e. co-sorting,
 not repulsion. Stripped of structure and of ancestry co-sorting, the pair-specific
-residue is thus F11431--F49480 together with the two weak trans pairs of
-Table~\ref{tab:dmi} --- a handful of edges, as the by-hand pass already found, but now
-reached by one reproducible criterion.
+residue is thus F11431--F49480 together with a couple of weak, leverage-stable trans
+pairs --- a handful of edges in all, reached by one reproducible criterion.
 
 \begin{figure}[h]
 \centering
@@ -607,41 +400,56 @@ F45183--F45504 & 14/14 & cis   & $5.0\times10^{-3}$  & unsorted/unsorted \\
 \end{table}
 
 \section{Synthesis and what the simulation will settle}
+\label{sec:synth}
 
-Three structure-corrected views now agree, and they agree on a largely negative
-result. The among-population screen showed the raw signal is the ancestry gradient.
-The bidirectional test, working orthogonally to that gradient, found only a modest and
-diffuse excess of co-sorting. And the mixed model, once its signal is followed to the
-end --- paralogy filtered, dominant structure conditioned out, hubs recognised as
-low-recombination regions co-retaining ancestral structure rather than incompatibilities,
-and the survivors screened for the frequency and leverage artifacts the MAF--LD bound
-invites --- leaves only two weak pair-specific trans edges. Each layer of control
-removed an apparent signal and exposed it as structure, assembly, or a handful of
-individuals; what remains is marginal.
+One structure-corrected scan, read out by a single reproducible procedure (global FDR,
+average-linkage region-merging, and a leave-one-population-out leverage filter), gives a
+largely negative result. Paralogy, the dominant ancestry axis, single-deme leverage, and
+near-fixed loci are each removed in turn, and every removal exposes an apparent signal as
+an artifact rather than an incompatibility. Two kinds of object remain. The bulk is a
+low-recombination \emph{structure} module --- unlinked regions co-inherited as
+individual-level admixture blocks, which the genotype PCA shows separate populations
+\emph{less} than random differentiated loci and load only weakly on the genome PCs. The
+residue of interest is a short candidate list: an aquilonia \emph{co-sorting} module
+(F33454 and partners) that belongs with the ancestry-sorting arms A/C, a single strong
+ancestry-independent trans pair (F11431--F49480), and a couple of weak, leverage-stable
+trans pairs.
 
 This is the expected place to be \emph{before} the null. Every control here removes
-structure that is \emph{aligned} with what it conditions on, and none of them can say
-whether the weak residue exceeds what neutral, recombination-matched drift would
-produce in twenty replicate populations of this size and sampling design. That is the
-one thing Module E is built to answer, and it is now the load-bearing next step: it
-turns ``a weak residual signal'' into ``an excess over neutral'', or not. The handful of
-genuine pair-specific candidates in Table~\ref{tab:dmi} are then few and weak enough to be
-examined one at a time once the null gives them a scale.
+structure \emph{aligned} with what it conditions on; none can say whether the residue ---
+or, crucially, any of the low-recombination modules --- exceeds what neutral,
+recombination-matched drift would produce in twenty replicate populations of this size and
+sampling design. That is Module E, and the revision that matters most is how its null is
+built.
 
-One loose end is resolved rather than deferred. It was tempting to assign the hub axes
-(F33028 and kin) to the \emph{extrinsic} climate side, on the strength of an
-individual-level correlation between the dominant genome axes and the climate PCs. The
-climate-association test says otherwise. Against the BayPass genotype--environment scan,
-F33028 and its module are among the \emph{least} climate-associated loci in the genome ---
-the module's median Bayes factor is \emph{below} the genome-wide background for both
-climate axes ($p\sim10^{-10}$), and F33028 itself falls in the first percentile for the
-first axis. At the locus level the genome ancestry axes barely track the climate
-association at all ($r\approx 0.1$), so the individual-level genome--climate correlation is
-population-level entanglement (ancestry and climate both vary with geography), not
-locus-specific climate selection. The hubs therefore belong to \emph{neither} arm --- not a
-resolved intrinsic incompatibility, and not an extrinsic climate response, but the genome's
-low-recombination (centromeric) fraction retaining founding admixture co-ancestry
-(Section~\ref{sec:transhubs}): a recombination-landscape feature that a two-locus ancestry-LD
-screen surfaces and that neither the sorting nor the climate analysis is built to catch.
+\paragraph{Low recombination must be judged, not excluded.} Low-recombination regions are
+exactly where coadapted complexes are expected to accumulate, so the ``structure'' label is
+an annotation, not a filter: \emph{every} locus is carried into the null. The null itself
+must be matched to \emph{local} recombination --- neutral admixture simulated on the real
+recombination map, with the same founder ancestries, generations and sampling --- so that a
+low-recombination pair is compared against its own, legitimately high, neutral baseline and
+can still surface if its LD exceeds it. Two corroborations are available even before the
+simulation, and both separate selection from neutral relic co-ancestry:
+\emph{replicate-population parallelism} (neutral relic LD drifts in random directions across
+the twenty populations, whereas epistatic selection maintains the same combination
+reproducibly) and \emph{specific exceedance} of a module over the general low-recombination
+background. The coherent multi-chromosome blocks --- where an individual takes one dosage
+across all of a module's SNPs on six or more chromosomes (Fig.~\ref{fig:modhm}) --- are the
+first coadaptation candidates to test, not the ones to set aside. Module E converts each of
+these leads into an excess-over-neutral statement, or not; until then the result is
+descriptive.
+
+\section*{Appendix: explored and set aside}
+
+For the record, several analyses were run and are \emph{not} part of the minimal pipeline
+(see \texttt{moduleD\_plan.md}). The Ohta among-population LD arm as a standalone screen: the
+raw among-population signal is the ancestry cline, so it is retained only as Module E's
+measurement instrument. An SNP-level bidirectional-sorting test: a weak, diffuse excess of
+co-sorting whose per-locus permutation null overstates significance by not modelling shared
+drift. A per-focal Bonferroni read-out: replaced by one global FDR. A neutral/LD-pruned GRM
+basis: it under-corrects, because $K$ must \emph{contain} the selected ancestry axis it
+removes. And a climate-association tie for the hub loci: negative --- they are among the
+least climate-associated loci in the genome, so the hubs belong to neither the intrinsic nor
+the extrinsic arm. These are recorded so the pruning is deliberate, not lost.
 
 \end{document}
