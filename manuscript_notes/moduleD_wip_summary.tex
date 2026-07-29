@@ -249,17 +249,11 @@ over $83$ meta-nodes ($18$ trans, $92$ cis; Fig.~\ref{fig:metanet}).
 The network splits cleanly into two kinds of object. The dominant one is a single grey
 \emph{structure} complex --- the low-recombination hubs
 (the merged F33028/F33095 anchor and F27700, plus F57361) wired almost entirely to one
-another: $66$ of the $110$ edges are structure--structure. A PCA over the $87$ loci of
-this module (Fig.~\ref{fig:structpca}) shows what it is \emph{not}. These loci separate
-individuals by population \emph{less} than a random draw of differentiated loci (mean
-per-locus among-population $R^{2}=0.43$, against $0.54$ for random differentiated and
-$0.64$ for the candidate loci), and they load only weakly on the genome-wide PCs
-($|r|\le0.23$). Their cross-genome correlation is therefore neither among-population
-geographic differentiation nor the dominant ancestry axis; it is \emph{individual-level
-admixture-block covariance} --- ancestral haplotype blocks co-inherited within
-individuals and, in low-recombination regions, not yet broken up --- carried within
-populations. These loci also sit in the lowest recombination percentile (centromeric and
-pericentromeric), which is why they persist through PC-conditioning.
+another: $66$ of the $110$ edges are structure--structure. These loci sit in the lowest
+recombination percentile (centromeric and pericentromeric), which is why they persist
+through PC-conditioning. What they are is better read one module at a time (the modules
+below) than from the pooled set of all structure loci, which mixes several distinct
+co-ancestry modules and so has no coherent joint interpretation.
 
 \paragraph{Low recombination is a caveat, not a verdict.} We label these regions
 ``structure'' as an \emph{annotation}, never a filter, because low recombination does not
@@ -269,8 +263,9 @@ unlinked pair the between-region recombination fraction is $0.5$ regardless of l
 so low local recombination does not ``hold'' cross-chromosome LD; it makes each region a
 clean, low-noise ancestry \emph{block}, i.e.\ the highest-signal marker of whatever
 residual covariation exists after PC-conditioning --- finer neutral structure \emph{or}
-selection. The PCA above is \emph{consistent with} neutral relic co-ancestry but does not
-exclude selection (parallel or stabilising selection also lowers differentiation). The
+selection. These low-recombination regions are \emph{consistent with} neutral relic
+co-ancestry but do not by themselves exclude selection (parallel or stabilising selection
+also lowers differentiation). The
 only clean discriminant is a recombination-matched neutral null (Module E,
 Section~\ref{sec:synth}): every locus, low-recombination included, is carried into that
 null and judged against its own local-rate baseline, so a low-recombination pair whose LD
@@ -357,19 +352,6 @@ the candidates -- is the visual statement that the two are different phenomena.}
 \label{fig:structcircos}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.72\textwidth]{../Figures/moduleD_structure_pca.png}
-\caption{PCA over the $87$ loci of the structure module, individuals coloured by
-population. The module carries real between-population structure (some populations, e.g.
-J\"arvenp\"a\"a, pull out as coherent clusters), but \emph{less} than a random draw of
-differentiated loci (mean per-locus among-population $R^{2}=0.43$ vs $0.54$), and its
-axes correlate only weakly with the genome-wide PCs. The hub LD is individual-level
-admixture-block covariance in low-recombination regions, not geographic differentiation
-and not a pairwise incompatibility.}
-\label{fig:structpca}
-\end{figure}
-
 \begin{table}[h]
 \centering
 \caption{The $13$ candidate--candidate meta-edges (both endpoints outside the structure
@@ -407,9 +389,8 @@ average-linkage region-merging, and a leave-one-population-out leverage filter),
 largely negative result. Paralogy, the dominant ancestry axis, single-deme leverage, and
 near-fixed loci are each removed in turn, and every removal exposes an apparent signal as
 an artifact rather than an incompatibility. Two kinds of object remain. The bulk is a
-low-recombination \emph{structure} module --- unlinked regions co-inherited as
-individual-level admixture blocks, which the genotype PCA shows separate populations
-\emph{less} than random differentiated loci and load only weakly on the genome PCs. The
+low-recombination \emph{structure} module --- unlinked regions of broad co-ancestry that
+resolve into several distinct co-ancestry modules rather than one interpretable block. The
 residue of interest is a short candidate list: an aquilonia \emph{co-sorting} module
 (F33454 and partners) that belongs with the ancestry-sorting arms A/C, a single strong
 ancestry-independent trans pair (F11431--F49480), and a couple of weak, leverage-stable

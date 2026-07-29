@@ -60,10 +60,9 @@ Therefore:
 - **Annotate** each locus/region by recombination percentile (`STRUCT_PCT = 0.10` → `structure`
   flag) as a **"high neutral-baseline"** marker — context for the null, **not** a discard.
 - **Carry every locus, low-recombination included, into the candidate screen and the null.**
-- The **structure PCA** (separates populations *less* than random differentiated loci,
-  per-locus among-pop R² ≈ 0.43 vs 0.54; weak on genome PCs) is *consistent with* neutral
-  relic co-ancestry but does **not** exclude selection (parallel/stabilising selection also
-  lowers differentiation). It is a descriptive characterisation, not a verdict.
+- Characterise the structure regions **per module** (Step 4), not pooled: pooling all
+  structure loci mixes several distinct co-ancestry modules and has no coherent joint
+  interpretation, so no genome-wide "structure PCA" is used.
 
 ## Step 4 — Collapse redundancy (honest counting / display)
 - **Third-level merge** — `MERGE_METHOD = "average"`, within-chromosome ≤ `LINK_CM` cM,
@@ -116,7 +115,7 @@ to *local* recombination:
 ## Code shape — the minimal file set
 **Keep (core):** `emmax.R`, `moduleD_emmax.R`, `moduleD_paralogy.R`,
 `moduleD_network_build.R` (FDR → paralogy → average-merge → leverage → recomb annotation →
-modules; **remove the near-fixed/MIN_MAF check**), `moduleD_structure_pca.R`,
+modules; **remove the near-fixed/MIN_MAF check**),
 `moduleD_module_heatmaps.R`, `moduleD_network_circos.R`.
 **Keep for E only:** `Ohta.R`, `moduleD_ohta_dmi.R` (null instrument — not a screen).
 **Drop after the WIP restructure:** `moduleD_bidirectional.R`, `moduleD_climate_tie.R`,
