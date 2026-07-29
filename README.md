@@ -16,7 +16,7 @@ DIEM output ─► [0a] LD decay ─► hybrids_only + hybrids_and_parents (+ ld
    moduleA_*                                          moduleB_*                        BayPass + moduleC_*
 ```
 
-All three analysis modules join on the **canonical clustering** and on the two genotype matrices. Module D (intrinsic/Ohta DMI arm) also joins on them and is built here (descriptive; see below); Module E (neutral null) is a separate workstream — see *Status*.
+All three analysis modules join on the **canonical clustering** and on the two genotype matrices. Module D (intrinsic two-locus arm) also joins on them and is built here (structure-corrected, descriptive; see below); Module E (neutral null) is a separate workstream — see *Status*.
 
 ## Key shared objects
 
@@ -64,9 +64,25 @@ BayPass inputs and runs are upstream (HPC): `R/moduleC_prepare_{with_aland,aland
 
 **`R/moduleC_rate_based.R`** (**primary Module C analysis**) — reads `data/moduleC_C3_cl.rds`, clustering, `hybrids_and_parents`, BayPass `.out`, `data/diagnostic_index_enrichment<tag>.csv` → `data/moduleC_rate_based_<tag>.rds`, `Figures/moduleC_dose_response_<tag>.{pdf,png}` — size-normalised, cluster-level enrichment (replaces the size-gated outlier count).
 
-## Module D — intrinsic (DMI) arm
+## Module D — intrinsic (two-locus incompatibility) arm
 
-**`dev/R/moduleD_ohta_dmi.R`** — reads `eMLG_5loci_0025_cM05.rds`, `hybrids_only_maf005.Rdata` (`sample_data`), `moduleC_C3_cl.rds` (differentiated / DI gate); sources `dev/R/Ohta.R` — writes `data/moduleD_ohta.rds`, `Figures/moduleD_fig4.{pdf,png}` — among-population two-locus Ohta LD on **unlinked** eMLG-cluster pairs (the intrinsic test: correlated among-replicate ancestry sorting = candidate DMIs, vs the generic per-locus sorting of A/B). *Unlinked* is defined on the genetic map — different chromosome, or same chromosome \> 10 cM (≈99% admixture-LD decay in \~50 generations; validated empirically by the LD-vs-cM decay to the inter-chromosomal baseline). Scope = all *differentiated* clusters (parent MAF ≥ 0.15) with a cheap among-population frequency-correlation (`R_st`) pre-filter; exact Ohta decomposition only on the `|R_st| ≥ 0.7` unlinked tail. Primary statistic = the among-population component `R_st` / `D2st`. **Descriptive**: unlinked ≈ linked (`D2st` ≫ `D2is`, `Dp2st` ≈ 0 ⇒ correlated allele-frequency divergence / shared ancestry axis, not systematic epistasis), so candidate DMIs are defined downstream as pairs whose among-population LD *exceeds* Module E's null. The reusable `moduleD_pop_freq_matrix()` / `moduleD_prefilter()` / `moduleD_scan()` functions let E run the identical pre-filter + scan on simulated genotypes.
+Screens **unlinked** LD-reduced unit pairs for residual associations beyond shared ancestry and relatedness — candidate two-locus (Dobzhansky–Muller) incompatibilities, complementary to the per-locus sorting of A/B and the climate axis of C. *Unlinked* = different chromosome, or same chromosome \> 10 cM on the genetic map (≈99% admixture-LD decay in \~50 generations). One scan → four filters → an annotation → modules → the neutral null (Module E). Minimal-pipeline spec: `manuscript_notes/moduleD_plan.md`.
+
+**`dev/R/moduleD_emmax.R`** — reads `eMLG_5loci_0025_cM05.rds`, `hybrids_only_maf005.Rdata` (`sample_data`), `moduleC_C3_cl.rds` (differentiated / DI gate), recmap; sources `dev/R/{emmax,moduleD_paralogy}.R` — writes `data/moduleD_emmax.rds`, `Figures/moduleD_emmax_manhattans.pdf` — the structure-corrected two-locus scan: each differentiated eMLG dosage is a trait tested against every other in an EMMAX LMM with a **double-LOCO** VanRaden GRM built from differentiated units, each focal **conditioned on the top 10 genome PCs**; associations signed cis/trans by the structure-corrected GLS coefficient; calibrated (λ ≈ 0.98–1.05). Focal set is targeted (bidirectional + extreme-covariance + random controls).
+
+**`dev/R/moduleD_paralogy.R`** (shared filter) — `flag_paralogy()`: median within-population |r| \> 0.9 flags cross-chromosome assembly duplicates that a genetic-distance rule cannot catch; stores genotype concordance + per-unit excess Ho as corroboration.
+
+**`dev/R/moduleD_network_build.R`** — reads `moduleD_emmax.rds`, clustering, `moduleC_C3_cl.rds`, `hybrids_only_maf005.Rdata`, `moduleD_bidirectional.rds`, recmap; sources `dev/R/moduleD_paralogy.R` — writes `data/moduleD_network.rds` (meta-nodes + meta-edges) — the single reproducible read-out: global Benjamini–Hochberg FDR (`q < 0.01`) over all unlinked tests → paralogy filter → third-level within-chromosome **average-linkage** merge (`|r| > 0.5`, ≤ 10 cM; single linkage chains, so avoided) → single-population **leverage** filter (leave-one-population-out `|r| ≥ 0.3`, which subsumes any near-fixed/MAF cutoff) → low-recombination **structure annotation** (recombination percentile \< 0.1 — a label carried into Module E's null, *never* a filter) → cross-chromosome correlation **modules** (`|r| > 0.4`).
+
+**`dev/R/moduleD_structure_pca.R`** — reads `moduleD_network.rds`, clustering, `hybrids_only_maf005.Rdata`, `moduleC_C3_cl.rds` — writes `Figures/moduleD_structure_pca.png` — diagnostic: the low-recombination structure module's among-population differentiation vs random-differentiated and candidate baselines, and its alignment with the first 10 MAF≥0.05 genome-wide genetic PCs (consistent with residual co-ancestry; cause unresolved pending E).
+
+**`dev/R/moduleD_module_heatmaps.R`** — reads `moduleD_network.rds`, clustering, `moduleC_C3_cl.rds`, `hybrids_only_maf005.Rdata`, recmap — writes `Figures/moduleD_module_<id>_heatmap.png` — per-module genotype heatmaps (each module = one coherent multi-chromosome co-ancestry block).
+
+**`dev/R/moduleD_network_circos.R`** — reads `moduleD_network.rds`, clustering, `hybrids_only_maf005.Rdata`, `moduleC_C3_cl.rds`, `moduleD_bidirectional.rds`, recmap — writes `Figures/moduleD_{trans,candidate,structure,module}_circos.png` + `moduleD_trans_network.png` — the network and its region-band views (combined, candidate-only, structure-only, within-module).
+
+**`dev/R/moduleD_bidirectional.R`** (annotation only, not a DMI screen) — reads `moduleA_snp.rds`, clustering — writes `data/moduleD_bidirectional.rds` (`reps`) — the set of bidirectionally sorting units for the circos/heatmap sorting-ring annotation.
+
+**`dev/R/moduleD_ohta_dmi.R`** — retained only as **Module E's measurement instrument** (among-population Ohta LD; reusable `moduleD_pop_freq_matrix()` / `moduleD_prefilter()` / `moduleD_scan()`), not a standalone screen. The intrinsic call (excess over neutral, judged at each pair's *local* recombination rate) is made only against Module E's recombination-matched null.
 
 ## Shared code and helpers
 
@@ -88,10 +104,11 @@ BayPass inputs and runs are upstream (HPC): `R/moduleC_prepare_{with_aland,aland
 
 - `manuscript_notes/supplementary_methods_pipeline.{tex,pdf}` — **canonical methods** (LD decay → clustering → A/B/C), with the parameter table.
 - `manuscript_notes/module{B,C}_results_summary.{tex,pdf}`, `moduleA_results_summary.md` — per-module results.
+- `manuscript/supplementary_methods_ld_module_D.{tex,pdf}`, `supplementary_results_module_D.{tex,pdf}` — Module D methods + results (manuscript style); `manuscript_notes/moduleD_plan.md` — the minimal-pipeline spec; `manuscript_notes/moduleD_wip_summary.{tex,pdf}` — working notes.
 - `dev/methods_notes.md` — LD-pruning / eMLG design rationale.
 - `dev/HANDOFF_SUMMARY_*.md` — historical thread handoffs.
 
 ## Status
 
-- **Module D** (among-region two-locus Ohta test on unlinked eMLG pairs; `dev/R/moduleD_ohta_dmi.R`) — **built, descriptive**. The among-population LD screen finds unlinked ≈ linked (structure/drift signature, no pair-specific signal), so the DMI reading (excess over neutral) plugs in when Module E's null is ready — E reuses D's factored scan functions.
+- **Module D** (structure-corrected two-locus screen for intrinsic incompatibilities; `dev/R/moduleD_{emmax,network_build,…}.R`) — **built, descriptive**. Largely negative: the scan's strongest signal is technical (paralogy) or a low-recombination co-ancestry component (consistent with residual admixture-block co-ancestry, cause unresolved), not pair-specific. The residue is an aquilonia co-sorting module (belongs with A/C) and a single ancestry-independent trans candidate (F11431–F49480). Low recombination is annotated, not filtered; the intrinsic call (excess over neutral, judged at each pair's *local* recombination rate) plugs in when Module E's null is ready.
 - **Module E** (recombination-matched haplodiploid neutral null; `dev/R/moduleE_*.R`) — separate workstream. The inference license: until it exists, the descriptive sorting results are "consistent with neutral" only.
