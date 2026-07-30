@@ -157,6 +157,37 @@ Right: individual PCA on diagnostic markers --- strong, structured differentiati
 \label{fig:struct}
 \end{figure}
 
+\paragraph{The neutral background is consistent with a single panmictic pool ---
+which sharpens the signal.} Taking the low neutral $F_{ST}$ to its limit: if the 20
+populations are effectively \emph{one} connected pool at neutral loci, then
+subsampling a single pool 20 times should reproduce the data --- and it does.
+Among-population $F_{ST}$ at neutral markers then sits at the small-sample floor
+($\approx$0.07 here; Hudson $\to\approx0$), matching the empirical neutral value and
+explaining it more directly than 20 independently drifting demes (which
+over-differentiate to $\approx$0.08). But a single panmictic pool --- like \emph{any}
+neutral demography --- is \textbf{DI-blind}: drift and sampling cannot tell
+ancestry-informative markers from uninformative ones, so they give the same $F_{ST}$
+at every DI. Figure~\ref{fig:panmix} makes the point: the single-pool null and the
+20-deme null are both flat across DI, while the data rise $\sim$6-fold. This is the
+strongest form of the argument --- against a panmictic baseline the neutral
+differentiation is $\approx0$, so there is essentially \emph{no drift left to
+attribute the diagnostic $F_{ST}$ to}: the observed 0.31 is almost entirely excess,
+and its DI-scaling can only come from a DI-specific process (ancestry sorting /
+selection). We therefore treat the hybrid populations as effectively panmictic at
+neutral loci (large $N_e$ / connectivity) and read the diagnostic differentiation
+against that flat, near-zero baseline.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.78\textwidth]{../Figures/moduleE_panmixia_doseresponse.pdf}
+\caption{Among-population $F_{ST}$ versus DiagnosticIndex. Every neutral demography is
+flat because drift and sampling are DI-blind: a single panmictic pool ($\approx$0.07)
+and 20 independent demes ($\approx$0.08) both give a horizontal profile. The empirical
+data rise $\sim$6-fold from the neutral floor to the diagnostic markers. No neutral
+model can be near-zero at neutral loci \emph{and} strongly differentiated at
+diagnostic loci --- the DI-scaling is the signal.}
+\label{fig:panmix}
+\end{figure}
+
 \section{The diagnostic differentiation is locus-specific, not variable admixture}
 
 If the populations were simply founded at different aquilonia:polyctena ratios, each
@@ -342,11 +373,15 @@ adding mutation with a burn-in) is a separate, larger undertaking.}
 individual-level data (controlling sampling), and test whether it aligns with
 climate (reconciling with Modules~A and~C: parallel direction vs divergent
 differentiation).
-\item \textbf{Non-independence.} Neutral $F_{ST}\approx0$ is formally degenerate
-between enormous $N_e$ and gene flow / shared ancestry among ``populations'';
-extra within-event sampling and demographic modelling (cf.\ Nouhaud et al.) would
-separate these, and it bears on how many independent replicates the sorting test
-really has.
+\item \textbf{Non-independence.} Neutral $F_{ST}\approx0$ is degenerate between
+enormous $N_e$ and connectivity/shared ancestry. A one-time \emph{founding tree} is
+ruled out: drawing the 20 populations from only 15/10/5 independent demes leaves every
+statistic unchanged (co-descension replicates frequency vectors without changing their
+variance), and the empirical neutral markers show no clustering into founding groups.
+So the low neutral $F_{ST}$ points to large $N_e$ / ongoing connectivity (effective
+panmixia, Fig.~\ref{fig:panmix}) rather than a shared-founding hierarchy. What remains
+open is the \emph{effective number of independent replicates} for the sorting
+$p$-value, to be estimated from the empirical neutral coancestry (cf.\ Nouhaud et al.).
 \end{enumerate}
 
 \noindent\wip{All analyses run from a 19.5~MB compact empirical bundle (replacing

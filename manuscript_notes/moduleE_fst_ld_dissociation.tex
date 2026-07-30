@@ -1,0 +1,95 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\title{The $F_{ST}$--LD dissociation: the signature that separates empirical
+ancestry sorting from a neutral null}
+\author{}
+\date{Module E working note --- \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\begin{abstract}\noindent
+Across 20 replicate \textit{F.\ polyctena}\,$\times$\,\textit{F.\ aquilonia} hybrid
+populations, the empirical data and a recombination-matched, haplodiploid
+\emph{neutral null} (real phased founders, no selection, calibrated so the neutral
+LD background matches) differ in a way no neutral demography can produce: at
+ancestry-informative (high-DiagnosticIndex) loci the empirical data show
+\textbf{high differentiation but low linkage disequilibrium}, while the null shows
+exactly the reverse --- \textbf{low differentiation but high LD}. This single
+dissociation, visible both in aggregate and SNP-by-SNP (Fig.~\ref{fig:diss}), is the
+clean signature of divergent, locus-specific selection on ancestry.
+\end{abstract}
+
+\section*{The observation}
+We measure two things per SNP and bin them by DiagnosticIndex (DI, how strongly a
+marker distinguishes the parental species): among-population $F_{ST}$, and LD between
+a SNP and its \emph{directly adjacent} SNP(s) (mean $r^2$; i.e.\ $ld_w$ at a one-SNP
+window). The null is the 20 independent simulated demes, each downsampled to the
+matching empirical population size.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{../Figures/moduleE_emp_vs_sim_summary.pdf}
+\caption{\textbf{Empirical vs neutral null.} \textbf{(A)} Among-population $F_{ST}$
+rises with DI in the data but is flat in the null (drift is DI-blind); the null even
+sits slightly \emph{above} the empirical at neutral loci (it mildly over-differentiates
+the background), then the empirical pulls far ahead at diagnostic loci. \textbf{(B)}
+Adjacent-SNP LD does the opposite: it \emph{rises} with DI in the null (admixture LD)
+while the empirical stays low. \textbf{(C--E)} Per-SNP distributions (violin $+$ quartile
+box) split by DI class (columns: neutral $\le-90$, mid, diagnostic $>-25$) for the three
+per-SNP metrics (rows), over all high-recombination SNPs. At \emph{neutral} loci the
+empirical and null distributions coincide on all three --- the calibrated control. The
+dissociation opens only at mid/high DI: empirical $F_{ST}$ jumps to $\sim$0.30 while the
+null stays $\sim$0.08 (C); adjacent-SNP LD stays low in the empirical but rises in the
+null, strongest at diagnostic loci (median 0.06 vs 0.27; D); and empirical sorting
+spreads widely in \emph{mixed directions} while the null sits at zero (E).}
+\label{fig:diss}
+\end{figure}
+
+\section*{Why this is diagnostic of selection, not demography}
+\begin{itemize}\itemsep2pt
+\item \textbf{The two observations are one phenomenon.} At a diagnostic locus,
+populations sort ancestry \emph{divergently and locus-specifically} --- different
+populations fix different loci. That builds high per-locus $F_{ST}$ and, because the
+\emph{set} of differentiated populations shuffles from one SNP to the next, the
+among-population covariance between neighbouring SNPs stays near zero: high $F_{ST}$
+inflates the $r^2$ denominator while the numerator does not, so the pooled LD
+collapses (within-population LD $\approx0.23$ falls to $\approx0.03$ when pooled).
+\item \textbf{The null cannot do both at once.} With no selection, ancestry stays
+admixed and genome-wide-correlated, giving strong \emph{admixture} LD at diagnostic
+loci (panel B rises) --- but drift cannot differentiate ancestry-informative from
+uninformative markers, so $F_{ST}$ is flat across DI (panel A). Every neutral model
+(one panmictic pool, 20 independent demes, or a founding tree) is DI-blind and gives
+this flat-$F_{ST}$/high-LD profile.
+\item \textbf{Incomplete, net-unidirectional, locus-autonomous sorting.} Robustly,
+most diagnostic loci are only partly sorted (\,$\sim$7 of 20 populations fixed) and
+unidirectional per locus, with a net aquilonia bias (Module~A); the divergence lives
+in \emph{which} populations have sorted \emph{which} loci --- an incidence that is
+near-independent across loci (effective dimensionality $\approx15$ of 20; no shared
+sorting axis). This locus-autonomy is what a few large selected blocks could not
+produce, and it is what cancels the LD.
+\item \textbf{Orthogonal to the demographic origin.} Whether the populations are one
+connected pool that spread (neutral $F_{ST}\approx0$, our reading) or many
+independent hybridizations, the diagnostic-locus pattern is the same --- the neutral
+loci decide the origin, the diagnostic loci decide the selection.
+\end{itemize}
+
+\section*{Conclusion}
+The null is calibrated on the loci where incompatibilities/selection should be absent
+(neutral background matches), so the diagnostic-locus behaviour is read against a fair
+baseline. There, the data are simultaneously \emph{more differentiated} and \emph{less
+linked} than the null --- a combination drift, sampling and panmixia are all forbidden
+from producing. The empirical hybrid populations are therefore undergoing
+\textbf{divergent, locus-specific, largely intrinsic (DI-governed) sorting of parental
+ancestry}, incompletely and heterogeneously across the range. The $F_{ST}$--LD
+dissociation of Fig.~\ref{fig:diss} is the most compact evidence for it we have.
+
+\vspace{0.5em}\noindent\footnotesize
+Reproduced by \texttt{dev/R/moduleE\_emp\_vs\_sim\_panels.R}; LD is mean $r^2$ to the
+directly adjacent SNP(s) throughout; null $=$ 20 independent demes (450/195, $K$=6250,
+gen~60) downsampled to empirical population sizes.
+\end{document}

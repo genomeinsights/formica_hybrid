@@ -32,7 +32,7 @@ NPERBIN="${NPERBIN:-1500}"; COPIES="${COPIES:-40}"
 K="${K:-6250}"; NCYC="${NCYC:-80}"; EVERY=20; SS="${SS:-50}"; NDEMES=20
 OUT="${OUT:-$SD/output_foundersweep}"
 CONC="${1:-6}"
-FDIR="$SD/founders/maf015_DIstrat${NPERBIN}_x${COPIES}/"
+FDIR="${FDIR:-$SD/founders/maf015_DIstrat${NPERBIN}_x${COPIES}/}"   # override to use e.g. the burn-in founders
 
 command -v slim >/dev/null || { echo "ERROR: 'slim' not on PATH (need SLiM 5)."; exit 1; }
 NAQP=$(( 30 * COPIES )); NPOLP=$(( 13 * COPIES ))     # inflated pool sizes
