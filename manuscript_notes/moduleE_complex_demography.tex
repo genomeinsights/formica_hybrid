@@ -1,0 +1,231 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\title{Complex demography does not explain the ancestry-sorting signal:
+shared ancestry, admixture-proportion variation, and space}
+\author{}
+\date{Module E working note --- \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\begin{abstract}\noindent
+Our recombination-matched neutral null treats the 20 replicate
+\textit{F.\ polyctena}\,$\times$\,\textit{F.\ aquilonia} hybrid populations as
+independent foundings, and a reviewer rightly asked whether a \emph{richer} neutral
+demography could reproduce the empirical signature --- high among-population $F_{ST}$
+at ancestry-informative (high-DiagnosticIndex) loci combined with \emph{low} local
+linkage disequilibrium. We examine the three natural richer neutral demographies:
+(1) a common admixed source that splits into the 20 populations; (2) variation in
+admixture proportion among populations; (3) space. \textbf{None can produce the
+signal.} Shared ancestry \emph{reduces} differentiation and, by symmetry, cannot
+concentrate it at diagnostic loci. Admixture-proportion variation \emph{of the
+observed magnitude} is bounded --- analytically and from the data --- to
+$\lesssim 5\%$ of the observed diagnostic $F_{ST}$. Space is a milder perturbation
+than either and cannot exceed them. The single reason underlying all three is that in
+a neutral model the differentiation is \emph{genome-wide} (a low-dimensional ancestry
+axis), whereas the empirical differentiation is $\sim\!95\%$ \emph{locus-specific} ---
+which is simultaneously why diagnostic $F_{ST}$ is high and why local LD is low. A
+model-free \emph{linkage floor} sharpens this: because recombination preserves
+between-source allele-frequency covariance, pooled LD cannot fall below its
+between-population component, and a genome-wide ancestry axis at the empirical $F_{ST}$
+has a floor \emph{above} the empirical total LD --- so no recombinant-source history
+built on genome-wide ancestry can reach the data. We also record two methodological
+corrections made along the way.
+\end{abstract}
+
+\section{The question and three neutral routes}
+The empirical data show, relative to the neutral null, \textbf{high differentiation but
+low LD} at ancestry-informative loci. A neutral demography could in principle raise
+diagnostic $F_{ST}$ three ways: by making the populations share ancestry (route 1), by
+letting them differ in overall admixture proportion (route 2), or by arranging them in
+space (route 3). We take each in turn. Throughout, ``diagnostic'' loci are
+DI\,$>-25$ with parental frequency difference $>0.3$; among-population $F_{ST}$ uses the
+20 populations; the neutral simulations are the calibrated recombination burn-in null
+(real phased founders, $\mu=0$, empirical cM map, haplodiploid, $K=6250$).
+
+\section{Route 1 --- a common admixed source that splits}
+\paragraph{Design and result.} We built a two-stage null: evolve one ancestral admixed
+deme for $T_1$ generations, then found 20 sub-demes that drift $T_2 = 50 - T_1$
+generations (total $\sim$50, the Nouhaud et al.\ estimate). Sweeping the split time
+$T_1 \in \{0,25,45\}$ spans fully independent to near-panmictic. The $F_{ST}$-vs-DI
+curve was flat at every $T_1$.
+
+\paragraph{Correction.} That flat result does \emph{not}, on its own, license the
+conclusion ``shared ancestry cannot reproduce the signal,'' because a manipulation
+check shows the sweep never actually varied realized relatedness. On the full samples,
+neutral $F_{ST}$ is flat ($\approx 0.02$) across $T_1$, the among-population coancestry
+correlation is pinned at $-1/(n-1)$ (the value for independent demes) at every $T_1$,
+and divergence from the ancestral pool is equal for $T_2=25$ and $T_2=5$. The
+among-deme differentiation is dominated by the independent founding draw (each sub-deme
+redraws its founders), and post-split drift at $K=6250$ over $\le 50$ generations is
+negligible; a symmetric split cannot create among-deme covariance structure regardless.
+We therefore \textbf{retract} the earlier standalone ``shared-source'' conclusion.
+
+\paragraph{What still holds, structurally.} Shared ancestry \emph{lowers} among-population
+differentiation; it cannot create a differentiation \emph{excess} concentrated at
+diagnostic loci. And more fundamentally (Route 2), with a single genome-wide admixture
+level per population, $F_{ST}$ has no reason to depend on DI at all under \emph{any}
+neutral demography.
+
+\section{Route 2 --- variation in admixture proportion (the one that can bite)}
+This is the one neutral mechanism that can make $F_{ST}$ depend on DI. If population $i$
+has aquilonia ancestry $\alpha_i$, its expected frequency at a locus with parental
+difference $\delta = f_{aq}-f_{pol}$ is $p_i = f_{pol} + \alpha_i\,\delta$, so the
+among-population variance from admixture alone is $\delta^2\,\mathrm{var}(\alpha)$.
+Because $\delta$ is largest at high-DI loci, admixture variation raises diagnostic
+$F_{ST}$ specifically. The question is purely quantitative: is the observed spread in
+$\alpha$ large enough?
+
+\paragraph{It is not (Fig.~\ref{fig:bound}).} The empirical per-population aquilonia
+ancestry spans $[0.35,0.64]$ with $\mathrm{sd}(\alpha)=0.071$. Feeding exactly these
+$\alpha_i$ through the pure-admixture model (no locus-specific deviation) predicts a
+diagnostic $F_{ST}$ of \textbf{0.015}, against the observed \textbf{0.314} --- admixture
+variation accounts for \textbf{4.7\%}. This bound is conservative: sampling noise can
+only \emph{inflate} the apparent $\mathrm{sd}(\alpha)$, so the true contribution is if
+anything smaller. It converges with two independent measurements: a per-locus regression
+of population frequency on $\alpha$ (median $7\%$ variance explained) and the earlier
+genome-wide ancestry decomposition ($\sim\!6\%$).
+
+\begin{figure}[h]\centering
+\includegraphics[width=0.72\textwidth]{../Figures/moduleE_admixture_bound.pdf}
+\caption{Observed among-population $F_{ST}$ vs DiagnosticIndex (orange) against the
+ceiling that admixture-proportion variation of the observed magnitude
+($\mathrm{sd}\,\alpha = 0.07$) can produce (blue). The neutral admixture ceiling
+($0.015$) is $\sim\!20\times$ below the observed diagnostic $F_{ST}$ ($0.314$).}
+\label{fig:bound}
+\end{figure}
+
+\paragraph{Correction.} An attempt to demonstrate this by simulation --- founding each
+deme with a different aquilonia:polyctena \emph{count} ratio --- failed its manipulation
+check: realized $\alpha$ converged to $\approx 0.50$ for all demes (uncorrelated with
+intent). The reason is model biology: pure-polyctena queens $\times$ pure-aquilonia
+males pin every F$_1$ daughter at $50\%$ aquilonia, so the founder \emph{count} sets
+diversity, not ancestry. Varying $\alpha$ requires founders of mixed ancestry in both
+sexes. We did not pursue that build, because the analytic bound above already settles
+the quantitative question the simulation would have asked.
+
+\section{Route 3 --- space}
+A spatial stepping-stone with limited migration is a milder perturbation than either a
+fully shared source (Route 1) or free variation in admixture proportion (Route 2): it
+neither shares more ancestry than a common origin nor spreads $\alpha$ more than the
+observed range. It therefore cannot exceed the ceilings above, and we do not simulate it
+separately.
+
+\section{Why all three fail is one fact in two spaces}
+Every neutral route differentiates populations \emph{genome-wide} --- through a
+low-dimensional ancestry/drift axis shared across loci. The data are the opposite:
+$\sim\!95\%$ of the diagnostic differentiation is \textbf{locus-specific}. That single
+fact explains both halves of the empirical signature at once. High diagnostic $F_{ST}$:
+each ancestry-informative locus is differentiated on its own, far beyond the $\sim\!5\%$
+a common ancestry axis supplies. Low diagnostic LD: precisely \emph{because} the loci
+differentiate independently rather than as shared ancestry blocks, neighbouring
+diagnostic markers do not covary --- so local LD stays low. A neutral model gets these
+backwards together (low $F_{ST}$, high admixture LD); the data show high $F_{ST}$, low
+LD. Locus-specific, divergent selection on ancestry is the mechanism that produces
+independent per-locus differentiation without linkage.
+
+\section{The linkage floor: a stricter, model-free bound}
+The routes above are ruled out on $F_{ST}$ magnitude. There is a second, independent
+bound --- on LD --- that is sharper still, and it disposes of the tempting rescue that
+``a long enough recombinant phase could break the LD.'' The rescue fails because
+\emph{recombination is frequency-neutral in both directions}: it removes within-source
+haplotype LD, but it preserves every source's allele frequency at every locus, and
+therefore preserves the \textbf{between-source covariance} of allele frequencies across
+adjacent loci. Pooled LD thus has an irreducible floor,
+\[ \mathrm{LD_{pooled}(\infty)} \;\approx\; \mathrm{LD_{between}}, \]
+that no amount of recombination can go below.
+
+\paragraph{Measuring the floor.} We estimate $\mathrm{LD_{between}}$ by permuting
+genotypes among individuals independently at each marker, \emph{within} each population.
+This destroys within-population LD while holding every population allele frequency ---
+and hence $F_{ST}$ --- fixed; the residual pooled adjacent-marker LD is the floor.
+Table~\ref{tab:floor} gives the result for the diagnostic loci. Empirically, observed
+adjacent LD is $0.127$ and its floor is $0.043$ (so $66\%$ of the empirical LD is
+within-population); the current fixed-$\alpha$ null has a floor of only $0.010$
+(its high $0.368$ LD is $97\%$ within-population, i.e.\ removable admixture LD).
+
+\begin{table}[h]\centering
+\caption{Diagnostic adjacent-marker LD (median $r^2$): observed vs the between-population
+floor recombination cannot remove.}
+\label{tab:floor}
+\begin{tabular}{lccc}
+\toprule
+ & observed pooled LD & between-pop floor & within-pop (reducible) \\
+\midrule
+empirical                       & 0.127 & 0.043 & 0.083 \\
+fixed-$\alpha$ null (current)    & 0.368 & 0.010 & 0.358 \\
+single ancestry axis @ $F_{ST}{=}0.30$ & --- & \textbf{0.137} & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The decisive comparison (Fig.~\ref{fig:floor}).} Ask what floor a single
+genome-wide ancestry axis would carry \emph{if it reached the empirical diagnostic}
+$F_{ST}=0.30$. It requires an $\alpha$-spread $5.9\times$ the observed (already
+implausible), and even then its floor is $\mathbf{0.137}$ --- \emph{above} the empirical
+observed LD of $0.127$, and more than $3\times$ the empirical floor ($0.043$). A
+genome-wide axis makes adjacent loci distinguish the \emph{same} populations too
+consistently, so its irreducible floor exceeds the empirical \emph{total} LD: no
+recombinant-source model built on genome-wide ancestry can reach the empirical
+dissociation. The empirical floor is $3\times$ lower, which means adjacent diagnostic
+loci distinguish \emph{different} populations --- the direct signature of locus-specific
+differentiation.
+
+\begin{figure}[h]\centering
+\includegraphics[width=0.82\textwidth]{../Figures/moduleE_ld_floor.pdf}
+\caption{The LD-permutation floor (diagnostic adjacent-marker $r^2$). Recombination can
+lower pooled LD only to the between-population floor (blue). A single ancestry axis at
+the empirical $F_{ST}$ has a floor ($0.137$) \emph{above} the empirical total LD
+($0.127$, dashed); empirical's own floor ($0.043$) is three times lower.}
+\label{fig:floor}
+\end{figure}
+
+\section{Conclusion and honest caveats}
+The three natural richer neutral demographies --- shared common source, admixture-
+proportion variation, and space --- are individually insufficient, by a wide and
+quantified margin, to reproduce the empirical ancestry-sorting signal. This closes the
+``you only tested one demography'' concern for these routes and reinforces the
+whole-experiment envelope result (the empirical $F_{ST}$ rise sits $\sim\!100$ standard
+deviations outside the neutral envelope).
+
+Two corrections are recorded above: the retraction of the standalone shared-source
+conclusion, and the failed admixture-by-count simulation. Both arose from insisting that
+a simulation actually produce the variation it claims to test before its output is
+interpreted --- a discipline we would keep.
+
+\paragraph{One neutral model remains, and the floor sets its bar.} The linkage floor does
+not merely rule things out; it specifies exactly what a surviving neutral model must do:
+reach $F_{ST}=0.30$ at diagnostic loci while keeping its between-population floor near the
+empirical $0.043$. That excludes not only the three routes above but any
+\emph{genome-wide-ancestry} history --- including an ancient, freely-recombining hybrid
+\emph{swarm}, whose sources differ in overall ancestry and therefore inherit the high
+floor. What survives is narrower: an ancient, \emph{persistently structured} hybrid
+metapopulation in which drift and recombination act \emph{concurrently} for long enough
+that different source lineages come to carry the high-frequency allele at
+\emph{adjacent} loci --- fine-scale, locus-specific source differences, not a shared
+ancestry axis. Two stacked demands make this severe: the locus-specific differentiation
+requires real generations of drift (which recombination-rate rescaling cannot
+accelerate), and keeping those differences finer than the $\sim\!10$\,kb / $0.13$\,cM
+marker spacing runs against a $\sim\!523$-generation adjacent-marker LD half-life.
+Whether neutral processes can meet both at demographically defensible parameters is the
+one genuine open question; the floor ($\le 0.043$ at $F_{ST}=0.30$) is the target any
+such simulation must hit.
+
+\section*{Reproducibility}
+Analytic bound: \texttt{dev/R/moduleE\_admixture\_bound.R} (Fig.~\ref{fig:bound}) and the
+empirical hybrid index \texttt{dev/R/} setup. Shared-source null and its manipulation
+check: \texttt{moduleE\_slim/run\_sharedsource.sh}, the model \texttt{OUTPUT\_FOUNDERS}
+block, \texttt{dev/R/moduleE\_sharedsource\_relatedness.R}. Admixture-by-count attempt:
+\texttt{moduleE\_slim/run\_variable\_alpha.sh}, \texttt{dev/R/moduleE\_varalpha\_setup.R},
+\texttt{dev/R/moduleE\_varalpha.R}. Linkage floor (Fig.~\ref{fig:floor}, Table~\ref{tab:floor}):
+\texttt{dev/R/moduleE\_ld\_floor.R}. This note supersedes the earlier
+\texttt{moduleE\_sharedsource} note, whose standalone conclusion is retracted here.
+
+\end{document}

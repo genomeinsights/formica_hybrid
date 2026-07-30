@@ -85,8 +85,9 @@ initialize() {
 		initializeGenomicElement(g1, 0, L - 1);
 	}
 
-	// sample generations 20,40,...,160
-	defineConstant("sampleCycle", seq(sampleEvery, nCycles, by=sampleEvery));
+	// sample generations 20,40,...,160 (empty if sampleEvery > nCycles, e.g. the
+	// ancestral stage of the shared-source null, which only dumps the founder pool)
+	defineConstant("sampleCycle", (sampleEvery > nCycles) ? integer(0) else seq(sampleEvery, nCycles, by=sampleEvery));
 	defineConstant("prefix", "neutral_realfounders_Naq" + N_AQ + "_Npol" + N_POL + "_K" + K + "_rep" + rep);
 }
 
@@ -337,4 +338,34 @@ sampleCycle late() {
 	out = folder + "/hyb_" + prefix + "_gen" + sim.cycle + ".vcf";
 	females.outputIndividualsToVCF(filePath=out);
 	if (verbose) catn("[gen " + sim.cycle + "] wrote " + size(females) + " females -> " + out);
+}
+
+//// --------- 5. Optional: dump the ancestral pool as a founder VCF ------------- ////
+//
+// SHARED-SOURCE (complex-demography) null, STAGE 1. When OUTPUT_FOUNDERS is defined,
+// at the final cycle we write POOL_AQ haploid males + POOL_POL diploid queens sampled
+// from this deme, in the SAME layout the founder reader expects (haploid male columns
+// first, then diploid queen columns). A second run then FOUNDS 20 sub-demes from this
+// drifted ancestral pool with the model UNCHANGED (readHaplosomesFromVCF, FDIR ->
+// the split-per-chromosome copy of this file). The round trip is exact:
+// outputIndividualsToVCF writes males as haploid GT and queens as diploid GT, and
+// readHaplosomesFromVCF reads them straight back into c(male, queen) haplosomes.
+//
+// The species labels dissolve here -- the ancestral pool is admixed, so its males play
+// the "aq male" (haploid sperm) role and its queens the "pol queen" (diploid) role in
+// stage 2; the model only needs haploid males + diploid queens to seed, not a species.
+nCycles late() {
+	if (!exists("OUTPUT_FOUNDERS")) return;
+	pa = exists("POOL_AQ")  ? POOL_AQ  else 1200;   // haploid males  to emit
+	pp = exists("POOL_POL") ? POOL_POL else 520;    // diploid queens to emit
+	males  = c(p1.subsetIndividuals(sex="M"), p1000.individuals);  // young + cold-stored, all haploid
+	queens = p1.subsetIndividuals(sex="F");                        // all ages, diploid
+	if (size(males) < pa | size(queens) < pp)
+		stop("[output-founders] ancestral pool too small: have " + size(males) + " males / " +
+		     size(queens) + " queens, need " + pa + "/" + pp + " -- raise K or lower POOL_AQ/POOL_POL");
+	males  = sample(males, pa);
+	queens = sample(queens, pp);
+	out = folder + "/ancestral_" + prefix + "_gen" + sim.cycle + ".vcf";
+	c(males, queens).outputIndividualsToVCF(filePath=out);
+	catn("[output-founders] ancestral pool: " + pa + " males + " + pp + " queens -> " + out);
 }

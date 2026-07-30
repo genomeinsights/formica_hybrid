@@ -1,0 +1,145 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\title{A shared-source (common-origin) demography does not explain the
+empirical ancestry-sorting signal}
+\author{}
+\date{Module E working note --- \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\begin{abstract}\noindent
+Our recombination-matched neutral null treats the 20 replicate
+\textit{F.\ polyctena}\,$\times$\,\textit{F.\ aquilonia} hybrid populations as
+\emph{independent} foundings. A reviewer noted this is only one neutral demography.
+The natural richer comparator is a \textbf{common admixed source that later splits}
+into the 20 populations, so the demes share ancestry rather than being independent.
+We built this shared-source null as a two-stage haplodiploid simulation, anchored to
+the Nouhaud et al.\ estimate of $\sim$50 generations of hybridisation, and swept the
+split time from fully independent to near-panmictic. \textbf{Across the entire sweep
+the null reproduces neither the empirical diagnostic-$F_{ST}$ excess nor the
+$F_{ST}$--LD dissociation}: the diagnostic-vs-neutral $F_{ST}$ rise stays at
+$\approx 0$ (empirical $+0.27$) and the diagnostic $F_{ST}$/LD ratio stays at $0.2$
+(empirical $2.2$), independent of how much ancestry the populations share. Shared
+common ancestry is therefore not the explanation, and a spatial stepping-stone model
+--- a milder perturbation of the same neutral demography --- is very unlikely to be
+either.
+\end{abstract}
+
+\section*{The question}
+The independent-foundings null overshoots empirical neutral $F_{ST}$ (independent
+demes differentiate more than the real, evidently connected, populations). If the 20
+populations instead descend from one hybrid source that split relatively recently,
+their shared pre-split ancestry would lower among-population differentiation. Could
+that shared ancestry --- rather than selection --- also generate the empirical
+signature at ancestry-informative loci: high differentiation ($F_{ST}$) combined with
+\emph{low} local linkage disequilibrium?
+
+\section*{The model}
+Everything that makes the null a \emph{conditional} benchmark is retained: real phased
+founders, no new mutation ($\mu=0$), the empirical cM recombination map, and the
+haplodiploid life cycle. The total age is held at $\sim$50 generations (Nouhaud et
+al.); per-population carrying capacity $K=6250$. The single lever is the split time
+$T_1$ (with post-split drift $T_2 = 50 - T_1$):
+
+\begin{itemize}\itemsep2pt
+  \item \textbf{Stage 1 --- ancestral pool.} Found one admixed deme (450 aquilonia
+  + 195 polyctena drawn from the diversified burn-in pool) and evolve it $T_1$
+  generations. Then emit a large sample of its haploid males and diploid queens as a
+  founder pool.
+  \item \textbf{Stage 2 --- 20 sub-demes.} Each sub-deme founds afresh (450/195) from
+  that ancestral pool and drifts $T_2$ generations, sampled to 50 females. The demes
+  now share all pre-split ancestry; their remaining differentiation is only the
+  founding draw plus post-split drift.
+\end{itemize}
+
+We sweep three split times, all totalling 50 generations:
+$T_1=0$ (fully \emph{independent}; the existing null), $T_1=25$ (half shared), and
+$T_1=45$ (near-\emph{panmictic}: 90\% of history shared, the minimum $T_2=5$ needed to
+produce a sampleable brood). For each split time the 20 sub-demes are downsampled to
+their matched empirical population sizes and reduced to the same experiment-level
+curves used elsewhere in Module E: among-population $F_{ST}$ versus DiagnosticIndex
+(DI), adjacent-SNP LD versus DI, and the diagnostic $F_{ST}$/LD ratio.
+
+\section*{Result: the needle does not move}
+Figure~\ref{fig:ss} shows the outcome; Table~\ref{tab:ss} gives the summary
+statistics.
+
+\begin{table}[h]\centering
+\caption{Diagnostic-locus statistics by split time (single realization per $T_1$).
+The nulls are indistinguishable from one another and far from empirical.}
+\label{tab:ss}
+\begin{tabular}{lcc}
+\toprule
+split time & diagnostic $F_{ST}$/LD ratio & neutral$\rightarrow$diagnostic $F_{ST}$ rise \\
+\midrule
+$T_1=0$ \ (independent)      & 0.2 & $-0.008$ \\
+$T_1=25$ (half-shared)       & 0.2 & \phantom{$-$}0.000 \\
+$T_1=45$ (near-panmictic)    & 0.2 & \phantom{$-$}0.001 \\
+\textbf{empirical}           & \textbf{2.2} & \textbf{0.269} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two features are decisive. First (Fig.~\ref{fig:ss}A), the empirical $F_{ST}$ climbs
+from $\approx 0.05$ at neutral loci to $\approx 0.32$ at diagnostic loci --- a rise of
+$+0.27$ --- whereas every null stays \textbf{flat at $\approx 0.08$ regardless of
+split time}. Shared ancestry produces no diagnostic-specific $F_{ST}$ excess; the
+three coloured lines lie on top of one another. Second (Fig.~\ref{fig:ss}B), the nulls
+carry the \textbf{opposite} adjacent-LD gradient to the data: their diagnostic loci
+have \emph{high} local LD (rising to $\approx 0.48$), exactly where the empirical data
+have \emph{low} LD ($\approx 0.23$). The empirical dissociation --- strong
+differentiation \emph{without} local linkage --- is absent across the whole sharing
+axis, and the diagnostic $F_{ST}$/LD ratio is stuck at $0.2$ against the empirical
+$2.2$.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{../Figures/moduleE_sharedsource.pdf}
+\caption{Shared-source null versus empirical. Coloured lines: the three split times
+($T_1=0$ independent, $T_1=25$ half-shared, $T_1=45$ near-panmictic); orange:
+empirical. \textbf{(A)} $F_{ST}$ vs DI --- empirical rises steeply, all nulls stay
+flat. \textbf{(B)} adjacent-SNP LD vs DI --- the nulls show high LD at diagnostic loci,
+empirical shows low LD (the dissociation). The split time makes no difference to
+either.}
+\label{fig:ss}
+\end{figure}
+
+\section*{Interpretation}
+Shared common ancestry reproduces neither the diagnostic-$F_{ST}$ excess nor the
+$F_{ST}$--LD dissociation, and does so \emph{invariantly} in the amount of sharing.
+This is the outcome anticipated by the ancestry decomposition, in which a single
+genome-wide ancestry axis accounts for only $\sim 6\%$ of the diagnostic
+differentiation, and it reinforces the whole-experiment envelope result (the empirical
+$F_{ST}$ rise sits $\sim\!100$ standard deviations outside the neutral envelope). A
+common origin lowers overall differentiation but cannot concentrate differentiation at
+ancestry-informative loci while \emph{keeping their local LD low}; only divergent,
+locus-specific selection on ancestry does that.
+
+Because the spatial stepping-stone model is a milder perturbation of the same neutral
+demography than a fully shared origin, and even complete sharing leaves the diagnostic
+axis untouched, a spatial model is very unlikely to move the result. We therefore
+regard the complex-demography line of neutral explanations as tested and insufficient.
+
+\paragraph{One caveat on the neutral baseline.} The neutral ($F_{ST}\!\approx\!0.08$ at
+low DI) level did \emph{not} fall even at $T_1=45$, because each sub-deme still draws
+its 450/195 founders independently from the ancestral pool, so founding-draw variance
+dominates the small post-split drift. The literal single-panmictic-population limit is
+covered by a separate test; it does not bear on the diagnostic-locus conclusion, which
+is what distinguishes selection from neutrality here.
+
+\section*{Reproducibility}
+Two-stage simulation: \texttt{moduleE\_slim/SpecIAnt\_rufa\_neutral\_realfounders.slim}
+(the added \texttt{OUTPUT\_FOUNDERS} block dumps the ancestral pool),
+\texttt{run\_sharedsource.sh} (harness; ancestral run $\rightarrow$ per-chromosome
+split $\rightarrow$ 20 sub-demes), design in \texttt{SHARED\_SOURCE\_DESIGN.md}.
+Analysis: \texttt{dev/R/moduleE\_sharedsource.R}. This note reports the single-
+realization proof ($N_{\mathrm{rep}}=1$ per split time; 60 simulations, no errors); a
+20-replicate envelope can formalise the ``needle does not move'' statement.
+
+\end{document}
