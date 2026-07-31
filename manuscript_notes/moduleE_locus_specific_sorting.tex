@@ -1,0 +1,139 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\title{Adjacent loci are sorted along \emph{different} population axes:
+recombination time is not the missing ingredient}
+\author{}
+\date{Module E working note --- \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\begin{abstract}\noindent
+The neutral null under-produces the empirical ancestry-sorting signal, and an obvious
+rescue is that the simulation is simply too young --- too few generations of
+ancestry-breaking recombination. We test this directly. Recombination reduces only the
+\emph{within}-population component of pooled linkage disequilibrium (LD); the
+\emph{between}-population component is fixed by the population allele frequencies and is
+therefore an irreducible floor. Decomposing pooled adjacent-marker LD into these two
+parts shows that the empirical--null mismatch lives in the between-population floor,
+which no amount of recombination can change. The direct measurement is the
+20-population allele-frequency-vector correlation of \emph{adjacent} diagnostic loci: it
+is $1.0$ for a genome-wide ancestry axis, $0.72$ for the drift-only null, and only
+$0.37$ empirically. Empirical populations sort neighbouring loci along
+\textbf{different} axes --- population A leans \textit{aquilonia} at one marker,
+population B at the next --- so both loci can have high $F_{ST}$ while their frequencies
+do not covary and pooled LD stays low. Insufficient recombination is excluded; the
+residual signal is explicitly locus- (module-) specific sorting.
+\end{abstract}
+
+\section{The test}
+Pooled LD across the 20 populations decomposes into a within-population part and a
+between-population part:
+\[
+\mathrm{LD_{pooled}} \;=\; \underbrace{\mathrm{LD_{within}}}_{\text{tract-driven; removed by recombination}}
+\;+\;\underbrace{\mathrm{LD_{between}}}_{\text{allele-frequency covariance; fixed}} .
+\]
+Recombination is frequency-neutral: it breaks the physical association between
+neighbouring alleles (the within-population, ancestry-tract part) but leaves every
+population's allele frequency --- and hence the between-population covariance ---
+untouched. So if the simulation is only \emph{too young}, its excess LD should be
+entirely within-population and should vanish with more recombination. If instead the
+mismatch is in the between-population floor, recombination cannot help.
+
+We estimate the between-population floor by permuting genotypes among individuals within
+each population, independently per marker: this destroys within-population LD while
+holding every population frequency (and $F_{ST}$) fixed. Because no neutral simulation
+reproduces the empirical diagnostic $F_{ST}=0.30$, the ``genome-wide ancestry''
+comparator is a single ancestry axis scaled to that $F_{ST}$ (an $\alpha$-spread
+$6.1\times$ the observed), which is the strongest such model. All quantities use
+diagnostic loci (DI\,$>-25$, parental difference $>0.3$) and matched population sizes.
+
+\section{Result (Fig.~\ref{fig:ts})}
+
+\paragraph{A --- tract age.} The null's ancestry-LD decays more slowly and lies above
+empirical at every genetic distance: the null's ancestry tracts are \emph{longer}, i.e.\
+it is younger in recombination terms. On tract length alone, the null would need more
+recombination. This is the one point in its favour; the decomposition removes it.
+
+\paragraph{B, D --- where the LD lives.} The null's pooled LD is $\sim\!97\%$
+within-population (median $r^2$: within $0.359$, between $0.009$) --- pure removable
+tract LD. Empirical LD is $65\%$ within / $35\%$ between (within $0.082$, between
+$0.043$), and the between-population floor is \emph{flat with distance}: it is
+covariance, not linkage. Aging the null removes only the within part, sliding its pooled
+LD toward $0.009$ --- \emph{below} empirical ($0.127$) --- while a genome-wide axis at
+empirical $F_{ST}$ is \emph{all} between-population ($0.138$), \emph{above} empirical.
+Neither reaches the empirical value by adding recombination.
+
+\begin{table}[h]\centering
+\caption{Within- vs between-population contributions to pooled diagnostic adjacent-marker
+LD (median $r^2$). The between-population part is the recombination limit ($t\to\infty$).}
+\label{tab:decomp}
+\begin{tabular}{lccc}
+\toprule
+ & pooled LD & within-pop (removable) & between-pop floor \\
+\midrule
+gen-60 null                       & 0.368 & 0.359 & 0.009 \\
+empirical                         & 0.127 & 0.082 & 0.043 \\
+single ancestry axis @ $F_{ST}{=}0.30$ & 0.138 & $\approx\!0$ & 0.138 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{C --- the decisive measurement.} The 20-population frequency-vector
+correlation of \emph{adjacent} diagnostic loci is $1.00$ for a genome-wide axis (all loci
+track the same $\alpha$), $0.72$ for the drift-only null (weak but ancestry-block
+structured), and only $\mathbf{0.37}$ empirically --- a broad distribution reaching
+negative values. Empirical adjacent loci are \emph{less} correlated than even the neutral
+null: neighbouring diagnostic markers distinguish \textbf{different} populations. Two such
+loci can each have high $F_{ST}$ while their allele frequencies are uncorrelated, so
+pooled LD stays low --- exactly the empirical dissociation.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{../Figures/moduleE_tract_ld.pdf}
+\caption{\textbf{A} ancestry-LD decay vs genetic distance (null tracts longer =
+younger). \textbf{B} the same decay split into total and the between-population floor
+(the null's floor is negligible; empirical's is substantial and flat). \textbf{C} the
+20-population frequency-vector correlation of adjacent diagnostic loci --- empirical
+(median $0.37$) is far below the drift-only null ($0.72$) and a genome-wide axis
+($1.00$). \textbf{D} within- vs between-population contributions to pooled adjacent LD;
+empirical (dashed line) lies between the null floor ($0.009$, too weak) and the
+single-axis floor ($0.138$, too correlated).}
+\label{fig:ts}
+\end{figure}
+
+\section{Conclusions}
+\begin{itemize}\itemsep2pt
+  \item \textbf{Insufficient recombination is excluded.} The empirical--null mismatch is
+  in the between-population floor (Table~\ref{tab:decomp}), which recombination cannot
+  change; aging the null overshoots \emph{downward}.
+  \item \textbf{A single ancestry axis is excluded.} It forces adjacent-locus correlation
+  to $1.0$ and a floor ($0.138$) above the empirical total LD.
+  \item \textbf{Ordinary shared-source and independent-founding histories are excluded.}
+  The independent-founding null already over-correlates adjacent loci ($r=0.72$); shared
+  ancestry only raises correlation further.
+  \item \textbf{An ancient freely-recombining source is hard to defend.} Recombination
+  preserves between-source covariance, so such a source reproduces the high adjacent-locus
+  correlation of a genome-wide axis, not the empirical $0.37$. Only an ancient,
+  \emph{structured} metapopulation in which different lineages come to carry the
+  high-frequency allele at adjacent loci could lower it --- the demanding scenario left
+  open by the linkage-floor bound.
+  \item \textbf{The residual signal is locus- (module-) specific sorting.} Empirical
+  populations sort neighbouring loci along different population axes, producing high
+  $F_{ST}$ without linkage --- the signature of divergent, locus-specific selection on
+  ancestry rather than any genome-wide neutral history.
+\end{itemize}
+
+\section*{Reproducibility}
+\texttt{dev/R/moduleE\_tract\_ld.R} (Fig.~\ref{fig:ts}, Table~\ref{tab:decomp}); the
+between-population floor and single-axis construction follow
+\texttt{dev/R/moduleE\_ld\_floor.R}. This note is the direct, per-locus demonstration
+behind the linkage-floor bound in \texttt{moduleE\_complex\_demography}.
+
+\end{document}

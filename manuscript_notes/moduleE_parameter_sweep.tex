@@ -1,0 +1,127 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\title{A neutral parameter sweep: no effective size reproduces the empirical
+differentiation at the ancestry-tract-matched time}
+\author{}
+\date{Module E working note --- \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\begin{abstract}\noindent
+We ran the recombination-matched, haplodiploid neutral null as a parameter sweep in
+carrying capacity $K$ and founding size, sampling each of 20 independent demes every 25
+ticks to 250. Two results follow. (1) \textbf{Effective size} scales with carrying
+capacity as $N_e \approx 0.31\,K$ (haplodiploidy and the age-structured life table pull
+$N_e$ well below census $K$); founding size (100--200) barely affects $N_e$. (2) Using
+within-deme adjacent-marker LD as an ancestry-tract clock, the empirical value is matched
+by \emph{every} parameter combination at only $\sim$15--20 generations of recombination.
+\textbf{At that tract-matched time the neutral among-population $F_{ST}$ is
+$\sim$0.03--0.04, against the empirical 0.30 --- a 6--10$\times$ gap --- and no
+combination, at any time out to 74 generations including the strongest drift, comes near
+it.} Insufficient recombination is excluded, and no neutral effective size in this range
+rescues the differentiation. This is the parameter-swept, direct form of the
+$F_{ST}$--tract dissociation.
+\end{abstract}
+
+\section{The sweep}
+Base configuration $K = 6250$, total founders $= 150$ (drawn from the diversified
+1200/520 pool, split aquilonia-males : polyctena-queens to hold admixture proportion
+$\alpha \approx 0.54$). One-at-a-time: $K \in \{3125, 6250, 12500\}$ and total founders
+$\in \{100, 150, 200\}$, others at base --- five combinations, 20 demes each, one
+replicate. Every deme runs to 250 ticks and is sampled every 25. Markers are the
+\textbf{9{,}902 high-DiagnosticIndex loci} (DI $>-25$, MAF $\ge 0.15$, systematically
+thinned to $\sim$15\,kb spacing), the ancestry-informative set that tract-length
+estimation requires. \textbf{Ticks are not generations}: the life table gives a
+generation time of $\approx 3.4$ ticks, so 250 ticks $\approx 74$ generations; all
+generation axes below are ticks$/3.4$.
+
+\section{Effective size (Fig.~\ref{fig:sweep}A, Table~\ref{tab:ne})}
+Within-deme expected heterozygosity decays log-linearly with generation, giving $N_e$
+from the slope ($H_e(g) = H_e(0)\,e^{-g/2N_e}$).
+
+\begin{table}[h]\centering
+\caption{Effective size from within-deme heterozygosity decay (generations $=$ tick$/3.4$).}
+\label{tab:ne}
+\begin{tabular}{lcccc}
+\toprule
+combination & $K$ & founders & $N_e$ & fit $R^2$ \\
+\midrule
+K3125\_f150  & 3125  & 150 & 1{,}195 & 0.99 \\
+K6250\_f150  & 6250  & 150 & 1{,}950 & 0.99 \\
+K12500\_f150 & 12500 & 150 & 3{,}917 & 0.93 \\
+K6250\_f100  & 6250  & 100 & 1{,}980 & 0.99 \\
+K6250\_f200  & 6250  & 200 & 2{,}105 & 0.99 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+$N_e \approx 0.31\,K$ across the $K$ sweep. Founding size (100--200) changes $N_e$
+negligibly: the bottleneck sets the \emph{initial} differentiation, not the long-run
+drift rate. So $K$ is the effective-size lever and founding size is a starting-condition
+lever. Note that every simulated deme retains $H_e \approx 0.47$, whereas the empirical
+value on the same markers is $H_e = 0.31$ (dashed) --- the empirical diagnostic loci are
+far more sorted (diversity-depleted) than neutral drift produces.
+
+\section{The tract-matched dissociation (Fig.~\ref{fig:sweep}B,C)}
+Panel C uses within-deme adjacent-marker $r^2$ as an ancestry-tract clock: it is the
+admixture LD that recombination erodes as tracts shorten. The empirical value (0.556) is
+crossed by \emph{all five} combinations at $\sim$15--20 generations (ticks $\sim$50--75);
+the curves overlie, so the tract clock is nearly parameter-independent and reads
+$\sim$15--20 generations --- consistent with the $\sim$20-generation field age of the
+hybrid populations.
+
+Panel B is the differentiation at those same times. At the tract-matched
+$\sim$15--20 generations the simulated among-deme $F_{ST}$ is $\sim$0.03--0.04, against
+the empirical \textbf{0.30}. The gap is 6--10$\times$, and it does not close anywhere in
+the sweep: even the strongest drift (K3125, $N_e = 1195$) at 74 generations reaches only
+$F_{ST} = 0.055$, by which time its tracts (adjacent LD 0.47) have already fallen
+\emph{below} empirical. For drift alone to reach $F_{ST} = 0.30$ in $\sim$20 generations
+would require $N_e \approx 30$ ($K \approx 100$) --- implausible, and it would deplete
+diversity genome-wide rather than concentrate differentiation at diagnostic loci.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{../Figures/moduleE_sweep_summary.pdf}
+\caption{Parameter sweep vs generations ($=$ ticks$/3.4$); empirical on the same 9{,}902
+high-DI markers is dashed. \textbf{(A)} within-deme diversity decay (source of $N_e$);
+all sims sit far above the empirical (heavily sorted) value. \textbf{(B)} among-deme
+$F_{ST}$ --- every combination is $\sim$0.03--0.05, an order of magnitude below empirical
+0.30. \textbf{(C)} within-deme adjacent-marker LD (tract clock) --- the empirical value
+is matched at $\sim$15--20 generations. Reading B at the C-matched time gives the
+6--10$\times$ $F_{ST}$ deficit.}
+\label{fig:sweep}
+\end{figure}
+
+\section{Conclusion}
+Across a $K \times$ founding-size grid spanning $N_e \approx 1200$--3900, no neutral
+combination reproduces the empirical among-population differentiation at diagnostic loci
+at the time its ancestry tracts match empirical --- nor at any time in the 74-generation
+window. The differentiation deficit is 6--10$\times$ and parameter-robust, and the
+diversity is simultaneously far too high. This is the direct, parameter-swept statement
+of the result the earlier analyses inferred: \textbf{the empirical high-$F_{ST}$,
+tract-appropriate, diversity-depleted state at ancestry-informative loci is not a neutral
+outcome at any effective size or age in this range; it is the signature of locus-specific
+ancestry sorting.} Insufficient recombination, insufficient drift, and founding-bottleneck
+strength are all excluded as explanations.
+
+\paragraph{Preliminary in one respect.} Panel C uses within-deme adjacent-marker LD as a
+\emph{proxy} for tract length. The colleagues' ancestry-tract caller will give the actual
+tract-length distribution (in cM), pinning the matched generation more precisely and
+allowing the full distribution shape to be matched rather than a single LD summary. The
+$F_{ST}$--tract dissociation is already unambiguous and does not depend on the proxy.
+
+\section*{Reproducibility}
+Sweep harness and inputs: \texttt{formica\_neutral\_sim\_sweep\_handoff/} (README,
+\texttt{run\_sweep.sh}, model, \texttt{markers.tsv}, founders). Output:
+\texttt{moduleE\_slim/output\_track\_length/} (5 combinations $\times$ 20 demes $\times$
+10 ticks). Analysis: \texttt{dev/R/moduleE\_analyze\_sweep.R} (Fig.~\ref{fig:sweep},
+Table~\ref{tab:ne}). Generation time from the life table; $\sim$3.4 ticks/generation.
+
+\end{document}
