@@ -1,0 +1,36 @@
+% ---- styling ----
+\usepackage{graphicx}
+\setkeys{Gin}{width=\linewidth,keepaspectratio}   % scale all figures to text width
+\usepackage{xcolor}
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+\definecolor{RuleGrey}{HTML}{B7C0C9}
+\usepackage{sectsty}
+\sectionfont{\color{Accent}\large\bfseries}
+\subsectionfont{\color{Accent}\normalsize\bfseries}
+\subsubsectionfont{\color{Accent}\normalsize\bfseries}
+\usepackage{etoolbox}
+% compact, small tables that fit many columns
+\AtBeginEnvironment{longtable}{\scriptsize}
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.12}
+\usepackage{amssymb}
+% ---- glyph fallbacks (robust regardless of main font) ----
+\usepackage{newunicodechar}
+\newunicodechar{✓}{\textcolor{Accent}{\ensuremath{\checkmark}}}
+\newunicodechar{≥}{\ensuremath{\geq}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{−}{\ensuremath{-}}
+\newunicodechar{Ω}{\ensuremath{\Omega}}
+\newunicodechar{β}{\ensuremath{\beta}}
+\newunicodechar{…}{\ensuremath{\ldots}}
+% ---- header/footer ----
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{Muted}Module B --- Climate association}
+\fancyhead[R]{\footnotesize\color{Muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}

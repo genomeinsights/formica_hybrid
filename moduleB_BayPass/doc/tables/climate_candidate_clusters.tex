@@ -1,0 +1,36 @@
+\documentclass[border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,booktabs,array,multirow,makecell,xcolor}
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+\renewcommand{\arraystretch}{1.18}
+\begin{document}
+\begin{minipage}{16.2cm}
+\raggedright
+{\color{Accent}\bfseries Table [climate-associated cluster candidates]. Putative climate-associated LD clusters across BayPass configurations.}
+
+\vspace{6pt}
+\begin{center}\footnotesize
+\begin{tabular}{@{}l l c r r r@{}}
+\toprule
+Population set & $\Omega$ (covariance) & Axis & \makecell{Candidates\\($\geq 5$)} & \makecell{Candidates\\($\geq 10$)} & \makecell{Median size\\(markers)} \\
+\midrule
+\multirow{4}{*}{\AA land-excluded (19 populations)} & \multirow{2}{*}{Internal (full data)} & PC1 & 14 & 7 & 68 \\
+ &  & PC2 & 16 & 7 & 116 \\
+\cmidrule(l){2-6}
+ & \multirow{2}{*}{\makecell[l]{LD-pruned (fixed)\\ \textbf{[primary]}}} & PC1 & 16 & 10 & 68 \\
+ &  & PC2 & 21 & 8 & 118 \\
+\midrule
+\multirow{4}{*}{Full (20 populations)} & \multirow{2}{*}{Internal (full data)} & PC1 & 9 & 5 & 272 \\
+ &  & PC2 & 43 & 24 & 94 \\
+\cmidrule(l){2-6}
+ & \multirow{2}{*}{LD-pruned (fixed)} & PC1 & 7 & 5 & 486 \\
+ &  & PC2 & 53 & 36 & 89 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{2pt}{\scriptsize\color{Muted} A cluster is a putative candidate when at least 5 (or 10) of its member markers reach $\mathrm{BF(dB)}\geq 15$. Genome-wide median cluster size $=9$ markers (32,840 clusters with a consensus genotype); the excess size of candidate clusters over this median reflects the size dependence of the member-count criterion. The eMLG gate restricts this set to clusters that track climate as a unit (per-cluster table).\par}
+\end{minipage}
+\end{document}
