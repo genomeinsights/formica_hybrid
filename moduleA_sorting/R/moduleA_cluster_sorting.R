@@ -38,6 +38,7 @@ source("moduleA_sorting/R/eMLG_parallelism.R")   # build_group_consensus(), clus
 ## ---- LOCKED parameters (match moduleA_sorting_phenomenon.R) --------------
 MIN_PARENT_MAF <- 0.15    # PRIMARY sorting gate (pooled-parental MAF floor)
 SORT_TH        <- 0.5     # unified sort_class threshold
+SORT_RULE      <- "prop_fixed"  # magnitude gate on total near-fixation (see parallelism_stats)
 FIX_TH         <- 0.1     # per-pop near-fixation tolerance (locked; NOT 0.15)
 MIN_DI         <- NULL    # DI is a covariate, never a gate
 DI_AGG         <- "max"   # cluster DI = max over members
@@ -73,7 +74,7 @@ prep_units <- ohta_fast_prepare(GTs_units, pops = pops_units)
 ps <- parallelism_stats(prep_units, hybrid_pops = hybrid_pops, aqu_pops = aqu_pops,
                         pol_pops = pol_pops, DI = DI_units, min_DI = MIN_DI,
                         parent_maf = maf_units, min_parent_maf = MIN_PARENT_MAF,
-                        sort_th = SORT_TH, fix_th = FIX_TH)
+                        sort_th = SORT_TH, fix_th = FIX_TH, sort_rule = SORT_RULE)
 setnames(ps, "marker", "group_id")
 message(sprintf("      done | %.0fs", as.numeric(difftime(Sys.time(), t0, units = "secs"))))
 

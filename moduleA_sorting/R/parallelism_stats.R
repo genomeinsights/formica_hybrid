@@ -89,6 +89,14 @@ library(data.table)
 ##                  bi_score > |uni_score| & bi_score >= sort_th
 ##                     -> "bidirectional"
 ##                  else "unsorted".
+## sort_rule    : magnitude gate for the class call. "component" (default) is the
+##                ORIGINAL rule above (the larger of |uni_score|/bi_score must
+##                reach sort_th). "prop_fixed" is a prototype that gates on the
+##                TOTAL near-fixation (prop_fixed >= sort_th) and then applies the
+##                SAME uni/bi direction split -- it removes the "valley" that
+##                otherwise demotes both-directions loci to "unsorted", so
+##                "bidirectional" is no longer systematically under-called. See
+##                the inline note at the sort_class block.
 ##                Because all three scores are population fractions, the SAME
 ##                sort_th is comparable across SNPs and eMLGs (run this
 ##                function on eMLG consensus genotypes) and genome
@@ -135,10 +143,12 @@ parallelism_stats <- function(prep,
                               min_parent_diff = 0,
                               admix_prop = 0.5,
                               sort_th = 0.5,
+                              sort_rule = c("component", "prop_fixed"),
                               orient = c("parents", "dosage"),
                               dosage_is_aqu = TRUE) {
 
-  orient <- match.arg(orient)
+  orient    <- match.arg(orient)
+  sort_rule <- match.arg(sort_rule)
 
   P <- prep$pop_means / 2                 # populations x markers allele freq
   pops_avail <- rownames(P)
@@ -285,9 +295,25 @@ parallelism_stats <- function(prep,
   uni_mag <- abs(uni_score)
   sort_class <- rep(NA_character_, length(markers))
   ok <- differentiated & n_obs > 0 & !is.na(uni_score)
-  is_uni <- ok & uni_mag >= bi_score & uni_mag >= sort_th
-  is_bi  <- ok & bi_score >  uni_mag & bi_score >= sort_th
-  sort_class[ok]     <- "unsorted"
+  sort_class[ok] <- "unsorted"
+  ## Two magnitude gates, SAME direction split (bidirectional iff the minority
+  ## direction exceeds 1/4 of the fixed populations, i.e. bi_score > uni_mag):
+  ##   "component" (default, ORIGINAL): the larger population-fraction component
+  ##     must itself clear sort_th (uni_mag or bi_score >= sort_th). Because a
+  ##     both-directions split shrinks BOTH components, near-balanced loci need
+  ##     prop_fixed ~ 1 to pass -> "bidirectional" is systematically under-called.
+  ##   "prop_fixed" (decoupled prototype): the magnitude gate is the TOTAL
+  ##     near-fixation prop_fixed (= uni_mag + bi_score) >= sort_th; direction is
+  ##     then the same uni/bi split. Removes the "valley" that demoted split loci
+  ##     to "unsorted". Kept opt-in so the locked pipeline is unchanged by default.
+  if (sort_rule == "component") {
+    is_uni <- ok & uni_mag >= bi_score & uni_mag >= sort_th
+    is_bi  <- ok & bi_score >  uni_mag & bi_score >= sort_th
+  } else {                                   # "prop_fixed"
+    sorted <- ok & prop_fixed >= sort_th
+    is_bi  <- sorted & bi_score > uni_mag
+    is_uni <- sorted & !is_bi
+  }
   sort_class[is_uni] <- ifelse(uni_score[is_uni] > 0, "aquilonia", "polyctena")
   sort_class[is_bi]  <- "bidirectional"
 

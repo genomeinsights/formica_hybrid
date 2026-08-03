@@ -43,6 +43,11 @@ DI_AGG      <- "max"    # cluster DI = max over members (not representative only
 
 ## Open knobs -- defaults chosen, review/override as needed:
 SORT_TH     <- 0.5      # unified sort_class threshold (a population fraction)
+SORT_RULE   <- "prop_fixed"  # magnitude gate = TOTAL near-fixation (prop_fixed >= sort_th),
+                        #   not the larger of |uni_score|/bi_score. Fixes the "valley" that
+                        #   demoted both-directions loci to unsorted (bidirectional was
+                        #   ~6x under-called under the original "component" rule). See
+                        #   parallelism_stats() sort_rule.
 MIN_PARENT_MAF <- 0.15  # PRIMARY sorting gate: pooled-parental MAF floor. Keeps loci
                         #   polymorphic in the parents, so a high sorting index isn't just
                         #   a founding near-monomorphism. 0.15 retains ~59% of loci (chosen
@@ -170,7 +175,7 @@ sweep_res <- rbindlist(lapply(FIX_MAJOR_GRID, function(fm) {
       hybrid_pops = hybrid_pops, aqu_pops = aqu_pops, pol_pops = pol_pops,
       DI = DI_vec, min_DI = MIN_DI,
       parent_maf = parent_maf_vec, min_parent_maf = MIN_PARENT_MAF,
-      sort_th = st, fix_th = 1 - fm            # major-allele floor -> away-allele tol
+      sort_th = st, fix_th = 1 - fm, sort_rule = SORT_RULE   # major-allele floor -> away-allele tol
     )
     d <- r[differentiated == TRUE]
     data.table(
@@ -229,7 +234,7 @@ t0 <- Sys.time()
 par_res_snp <- parallelism_stats(
   prep=prep_snp,
   hybrid_pops = hybrid_pops, aqu_pops = aqu_pops, pol_pops = pol_pops,
-  DI = DI_vec, min_DI = MIN_DI, parent_maf = parent_maf_vec, min_parent_maf = MIN_PARENT_MAF, sort_th = 0.5, fix_th = 0.1
+  DI = DI_vec, min_DI = MIN_DI, parent_maf = parent_maf_vec, min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = FIX_TH, sort_rule = SORT_RULE
 )
 
 snp_tab <- par_res_snp[differentiated == TRUE, .N, by = sort_class][order(-N)]
@@ -269,7 +274,7 @@ panelB_sweep <- rbindlist(lapply(FIX_MAJOR_GRID, function(fm) {
       hybrid_pops = hybrid_pops, aqu_pops = aqu_pops, pol_pops = pol_pops,
       DI = DI_vec, min_DI = MIN_DI,
       parent_maf = parent_maf_vec, min_parent_maf = MIN_PARENT_MAF,
-      sort_th = st, fix_th = 1 - fm            # major-allele floor -> away-allele tol
+      sort_th = st, fix_th = 1 - fm, sort_rule = SORT_RULE   # major-allele floor -> away-allele tol
     )
     d <- r[differentiated == TRUE & !is.na(sort_class) & !is.na(DI)]
     d[, DI_decile := cut(DI, breaks = DI_BREAKS, include.lowest = TRUE, labels = FALSE)]
@@ -381,7 +386,7 @@ cl_res <- parallelism_stats(
   hybrid_pops = hybrid_pops, aqu_pops = aqu_pops, pol_pops = pol_pops,
   DI = DI_units, min_DI = MIN_DI,
   parent_maf = parent_maf_units, min_parent_maf = MIN_PARENT_MAF,
-  sort_th = SORT_TH, fix_th = FIX_TH
+  sort_th = SORT_TH, fix_th = FIX_TH, sort_rule = SORT_RULE
 )
 cat(sprintf("      cluster-level test done | %.0fs\n", elapsed(t0)))
 setnames(cl_res, "marker", "unit_id")

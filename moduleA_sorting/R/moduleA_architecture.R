@@ -42,6 +42,7 @@ set.seed(1)
 MIN_PARENT_MAF <- 0.15
 FIX_TH         <- 0.1                          # major-allele fixation floor 0.90
 SORT_TH        <- 0.5
+SORT_RULE      <- "prop_fixed"                  # magnitude gate on total near-fixation (see parallelism_stats)
 SNP_SAMPLE     <- 200000L
 SORT_TH_SWEEP  <- c(0.5, 0.6, 0.7, 0.8)        # for the [SUPP S3] direction sweep
 CLUSTERING     <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
@@ -131,10 +132,11 @@ run_ps <- function(markers) {
   prep <- ohta_fast_prepare(GTs[, markers], pops = smeta$Population)
   r <- parallelism_stats(prep, hybrid_pops = hyb, aqu_pops = aqu, pol_pops = pol,
                          DI = DI_by, min_DI = NULL, parent_maf = maf_by,
-                         min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = FIX_TH)
+                         min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = FIX_TH,
+                         sort_rule = SORT_RULE)
   r[, `:=`(recomb = recomb_by[marker], n_loci = cs_by[marker])]; r[]
 }
-PS_PARAMS <- list(min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = FIX_TH)
+PS_PARAMS <- list(min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = FIX_TH, sort_rule = SORT_RULE)
 classify_cached <- function(path, mk_fun, label)
   cache_rds(path, label = label, valid = function(o) identical(o$params, PS_PARAMS),
             build = function() list(params = PS_PARAMS, r = run_ps(mk_fun())))$r

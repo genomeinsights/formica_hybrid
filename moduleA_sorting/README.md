@@ -1,9 +1,6 @@
----
+------------------------------------------------------------------------
 
-editor_options: 
-  markdown: 
-    wrap: 72
----
+editor_options: markdown: wrap: 72 ---
 
 # Module A — Ancestry sorting & genomic architecture
 
@@ -13,14 +10,14 @@ All scripts run **from the repo root** (`~/gitlab/formica_hybrid`), e.g. `Rscrip
 
 ## Conventions (locked)
 
-Parental-MAF gate ≥ 0.15 · sorting threshold **τ = 0.5** · near-fixation floor **φ = 0.90** (`fix_th = 0.1`, on the major/fixed-for allele) · **cM05** clustering · diagnostic index (DI) kept **ungated** as a covariate.
+Parental-MAF gate ≥ 0.15 · sorting threshold **τ = 0.5** · near-fixation floor **φ = 0.90** (`fix_th = 0.1`, on the major/fixed-for allele) · **cM05** clustering · diagnostic index (DI) kept **ungated** as a covariate · magnitude gate on **total near-fixation** (`sort_rule = "prop_fixed"`, i.e. `prop_fixed ≥ τ` then the uni/bi split — replaces the original "component" rule that under-called bidirectional loci \~6×).
 
 ## Pipeline (`R/`)
 
 `ohta_fast_prepare()` (and the rest of the Ohta D-statistic suite) now comes from the **`LDscnR` package** (`devtools::load_all("~/gitlab/LDscnR/")`), not a local file. Two reviewed stat libraries are still sourced locally (no I/O): `parallelism_stats.R` (`parallelism_stats`), `eMLG_parallelism.R` (`build_sorted_eMLG`, `build_group_consensus`, `cluster_DI`).
 
 | order | script | role |
-|-------|----------------------------|------------------------|
+|----|----|----|
 | 1 | `moduleA_sorting_phenomenon.R` | Per-SNP parallelism → sorted markers (A1); companion eMLG for the sorted clusters (A2); one cluster-level test + `score_eMLG` dilution check (A3); the τ×φ threshold-sensitivity sweeps (sorting classification A1b, DI-decile direction A1c). Produces `moduleA_snp.rds`, used by the other two scripts. |
 | 2 | `moduleA_architecture.R` | Reproduces the genomic-architecture results (the old manuscript "Module B"): DI–recombination/π/dxy correlations + decile table; sorting depleted in low recombination + magnitude slope; the `P(aquilonia)` direction logistic model + its threshold sweep; assembles the 3-panel architecture figure. |
 | 3 | `moduleA_fig_sorting_manhattan.R` | Genome-wide sorting landscape (toward-aquilonia, toward-polyctena, net direction, DI, and marker-level `ld_w`), across thresholds. Pure post-hoc on `moduleA_snp.rds`. |
