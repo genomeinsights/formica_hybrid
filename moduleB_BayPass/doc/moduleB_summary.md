@@ -301,7 +301,8 @@ Self-contained module folder `moduleB_BayPass/` with `R/` (scripts), `data/`
 (output objects), `Figures/` (plots) and `doc/` (this summary + `doc/tables/`
 candidate tables). Scripts are run **from the repo root** in the order below;
 they read shared/raw inputs from the repo root — the LD clustering
-`data/eMLG_5loci_0025_cM05.rds`, the genotype `data/hybrids_*_maf005.Rdata`, and
+`module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds` (a Module 0 output), the
+genotype `data/hybrids_*_maf005.Rdata` and `data/pruned_markers.rds`, and
 the BayPass run directories `with_aland/`, `aland_excluded/`, `aland_excluded_eMLG/`
 (which hold the per-run inputs, `run_baypass*.sh`, and the large `*_summary_*.out`)
 — and write all module products under `moduleB_BayPass/`.

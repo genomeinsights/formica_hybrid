@@ -26,7 +26,7 @@
 ## 2018. Linkage disequilibrium clustering-based approach for association mapping
 ## with tightly linked genomewide data. Mol Ecol Resour 18:809-824.
 ##
-## Reads : data/eMLG_5loci_0025_cM05.rds, data/hybrids_only_maf005.Rdata (map),
+## Reads : module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds, data/hybrids_only_maf005.Rdata (map),
 ##         aland_excluded/PC{1,2}_DIEM_withOmega_summary_betai_reg.out (member SNP BF),
 ##         aland_excluded_eMLG/PC{1,2}_eMLG_withOmega_summary_betai_reg.out (eMLG BF),
 ##         aland_excluded_eMLG/eMLG_group_order.txt,
@@ -42,7 +42,7 @@ PRIM_POP <- "aland_excluded"; PRIM_OM <- "withOmega"; D <- "aland_excluded_eMLG"
 dir.create("moduleB_BayPass/Figures", showWarnings = FALSE)
 
 ## ---- clustering + representative positions ------------------------------
-g  <- readRDS("data/eMLG_5loci_0025_cM05.rds")$groups
+g  <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$groups
 he <- g[has_eMLG == TRUE]
 e <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e)
 map <- as.data.table(e$map_hyb_005)[, .(marker, Chr, Pos)]; mk <- map$marker; rm(e); invisible(gc())

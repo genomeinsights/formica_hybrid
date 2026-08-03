@@ -39,7 +39,7 @@ dir.create(OUTDIR, showWarnings = FALSE, recursive = TRUE)
 ## ---- inputs -------------------------------------------------------------
 e <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e)
 sd <- as.data.table(e$sample_data)                       # Population, Sample_ID, PC1, PC2
-E  <- readRDS("data/eMLG_5loci_0025_cM05.rds")$eMLG      # inds x has_eMLG clusters, dosage [0,2]
+E  <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$eMLG      # inds x has_eMLG clusters, dosage [0,2]
 
 ## ---- align eMLG rows to sample_data, drop the excluded population -------
 stopifnot("eMLG individuals not all in sample_data" = all(rownames(E) %in% sd$Sample_ID))

@@ -57,7 +57,7 @@
 ## This script consumes those .out files (it does not run BayPass itself), the
 ## same way moduleB_analyse_baypass.R consumes the SNP-level .out files.
 ##
-## Reads : data/eMLG_5loci_0025_cM05.rds (clustering + eMLG dosages),
+## Reads : module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds (clustering + eMLG dosages),
 ##         data/hybrids_only_maf005.Rdata (map: marker order for the positional
 ##           BF join, Chr/Pos, DiagnosticIndex),
 ##         {with_aland,aland_excluded}/PC{1,2}_DIEM_{noOmega,withOmega}_summary_{betai_reg,pi_xtx}.out,
@@ -76,7 +76,7 @@ SIG_THR     <- 15                # marker-level significance: BF(dB) >= 15
 MIN5        <- 5; MIN10 <- 10    # member-count entry thresholds
 EMLG_BF_THR <- 15                # eMLG gate: cluster-level BF(dB) >= this
 DI_TH       <- -25               # ancestry-informative criterion (reported, not a gate)
-CLUST       <- "data/eMLG_5loci_0025_cM05.rds"
+CLUST       <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
 OUTDIR      <- "moduleB_BayPass/doc/tables"
 EMLG_DIR    <- "aland_excluded_eMLG"
 PRIM_POP    <- "aland_excluded"; PRIM_OM <- "withOmega"
