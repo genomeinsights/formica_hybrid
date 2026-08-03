@@ -1,0 +1,338 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{NoteBlue}{HTML}{EAF2F8}
+\definecolor{NoteBorder}{HTML}{7BA5C4}
+\definecolor{Muted}{HTML}{5B6570}
+
+\hypersetup{
+  pdftitle={Materials and Methods (Module A, _PK): ancestry sorting and genomic architecture},
+  pdfauthor={Poikela et al.},
+  pdfsubject={Hybrid genome evolution in Formica wood ants}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\color{Muted}Materials and Methods (Module A)}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+\setlist[itemize]{leftmargin=1.5em,itemsep=0.2em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=1.7em,itemsep=0.25em,topsep=0.25em}
+\renewcommand{\arraystretch}{1.15}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\rsq}{\ensuremath{r^{2}}}
+\newcommand{\todo}[1]{%
+  \par\noindent
+  \fcolorbox{NoteBorder}{NoteBlue}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      \textbf{Open item.} #1}}%
+  \par}
+
+\title{\vspace{-3em}
+  \textbf{\color{Accent}Materials and Methods}\\[0.3em]
+  \Large Ancestry sorting and genomic architecture}
+\author{Poikela et al.}
+\date{\small Module A (\texttt{\_PK} pipeline)}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+\begin{center}
+\small\color{Muted}
+Working draft for the \texttt{\_PK} pipeline. It covers the extent, direction and
+genomic architecture of ancestry sorting, using the LD-reduced units produced in
+Module~0 (LD decay and complexity reduction). Climate association and
+dependence-aware (block-bootstrap) uncertainty are documented separately. Blue
+boxes mark items that remain open.
+\end{center}
+
+\section{Scope and analytical principles}
+
+These methods describe the quantification of the extent and direction of ancestry
+sorting and the analysis of its genomic architecture, using the LD-reduced units
+from Module~0 (LD decay and complexity reduction).
+
+Three principles guided the analyses. First, markers in LD carry partly
+redundant information. We therefore used clusters of strongly correlated
+markers as LD-reduced analytical units wherever possible, while retaining
+marker-level analyses as diagnostics of spatial pseudoreplication. We do not
+assume that the resulting units are strictly statistically independent.
+Second, a variable evaluated as a predictor was not also used to select the
+analysed data. In particular, loci were gated by parental allele frequency
+rather than by the diagnostic index (DI), leaving the full range of DI
+available for analysis. Third, these analyses do not assume complete demographic
+independence of the twenty hybrid populations; analyses that use variation among
+populations are interpreted as descriptive associations.
+
+\todo{The general sample description currently reports 165 sequenced hybrid
+individuals, whereas the analysis objects contain 164. Confirm which individual
+was excluded, most likely because of excessive missing data, and report the
+identifier and exclusion criterion in the final text. Until then, 164 is used
+for all analysis-specific counts.}
+
+\section{Extent and direction of ancestry sorting}
+
+\subsection{Near-fixation and ancestry orientation}
+
+For each marker or cluster consensus, dosage was oriented as the
+\Faq-allele frequency using the sign of the parental allele-frequency
+difference. Units for which the parents did not differ had no defined parental
+direction. Within each hybrid population, a unit was classified as near-fixed
+toward \Faq{} when the oriented allele frequency was at least \(\phi\),
+near-fixed toward \Fpo{} when it was at most \(1-\phi\), and otherwise not
+near-fixed. Here \(\phi=0.90\) is the frequency the fixed-for (major) allele must
+reach, equivalently the requirement that the opposing allele fall to at most
+\(1-\phi=0.10\). The same threshold was used throughout because the attainable
+frequency values depend on the number of sampled diploid individuals in a
+population.
+
+\subsection{Sorting decomposition and classification}
+
+Let \(n_{\mathrm{obs}}\) be the number of populations with an observed and
+oriented frequency, and \(n_{\mathrm{aqu}}\) and \(n_{\mathrm{pol}}\) the
+numbers near-fixed toward \Faq{} and \Fpo{}, respectively. The total proportion
+near-fixed was decomposed as
+\begin{equation}
+\frac{n_{\mathrm{aqu}}+n_{\mathrm{pol}}}{n_{\mathrm{obs}}}
+=
+\left|\frac{n_{\mathrm{aqu}}-n_{\mathrm{pol}}}{n_{\mathrm{obs}}}\right|
++
+\frac{2\min(n_{\mathrm{aqu}},n_{\mathrm{pol}})}{n_{\mathrm{obs}}},
+\label{eq:sorting}
+\end{equation}
+where the first term is the unidirectional component and the second the
+bidirectional component. With \(\tau=0.5\), a unit was classified as
+unidirectional when the absolute unidirectional component was at least the
+bidirectional component and at least \(\tau\); bidirectional when the
+bidirectional component exceeded the absolute unidirectional component and was
+at least \(\tau\); and unsorted otherwise. Exchanging the parental labels
+changes the direction but not the magnitude or class.
+
+The two thresholds were treated separately. The near-fixation floor \(\phi\) is
+the per-population convention and was held constant; the sorting threshold
+\(\tau\) is the cross-population comparison. Their influence on the results was
+evaluated over a grid of \(\tau\in\{0.5,0.6,0.7,0.8\}\) and
+\(\phi\in\{0.80,0.85,0.90,0.95\}\): the estimated prevalence of sorting declines
+monotonically with either threshold, but the composition (predominantly
+unidirectional) and the diagnostic-index direction reversal are preserved
+throughout (threshold-sensitivity supplement, Figs~S1--S3).
+
+Nouhaud et al.~\cite{nouhaud2022} evaluated predictable ancestry sorting by
+asking whether the same ancestry component repeatedly fixed across three hybrid
+populations and summarising the outcome in fixed 20-kb windows. The present
+classification retains that biological contrast but extends it to twenty
+populations, estimates the outcome directly from population allele frequencies,
+and separates consistent-direction from opposing-direction near-fixation.
+Applying the statistic first to SNPs and then to LD-reduced units also avoids
+assigning equal analytical status to physical windows that may contain very
+different amounts of redundant information.
+
+\subsection{Parental polymorphism gate}
+
+Near-fixation was interpreted as sorting only for variants segregating in the
+founding parental pool. Analyses were therefore restricted to units with pooled
+parental MAF \(\geq0.15\), calculated from pooled parental allele counts and
+folded to the minor allele. This gate excludes variants already close to
+monomorphic in the parental pool without selecting on DI, which is evaluated as
+a predictor in subsequent analyses.
+
+\subsection{Cluster-level analysis and dilution check}
+
+The sorting statistic was first calculated per marker. It was then recalculated
+for eMLG consensus genotypes so that a cluster contributed one aggregate
+observation. For clusters without a stored consensus but containing a
+marker-level sorting signal, a consensus was constructed by the same procedure
+used for larger clusters. Parental consensus genotypes reused the reference
+marker and allele-flip decisions derived from the hybrid genotypes, preventing
+hybrid and parental consensuses from being placed on inconsistent orientations.
+Cluster DI was aggregated as the maximum DI among member markers.
+
+The cluster-level aggregation analysis is conditional: clusters entered this
+comparison because they contained at least one marker with a SNP-level sorting
+signal. Consequently, the proportion of aggregated clusters classified as
+unsorted does not estimate the genome-wide fraction of unsorted clusters.
+Instead, it asks whether an apparent marker-level sorting signal remains after
+correlated members are represented jointly.
+
+When a cluster containing an individually sorted marker was unsorted after
+aggregation, consensus fidelity was used to distinguish lack of an aggregate
+signal from possible dilution in a heterogeneous consensus. Low-fidelity
+clusters were flagged rather than automatically interpreted as evidence against
+sorting.
+
+\subsection{Models of sorting direction}
+
+Among unidirectionally sorted units, the probability of sorting toward \Faq{}
+was modelled by logistic regression. The genome-wide direction model is
+described with the architecture analyses below. The robustness of the
+diagnostic-index direction reversal to the classification thresholds is shown in
+the threshold-sensitivity supplement (Figs~S2 and~S3). Associations are
+interpreted descriptively and are not assigned a causal mechanism from these
+regressions alone.
+
+\section{Genomic architecture of sorting}
+
+\subsection{Marker-level genomic summaries}
+
+Map-based recombination rates were assigned to markers by linear interpolation and expressed in cM/Mb. For each retained marker, let \(p_{\mathrm{aqu}}\) and \(p_{\mathrm{pol}}\) denote the allele frequencies in the \Faq{} and \Fpo{} reference samples, respectively, and let
+\[
+\bar p=\frac{p_{\mathrm{aqu}}+p_{\mathrm{pol}}}{2}.
+\]
+We calculated the mean expected heterozygosity within the parental species as
+\[
+H_S=
+\frac{
+2p_{\mathrm{aqu}}(1-p_{\mathrm{aqu}})
++
+2p_{\mathrm{pol}}(1-p_{\mathrm{pol}})
+}{2},
+\]
+and expected heterozygosity based on the equally weighted pooled parental allele frequency as
+\[
+H_T=2\bar p(1-\bar p).
+\]
+The between-parent allelic-difference summary was calculated as
+\[
+d_{xy}
+=
+p_{\mathrm{aqu}}(1-p_{\mathrm{pol}})
++
+p_{\mathrm{pol}}(1-p_{\mathrm{aqu}}),
+\]
+and relative parental differentiation as
+\[
+F_{\mathrm{ST}}=\frac{H_T-H_S}{H_T},
+\]
+for markers with \(H_T>0\).
+
+These quantities are marker-level summaries conditional on the polymorphic sites retained for analysis. Because invariant sites were not included, \(H_S\) and \(d_{xy}\) should not be interpreted as genome-wide nucleotide diversity or absolute sequence divergence, respectively.
+
+\subsection{Marker-level and LD-reduced summaries}
+
+Sorting was summarised across recombination-rate deciles twice: once using one
+representative per LD-reduced unit and once using a random sample of individual
+markers. This comparison was used to diagnose spatial pseudoreplication.
+Differences between the two summaries indicate that a marker-level pattern is
+influenced by unequal redundancy across the recombination landscape.
+
+\subsection{Association models}
+
+Relationships among DI, recombination rate, parental expected heterozygosity,
+between-parent allelic difference, relative differentiation, pooled parental
+MAF, and cluster size were first summarised using rank correlations and
+recombination deciles (architecture results summary, Fig.~1a).
+
+The magnitude of sorting was modelled against recombination rate at the
+LD-reduced-unit level. Cluster size was not included in this model because it
+can be a consequence of both recombination and local marker variability;
+conditioning on it could induce an association between its causes.
+
+Among unidirectionally sorted units, sorting direction was analysed by logistic
+regression with standardised DI, standardised \(\log_{10}(\mathrm{recombination}
++0.1)\), standardised pooled parental MAF, and standardised log cluster size as
+predictors (architecture results summary, Fig.~1c). The recombination
+coefficient is treated as an association rather than as evidence of linked
+selection; its stability across the sorting threshold is shown in the
+threshold-sensitivity supplement (Fig.~S3).
+
+\subsection{Consensus-versus-representative validation}
+
+For clusters represented by both an eMLG consensus and a representative marker,
+we compared the inferred sorting direction between representations. The two
+representations agreed on the parental direction for approximately 99\% of these
+clusters, confirming that using representatives for genome-wide architecture models
+does not materially change the parental direction assigned to clusters, while the
+consensus remains preferable for aggregate sorting magnitude and cluster-level LD
+analyses.
+
+\section{Statistical interpretation}
+
+The analyses are descriptive and conditional on the sampled populations,
+quality gates, and analysis definitions. Consistent sorting can be produced by
+more than one evolutionary process; distinguishing drift from selection requires
+the recombination-matched neutral null, because a non-recombining autosomal
+block does not have lower \(N_e\) than its surroundings under neutrality. The
+weak residual low-recombination pull toward \Faq{} that survives control for DI
+is therefore reported as a lead for the intrinsic hypothesis rather than as
+evidence of linked selection.
+
+\section{Software, reproducibility, and current status}
+
+Ancestry-sorting and architecture analyses were performed in R using scripts in
+the \texttt{formica\_hybrid} repository, folder \texttt{moduleA\_sorting/R/}:
+\texttt{moduleA\_sorting\_phenomenon.R} (extent and direction of sorting, eMLG
+consensus construction, dilution check, and the \(\tau\)/\(\phi\)
+threshold-sensitivity sweeps) and \texttt{moduleA\_architecture.R} (genomic
+architecture and sorting-direction models); shared statistical functions are in
+\texttt{Ohta.R}, \texttt{parallelism\_stats.R} and \texttt{eMLG\_parallelism.R}.
+Shared genotype inputs and the Module~0 clustering are read from \texttt{data/}
+and \texttt{module0\_ld\_pruning/data/}; module intermediates are cached to
+\texttt{moduleA\_sorting/data/} with a parameter-stamped validity check so that
+reruns reuse them when settings are unchanged; figures are written to
+\texttt{moduleA\_sorting/Figures/}.
+
+\todo{Add the final \texttt{LDscnR} citation, version, and repository or archive
+identifier before submission.}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.20\textwidth}
+                  >{\raggedright\arraybackslash}p{0.42\textwidth}
+                  >{\raggedright\arraybackslash}p{0.27\textwidth}}
+\caption{Principal parameter settings used in the Module A analyses.}
+\label{tab:parameters}\\
+\toprule
+Analysis & Parameter & Value \\
+\midrule
+\endfirsthead
+\toprule
+Analysis & Parameter & Value \\
+\midrule
+\endhead
+Sorting & Near-fixation floor & \(\phi=0.90\) (fixed-for allele) \\
+        & Classification threshold & \(\tau=0.5\) \\
+        & Parental MAF gate & \(\geq0.15\) \\
+        & Cluster DI aggregation & maximum over members \\
+\midrule
+Threshold & Sorting threshold grid & \(\tau\in\{0.5,0.6,0.7,0.8\}\) \\
+sensitivity & Near-fixation floor grid & \(\phi\in\{0.80,0.85,0.90,0.95\}\) \\
+\midrule
+Architecture & DI criterion (diagnostic) & \(\mathrm{DI}>-25\) \\
+             & Direction model & logistic: DI, \(\log_{10}\)(recomb+0.1), parental MAF, \(\log\) size \\
+             & Magnitude model & \(\mathrm{prop\_fixed}\sim\) recombination (+ DI) \\
+\bottomrule
+\end{longtable}
+
+\begin{thebibliography}{1}
+\bibitem{nouhaud2022}
+Nouhaud P, Martin SH, Portinha B, Sousa VC, Kulmuni J. Rapid and
+predictable genome evolution across three hybrid ant populations.
+\textit{PLoS Biology}. 2022;20:e3001914.
+\href{https://doi.org/10.1371/journal.pbio.3001914}
+{doi:10.1371/journal.pbio.3001914}.
+\end{thebibliography}
+
+\end{document}

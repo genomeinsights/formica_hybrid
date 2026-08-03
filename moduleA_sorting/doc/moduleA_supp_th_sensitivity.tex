@@ -1,0 +1,161 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{pdflscape}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+
+\hypersetup{pdftitle={Supplementary Figures: threshold sensitivity of the ancestry-sorting analyses},
+  pdfauthor={Poikela et al.}}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}Supplementary Figures}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parindent}{0pt}\setlength{\parskip}{0.6em}
+
+\renewcommand{\thefigure}{S\arabic{figure}}
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+
+\title{\vspace{-3em}\textbf{\color{Accent}Supplementary Figures}\\[0.3em]
+  \Large Threshold sensitivity of the ancestry-sorting analyses}
+\author{Poikela et al.}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+% ---- Methods / rationale -----------------------------------------------
+The per-SNP sorting classification depends on two thresholds (Materials and
+Methods): the replicate-population sorting threshold \(\tau\), the minimum
+fraction of populations in which the dominant (unidirectional or bidirectional)
+component must occur for a unit to be classified as sorted; and the
+per-population near-fixation floor \(\phi\), the frequency the fixed-for
+(major) allele must reach for a population to count as near-fixed. We evaluated
+the sensitivity of the classification over a grid of
+\(\tau \in \{0.5, 0.6, 0.7, 0.8\}\) and
+\(\phi \in \{0.80, 0.85, 0.90, 0.95\}\). The upstream ancestry-diagnostic gate
+(pooled-parental minor-allele frequency \(\ge 0.15\)) was held fixed, so the
+denominator---the set of differentiated SNPs---is identical across every cell
+of the grid and the resulting percentages are directly comparable. All other
+conventions match the main analysis. The primary value \(\tau=0.5\) is the
+logical minimum at which a sorting direction is shared by at least half of the
+populations.
+
+% ---- Figure S1: sorting-classification sweep ---------------------------
+\begin{figure}[!ht]\centering
+\includegraphics[width=\textwidth,trim=0 0 0 0.60in,clip]{../Figures/moduleA_sorting_sweep.png}
+\caption{\textbf{Threshold sensitivity of the per-SNP sorting classification.}
+Percentage of differentiated SNPs assigned to each sorting outcome as a function
+of the sorting threshold \(\tau\) (\(x\)-axis) and the major-allele near-fixation
+floor \(\phi\) (line colour). The differentiated SNP set and its parental
+minor-allele-frequency gate were fixed across the grid. Panels show all sorted
+SNPs and the unidirectional \Faq{}, unidirectional \Fpo{}, and bidirectional
+classes. Increasing either threshold reduced the estimated prevalence of
+sorting monotonically, from \(38.6\%\) under the least stringent combination to
+\(1.3\%\) under the most stringent combination. At the primary operating point
+(\(\tau = 0.5\), \(\phi = 0.90\)), \(25.4\%\) were classified as sorted.
+Unidirectional sorting in either ancestry direction was consistently much more
+common than bidirectional sorting, which approached zero as stringency
+increased.}
+\label{figS:sortingsweep}
+\end{figure}
+
+% ---- Figure S2: DI-dependent direction sweep ---------------------------
+\clearpage
+\begin{center}
+\includegraphics[width=\textwidth,trim=0 0 0 0.60in,clip]{../Figures/moduleA_panelB_sweep.png}
+\captionof{figure}{\textbf{Threshold sensitivity of the DI-dependent sorting direction.}
+Fraction of unidirectional loci fixing toward \Faq{} across diagnostic-index
+deciles (\(x\)-axis; low to high), for each combination of the sorting threshold
+\(\tau\) (line colour) and the major-allele near-fixation floor \(\phi\)
+(panels). The dashed horizontal line at \(0.5\) marks no directional bias:
+points above it indicate a net lean toward \Faq{}, points below toward \Fpo{}.
+DI decile boundaries were defined once from the threshold-independent set of
+differentiated SNPs and held fixed across the grid. The loci contributing to
+each fraction nevertheless vary because changing \(\tau\) or \(\phi\) changes
+which loci meet the unidirectional-sorting criteria. Despite this change in the
+qualifying set, the low-DI-toward-\Fpo{} / high-DI-toward-\Faq{} reversal seen
+in main-text Figure~1B is preserved across the swept thresholds. The primary
+operating point (\(\tau = 0.5\), \(\phi = 0.90\)) reproduces the main-text
+curve exactly.}
+\label{figS:panelBsweep}
+\end{center}
+
+% ---- Figure S3: direction-model coefficients vs sorting threshold ------
+A complementary, architectural question is whether recombination predicts the
+\emph{direction} of sorting beyond the diagnostic index. Among unidirectional
+LD-reduced units we fit a logistic model,
+P(\Faq)\,\(\sim\)\,diagnostic index \(+\) recombination \(+\) parental MAF
+\(+\) \(\log\) block size, with all predictors standardised, and asked how its
+coefficients respond to the sorting threshold \(\tau\) (near-fixation floor held
+at \(\phi = 0.90\)). Because the per-unit sorting scores are stored, the
+unidirectional set was recomputed at each \(\tau\) without re-running the sorting
+test, and the standardisation was fixed over the full differentiated-unit set, so
+the coefficients move only because \(\tau\) changes which units qualify.
+
+\clearpage
+\begin{center}
+\includegraphics[width=\textwidth,trim=0 0 0 0.60in,clip]{../Figures/moduleA_direction_sweep.png}
+\captionof{figure}{\textbf{Sorting direction is governed by the diagnostic index across sorting thresholds.}
+Standardised coefficients (points; \(95\%\) confidence intervals) of the logistic
+direction model P(\Faq)\,\(\sim\)\,diagnostic index \(+\) recombination \(+\)
+parental MAF \(+\) \(\log\) block size, fitted to unidirectional LD-reduced units,
+as a function of the sorting threshold \(\tau\) (near-fixation floor
+\(\phi = 0.90\)). Panels, left to right: diagnostic index, recombination,
+parental minor-allele frequency and \(\log\) block size; the dashed line marks a
+null coefficient. The diagnostic index dominates at every threshold and
+strengthens as \(\tau\) increases (from \(+1.57\) at \(\tau = 0.5\) to
+\(+1.95\) at \(\tau = 0.8\)), whereas recombination contributes only a small,
+stable negative coefficient (\(\approx -0.09\); low recombination leans \Faq{}
+once the diagnostic index, parental MAF and block size are controlled) that
+remains roughly an order of magnitude weaker than the diagnostic index
+throughout, losing precision only at the strictest threshold as the
+unidirectional set shrinks. Parental MAF and block size stay near zero.}
+\label{figS:directionsweep}
+\end{center}
+
+% ---- Figure S4: genomic landscape of sorting across thresholds ---------
+Finally, the sorting signal has clear genomic structure that persists across the
+sorting threshold. Figure~\ref{figS:sortinglandscape} maps, along each chromosome,
+the fraction of differentiated SNPs fixing toward each parent in 100-kb windows at
+\(\tau \in \{0.5, 0.6, 0.7, 0.8\}\) (near-fixation floor \(\phi = 0.90\)), together with
+the net direction, the diagnostic-index landscape and the marker-level local-LD
+statistic \(\mathrm{ld}_w(0.95)\). Windows with fewer than 50 differentiated SNPs
+are removed as low-density, since their per-window estimates are unstable.
+
+\begin{landscape}
+\begin{center}
+\includegraphics[width=\linewidth]{../Figures/moduleA_sorting_manhattan_directional.png}
+\captionof{figure}{\textbf{Genomic landscape of directional ancestry sorting across sorting thresholds.}
+For each 100-kb window along the genome (faceted by chromosome), from top to
+bottom: the fraction of differentiated SNPs fixing toward \Faq{}, the fraction
+fixing toward \Fpo{}, the net direction (\Faq{} minus \Fpo{}), the diagnostic-index
+landscape (grey points are individual markers, line is the 5-window rolling mean,
+view clipped to \([-100, 0]\), dashed line marks the \(\mathrm{DI} = -25\)
+diagnostic cut), and the marker-level local-LD statistic \(\mathrm{ld}_w(0.95)\)
+(grey points, line is the window mean). Sorting rows are coloured by sorting
+threshold \(\tau\) (near-fixation floor \(\phi = 0.90\); 5-window rolling mean).
+Windows with fewer than 50 differentiated SNPs are removed as low-density. Sorting
+peaks frequently overlapped regions of elevated local LD, whereas the diagnostic
+index primarily predicted the direction of sorting. Both patterns persisted at more
+stringent sorting thresholds.}
+\label{figS:sortinglandscape}
+\end{center}
+\end{landscape}
+
+\end{document}
