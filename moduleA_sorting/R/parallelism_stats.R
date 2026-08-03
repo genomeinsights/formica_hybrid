@@ -32,7 +32,7 @@
 ## populations rather than 3.
 ##
 ##
-## Input is a `prep` object from ohta_fast_prepare() (dev/R/Ohta.R), the
+## Input is a `prep` object from ohta_fast_prepare() (LDscnR package), the
 ## same object sorting_stats() consumes, so the two results join on
 ## `marker`.
 
@@ -324,7 +324,7 @@ parallelism_stats <- function(prep,
 if (FALSE) {
 
   library(data.table)
-  source("dev/R/Ohta.R")               # ohta_fast_prepare()
+  devtools::load_all("~/gitlab/LDscnR/")  # ohta_fast_prepare() (LDscnR package)
   source("dev/R/parallelism_stats.R")
 
   e <- new.env()

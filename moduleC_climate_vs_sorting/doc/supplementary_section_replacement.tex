@@ -1,0 +1,50 @@
+% =====================================================================
+% REPLACEMENT for supplementary_results.tex section
+%   "Climate is not a robust driver of sorting or diagnosticity" (\label{sr:climate})
+% Based on the completed genome-wide, eMLG-level Module C analysis.
+% =====================================================================
+
+\section{Climate association does not explain repeated sorting or diagnostic enrichment}\label{sr:climate}
+
+We asked whether climate-association evidence was distributed non-randomly with respect
+to parental diagnosticity, recombination rate, or repeated directional sorting. The
+analysis used the complete set of 32{,}840 eMLGs from the primary {\AA}land-excluded
+BayPass configuration. For each climate axis and each of 10{,}000 null covariates drawn
+from the fixed among-population covariance matrix, the genome-wide Bayes-factor vector
+was reduced to the same three rank-based statistics. This calibration retains the
+population structure represented by $\Omega$ and avoids defining climate-associated
+regions by an arbitrary Bayes-factor threshold.
+
+\paragraph{Directional sorting and recombination.} Neither directional sorting
+nor recombination rate was associated with climate-association strength beyond the
+structured null. Among parentally differentiated eMLGs, the mean Bayes-factor-percentile
+difference between directional and non-directional units was 0.055 for PC1 (empirical
+$P=0.107$, FDR $=0.320$) and 0.024 for PC2 ($P=0.475$, FDR $=0.571$), compared with a
+null median of 0.033 and a central 95\% interval of 0.007--0.057. Correlations with
+recombination were likewise null (PC1 $\rho=0.001$, FDR $=0.909$; PC2 $\rho=-0.006$,
+FDR $=0.571$), as were correlations with continuous sorting magnitude (PC1 $P=0.575$;
+PC2 $P=0.357$).
+
+\paragraph{Diagnostic content.} Diagnostic Index was unrelated to climate-association
+strength on PC1 ($\rho=0.017$, FDR $=0.571$). PC2 showed the only departure among the
+six primary tests: its Bayes-factor rank was negatively correlated with DI
+($\rho=-0.125$, empirical $P=0.001$, FDR $=0.006$), below the null 95\% interval of
+$-0.093$ to 0.047. Because higher DI denotes greater parental diagnosticity, this weak
+correlation does not indicate enrichment among the most diagnostic eMLGs. The raw-Bayes-
+factor correlation was similar ($r=-0.119$, $P<0.001$), but the effect was diffuse: no
+individual eMLG survived the locus-level simulated-FDR analysis. It therefore describes
+a genome-wide shift in ranks, not a set of supported climate-adaptation loci.
+
+\paragraph{Sensitivity analyses and validation.} Upper-tail summaries were descriptive
+because extreme-rank membership was more sensitive to BayPass Monte Carlo variation. The
+top PC1 fractions contained more directionally sorted eMLGs than expected under the null
+(53.8\%, 47.8\%, and 39.6\% in the upper 0.1\%, 0.5\%, and 1\%; empirical $P=0.028$,
+0.0008, and 0.0034) and tended toward lower recombination. These cut-off-dependent
+patterns were absent for PC2 and did not alter the primary tests. Regenerated and archived
+per-eMLG exceedance counts correlated at 0.99996 and 0.99995 for PC1 and PC2, with total
+count differences of 0.0019\% and 0.0046\%. Independent runs showed that Monte Carlo
+variation in each primary statistic was at most 6.2\% of its variation among null
+covariates. Overall, the measured climate gradients do not robustly organise the repeated
+direction or magnitude of sorting. The weak PC2--DI relationship remains conditional and
+exploratory because climate, ancestry, and population history are geographically
+entangled.

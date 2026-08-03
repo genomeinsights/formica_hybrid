@@ -101,7 +101,7 @@ lev("Sielva", "drop Sielva")
 lev(c("Aland", "Sielva"), "drop Aland+Sielva")
 
 ## ---- 5. figure: PC vs ancestry, extremes highlighted ----
-dir.create("moduleB_BayPass/Figures", showWarnings = FALSE)
+dir.create("moduleB_climate_GEA/Figures", showWarnings = FALSE)
 m <- melt(dt, id.vars = c("Population", "ancestry"),
           measure.vars = c("PC1", "PC2"), variable.name = "PC", value.name = "score")
 m[, extreme := Population %in% c("Aland", "Sielva")]
@@ -114,7 +114,7 @@ p <- ggplot(m, aes(ancestry, score)) +
   facet_wrap(~ PC, scales = "free_y") +
   labs(x = "genome-wide aquilonia ancestry (per population)", y = "climate PC score") +
   theme_classic(base_size = 9)
-ggsave("moduleB_BayPass/Figures/moduleC_ancestry_confound.png", p, width = 150, height = 70, units = "mm", dpi = 300)
+ggsave("moduleB_climate_GEA/Figures/moduleB_ancestry_confound.png", p, width = 150, height = 70, units = "mm", dpi = 300)
 
-saveRDS(dt, "moduleB_BayPass/data/moduleC_ancestry_confound.rds")
-cat("\nSaved: moduleB_BayPass/data/moduleC_ancestry_confound.rds, moduleB_BayPass/Figures/moduleC_ancestry_confound.png\n")
+saveRDS(dt, "moduleB_climate_GEA/data/moduleB_ancestry_confound.rds")
+cat("\nSaved: moduleB_climate_GEA/data/moduleB_ancestry_confound.rds, moduleB_climate_GEA/Figures/moduleB_ancestry_confound.png\n")

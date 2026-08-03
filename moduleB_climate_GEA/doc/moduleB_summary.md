@@ -1,6 +1,6 @@
 # Module B — Climate association: summary for the manuscript
 
-**Scope.** Module B (`moduleB_BayPass/`; the cleaned re-organisation of the old `moduleC_*`) tests
+**Scope.** Module B (`moduleB_climate_GEA/`; the cleaned re-organisation of the old `moduleC_*`) tests
 whether population allele frequencies are associated with the climate covariates
 **PC1** and **PC2**, at two resolutions: (i) individual SNPs (standard BayPass
 outlier scan) and (ii) LD-complexity-reduced clusters (eMLGs; one consensus
@@ -56,7 +56,7 @@ and supplied fixed (`withOmega`)}. Output rows were matched positionally to the
 input markers (row-count and strictly-increasing-index asserts). Åland-excluded ×
 withOmega is primary. Background significant-marker rate (BF ≥ 15): **PC1 0.17 %,
 PC2 0.15 %**.
-Scripts: `moduleB_BayPass/R/moduleB_prepare_{with_aland,aland_excluded}.R`,
+Scripts: `moduleB_climate_GEA/R/moduleB_prepare_{with_aland,aland_excluded}.R`,
 `moduleB_write_baypass_inputs.R`, `{with_aland,aland_excluded}/run_baypass.sh`,
 `moduleB_analyse_baypass.R`.
 
@@ -68,7 +68,7 @@ ancestry link is driven by **Åland** (+0.568 → +0.384 when dropped), not Siel
 (+0.568 → +0.642 when dropped). Controls: fixed Ω (conditions out shared structure,
 present in both runs) and the Åland-excluded primary analysis. Associations are
 therefore interpreted as **conditional** associations, not direct evidence of local
-adaptation. Script: `moduleB_BayPass/R/moduleB_ancestry_confound.R`.
+adaptation. Script: `moduleB_climate_GEA/R/moduleB_ancestry_confound.R`.
 
 ### 2.3 LD-complexity reduction and the eMLG association (Li et al. 2018)
 Each ≥5-locus LD cluster was reduced to one **eMLG** (per-individual consensus
@@ -80,7 +80,7 @@ individually significant members. Because Ω is a property of the populations an
 BayPass co-estimates a genome-wide allele-frequency prior from *all* markers in a
 run, this must be run on the full 32,840-eMLG set (verified: subsetting to
 candidates shifts BF by up to tens of dB). Scripts:
-`moduleB_BayPass/R/moduleB_write_eMLG_baypass_inputs.R`, `run_baypass_eMLG.sh`,
+`moduleB_climate_GEA/R/moduleB_write_eMLG_baypass_inputs.R`, `run_baypass_eMLG.sh`,
 `moduleB_eMLG_manhattan.R`. (Note: BayPass `eBPis` is degenerate here — essentially
 all eMLGs p < 0.05 — so BF(dB), calibrated by the sim-null below, is used, not eBPis.)
 
@@ -98,8 +98,8 @@ permutation-style genome-wide FDR: under the pure-structure null the observed BF
 exchangeable with its nulls, so the expected number of floor-survivors is
 N/(NSIM+1) = 32,840/10,001 ≈ **3.28** per axis, and the FDR of the observed
 floor-survivor set = 3.28 / (number observed). Any cluster above the floor (k ≥ 1)
-cannot survive FDR and is discarded. Script: `moduleB_BayPass/R/moduleB_eMLG_null.R` →
-`moduleB_BayPass/data/moduleB_eMLG_null.rds`. (Scoping FDR to a pre-screened subset is invalid —
+cannot survive FDR and is discarded. Script: `moduleB_climate_GEA/R/moduleB_eMLG_null.R` →
+`moduleB_climate_GEA/data/moduleB_eMLG_null.rds`. (Scoping FDR to a pre-screened subset is invalid —
 selection on the same statistic — so the genome-wide denominator is used.)
 
 ---
@@ -114,7 +114,7 @@ selection on the same statistic — so the genome-wide denominator is used.)
 
 ![**Final Manhattan — FDR-passing eMLG clusters over all SNPs.** All 1,114,340 SNPs in grey (BF per axis); the member SNPs of the sim-FDR floor-surviving eMLG clusters are coloured, one colour per cluster (PC1: F7388; PC2: F14310, F49926, F53948, F54421, F58676). Most member SNPs lie *below* BF = 15 — the cluster-level signal is not driven by individually significant SNPs. Dashed line BF = 15.](../Figures/moduleB_fdr_snp_manhattan.png){width=100%}
 
-![**PC–ancestry confound.** Per-population climate PC vs genome-wide *aquilonia* ancestry; Åland/Sielva highlighted.](../Figures/moduleC_ancestry_confound.png){width=68%}
+![**PC–ancestry confound.** Per-population climate PC vs genome-wide *aquilonia* ancestry; Åland/Sielva highlighted.](../Figures/moduleB_ancestry_confound.png){width=68%}
 
 Compiled candidate tables (standalone PDFs): `tables/climate_candidate_clusters.pdf`,
 `tables/climate_candidate_full.pdf`.
@@ -297,7 +297,7 @@ survive (Table S2, `simnull_k` column: F63637 k = 12, F63812 k = 18, …).
 
 ## 6. Reproducibility (scripts & data objects)
 
-Self-contained module folder `moduleB_BayPass/` with `R/` (scripts), `data/`
+Self-contained module folder `moduleB_climate_GEA/` with `R/` (scripts), `data/`
 (output objects), `Figures/` (plots) and `doc/` (this summary + `doc/tables/`
 candidate tables). Scripts are run **from the repo root** in the order below;
 they read shared/raw inputs from the repo root — the LD clustering
@@ -305,14 +305,14 @@ they read shared/raw inputs from the repo root — the LD clustering
 genotype `data/hybrids_*_maf005.Rdata` and `data/pruned_markers.rds`, and
 the BayPass run directories `with_aland/`, `aland_excluded/`, `aland_excluded_eMLG/`
 (which hold the per-run inputs, `run_baypass*.sh`, and the large `*_summary_*.out`)
-— and write all module products under `moduleB_BayPass/`.
+— and write all module products under `moduleB_climate_GEA/`.
 
-| # | Step | Script (in `moduleB_BayPass/R/`) | Key output |
+| # | Step | Script (in `moduleB_climate_GEA/R/`) | Key output |
 |---|---|---|---|
 | 1 | BayPass inputs | `moduleB_prepare_{with_aland,aland_excluded}.R` → `moduleB_write_baypass_inputs.R` | `{with_aland,aland_excluded}/` BayPass input files |
 | — | BayPass runs (external) | `{with_aland,aland_excluded}/run_baypass.sh` | `…/PC{1,2}_DIEM_*_summary_*.out` |
 | 2 | SNP Manhattans | `moduleB_analyse_baypass.R` | `Figures/manhattan_*_min5SigLoci_*.png` |
-| 3 | PC/ancestry confound | `moduleB_ancestry_confound.R` | `data/moduleC_ancestry_confound.{rds,png}` |
+| 3 | PC/ancestry confound | `moduleB_ancestry_confound.R` | `data/moduleB_ancestry_confound.{rds,png}` |
 | 4 | Candidate definition + tables | `moduleB_climate_candidates.R` | `data/moduleB_climate_candidates.rds`; `doc/tables/climate_candidate_*.{tex,pdf}` |
 | 5 | eMLG BayPass inputs | `moduleB_write_eMLG_baypass_inputs.R` | `aland_excluded_eMLG/u_eMLG.geno` (+ staged Ω/covariates) |
 | — | eMLG BayPass runs (external) | `run_baypass_eMLG.sh` | `aland_excluded_eMLG/PC*_eMLG_*_betai_reg.out` |

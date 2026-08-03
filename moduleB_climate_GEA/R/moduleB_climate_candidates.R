@@ -63,10 +63,10 @@
 ##         {with_aland,aland_excluded}/PC{1,2}_DIEM_{noOmega,withOmega}_summary_{betai_reg,pi_xtx}.out,
 ##         aland_excluded_eMLG/PC{1,2}_eMLG_withOmega_summary_betai_reg.out,
 ##         aland_excluded_eMLG/eMLG_group_order.txt
-## Writes: moduleB_BayPass/data/moduleB_climate_candidates.rds  (all 35 candidates + pass_eMLG flag;
+## Writes: moduleB_climate_GEA/data/moduleB_climate_candidates.rds  (all 35 candidates + pass_eMLG flag;
 ##           the restricted set is pass_eMLG == TRUE),
-##         moduleB_BayPass/doc/tables/climate_candidate_clusters.{txt,tex}  (8-config counts),
-##         moduleB_BayPass/doc/tables/climate_candidate_full.tex            (per-cluster + eMLG gate)
+##         moduleB_climate_GEA/doc/tables/climate_candidate_clusters.{txt,tex}  (8-config counts),
+##         moduleB_climate_GEA/doc/tables/climate_candidate_full.tex            (per-cluster + eMLG gate)
 ## Run from the formica_hybrid repo root.
 
 suppressMessages(library(data.table))
@@ -77,7 +77,7 @@ MIN5        <- 5; MIN10 <- 10    # member-count entry thresholds
 EMLG_BF_THR <- 15                # eMLG gate: cluster-level BF(dB) >= this
 DI_TH       <- -25               # ancestry-informative criterion (reported, not a gate)
 CLUST       <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
-OUTDIR      <- "moduleB_BayPass/doc/tables"
+OUTDIR      <- "moduleB_climate_GEA/doc/tables"
 EMLG_DIR    <- "aland_excluded_eMLG"
 PRIM_POP    <- "aland_excluded"; PRIM_OM <- "withOmega"
 ## Omega label: noOmega = internal (full data); withOmega = LD-pruned (fixed)
@@ -242,8 +242,8 @@ print(restricted[, .(group_id, Chr, size = n_loci, cand_axis,
                      eMLG_Beta = round(eMLG_Beta, 3))])
 
 ## ---- save the candidate object (all candidates + pass flag) -------------
-saveRDS(cand, "moduleB_BayPass/data/moduleB_climate_candidates.rds")
-cat("\nSaved moduleB_BayPass/data/moduleB_climate_candidates.rds (", nrow(cand),
+saveRDS(cand, "moduleB_climate_GEA/data/moduleB_climate_candidates.rds")
+cat("\nSaved moduleB_climate_GEA/data/moduleB_climate_candidates.rds (", nrow(cand),
     " candidates; restricted set = pass_eMLG == TRUE, n=", nrow(restricted), ")\n", sep = "")
 
 ## ---- per-cluster LaTeX table (ordered by eMLG BF, gate marked) ----------
@@ -282,4 +282,4 @@ if (nzchar(Sys.which("latexmk"))) {
                         Sys.glob(file.path(OUTDIR, "*.fdb_latexmk")),
                         Sys.glob(file.path(OUTDIR, "*.log"))))
 }
-cat("\nWrote moduleB_BayPass/data/moduleB_climate_candidates.rds and moduleB_BayPass/doc/tables/climate_candidate_{clusters.{txt,tex},full.tex}\n")
+cat("\nWrote moduleB_climate_GEA/data/moduleB_climate_candidates.rds and moduleB_climate_GEA/doc/tables/climate_candidate_{clusters.{txt,tex},full.tex}\n")

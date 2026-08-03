@@ -5,7 +5,7 @@
 ##   manuscript_notes/moduleB_results_summary.pdf
 ## (that draft is "Module B"; in the _PK pipeline it is Module A). Built from
 ## RDS_data/ inputs at the clean _PK conventions: pooled-parental MAF gate 0.15,
-## sort_th 0.5, fix_th 0.1 (major-allele floor 0.90), cM1 clustering, DI ungated.
+## sort_th 0.5, fix_th 0.1 (major-allele floor 0.90), cM05 clustering, DI ungated.
 ## These settings differ from the current PDF (fix_th 0.15 / cM05), so the printed
 ## numbers shift slightly -- each cat() prints the regenerated value next to the
 ## PDF value so the manuscript text can be updated. Consolidates the former
@@ -24,7 +24,7 @@
 ##            -> moduleA_supp_th_sensitivity.tex Fig S3
 ##   assembled 3-panel figure (Fig 1 a/b/c)                  tag: == [FIG 1]
 ## ------------------------------------------------------------------------
-## Reads : data/hybrids_and_parents_maf005.Rdata, module0_ld_pruning/data/eMLG_5loci_0025_cM1.rds,
+## Reads : data/hybrids_and_parents_maf005.Rdata, module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds,
 ##         data/Frufa_DTOL_PR.ref_genome.recmap
 ## Writes: moduleA_sorting/data/moduleA_architecture.rds, moduleA_sorting/data/moduleA_r_{unit,snp}.rds,
 ##         moduleA_sorting/Figures/moduleA_architecture_fig.{pdf,png}, moduleA_sorting/Figures/moduleA_direction_sweep.png
@@ -34,7 +34,7 @@
 suppressPackageStartupMessages({
   library(data.table); library(ggplot2); library(patchwork); library(wesanderson)
 })
-source("moduleA_sorting/R/Ohta.R")                # ohta_fast_prepare()
+devtools::load_all("~/gitlab/LDscnR/")            # ohta_fast_prepare() etc. (LDscnR package)
 source("moduleA_sorting/R/parallelism_stats.R")   # parallelism_stats()
 set.seed(1)
 
@@ -44,7 +44,7 @@ FIX_TH         <- 0.1                          # major-allele fixation floor 0.9
 SORT_TH        <- 0.5
 SNP_SAMPLE     <- 200000L
 SORT_TH_SWEEP  <- c(0.5, 0.6, 0.7, 0.8)        # for the [SUPP S3] direction sweep
-CLUSTERING     <- "module0_ld_pruning/data/eMLG_5loci_0025_cM1.rds"
+CLUSTERING     <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
 RECMAP         <- "data/Frufa_DTOL_PR.ref_genome.recmap"
 RECOMPUTE      <- FALSE
 
@@ -76,7 +76,7 @@ for (ch in unique(map$Chr)) {
   map[idx, recomb := approx(r$pos, r$cMMb, xout = map$Pos[idx], rule = 2)$y]
 }
 
-## per-marker cluster size (canonical cM1 clustering)
+## per-marker cluster size (canonical cM05 clustering)
 g <- readRDS(CLUSTERING)$groups
 memb <- data.table(marker = unlist(g$members), cluster_size = rep(g$n_loci, lengths(g$members)))
 map <- memb[map, on = "marker"]

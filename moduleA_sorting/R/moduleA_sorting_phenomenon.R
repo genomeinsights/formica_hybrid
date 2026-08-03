@@ -25,10 +25,10 @@
 ##     ungated as a covariate so DI-vs-{recomb, cluster size, PC} stay unbiased
 ##     and "does DI predict sorting?" is non-circular (Module B, MAF-controlled)
 ##
-## Transparency: every step is in this file. It sources three reviewed stat
-## files -- Ohta.R (ohta_fast_prepare), parallelism_stats.R (parallelism_stats),
-## eMLG_parallelism.R (build_sorted_eMLG, build_group_consensus, cluster_DI) --
-## and defines score_eMLG() inline. Run top-to-bottom from the repo root
+## Transparency: every step is in this file. It loads the LDscnR package
+## (ohta_fast_prepare) and sources two reviewed stat files -- parallelism_stats.R
+## (parallelism_stats), eMLG_parallelism.R (build_sorted_eMLG,
+## build_group_consensus, cluster_DI) -- and defines score_eMLG() inline. Run top-to-bottom from the repo root
 ## (~/gitlab/formica_hybrid): `Rscript R/moduleA_sorting_phenomenon.R` or
 ## interactively. Writes RDS_data/eMLG_sorted_cM05.rds and moduleA_sorting/data/moduleA_*.rds.
 
@@ -59,13 +59,13 @@ SCORE_TH    <- 0.80     # score_eMLG floor for the A3 dilution check == the same
                         #   reused clusters (all >= 0.80) never flag and the check
                         #   focuses on the un-vetted built (small) clusters.
 
-CLUSTERING  <- "module0_ld_pruning/data/eMLG_5loci_0025_cM1.rds"   # frozen canonical (input)
-SORTED_FILE <- "moduleA_sorting/data/eMLG_sorted_cM1.rds"          # A2 companion (output)
+CLUSTERING  <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"  # frozen canonical (input)
+SORTED_FILE <- "moduleA_sorting/data/eMLG_sorted_cM05.rds"         # A2 companion (output)
 
 ## ---- inputs -------------------------------------------------------------
-source("moduleA_sorting/R/Ohta.R")                # ohta_fast_prepare() In LDsnR package as well but not exported
-source("moduleA_sorting/R/parallelism_stats.R")  # parallelism_stats(), .binom_two_sided_p()
-source("moduleA_sorting/R/eMLG_parallelism.R")    # build_sorted_eMLG(), build_group_consensus(), cluster_DI()
+devtools::load_all("~/gitlab/LDscnR/")             # ohta_fast_prepare() etc. (LDscnR package)
+source("moduleA_sorting/R/parallelism_stats.R")    # parallelism_stats(), .binom_two_sided_p()
+source("moduleA_sorting/R/eMLG_parallelism.R")     # build_sorted_eMLG(), build_group_consensus(), cluster_DI()
 
 ## hybrids + parents: parents define the aquilonia/polyctena allele orientation
 e2 <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e2)
@@ -359,8 +359,8 @@ cat("\n[A3] building matched parent-side consensus for", length(units), "units .
 t0 <- Sys.time()
 ## cache validation rebuilds if the cached parent side no longer matches the
 ## current unit set (e.g. sorted_eMLG was rebuilt with different units).
-#par_cons <-readRDS("moduleA_sorting/data/eMLG_sorted_cM1_parents.rds")
-par_cons <- cache_rds("moduleA_sorting/data/eMLG_sorted_cM1_parents.rds",
+#par_cons <-readRDS("moduleA_sorting/data/eMLG_sorted_cM05_parents.rds")
+par_cons <- cache_rds("moduleA_sorting/data/eMLG_sorted_cM05_parents.rds",
   label = "build_group_consensus (A3 parent side)",
   valid = function(pc) identical(colnames(pc), units),
   build = function() build_group_consensus(umem, GTs_hyb, GTs_parents,

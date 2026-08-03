@@ -239,7 +239,7 @@ build_sorted_eMLG <- function(groups, eMLG, GTs_hybrids, markers, cores = 1,
 if (FALSE) {
 
   library(data.table)
-  source("dev/R/Ohta.R")
+  devtools::load_all("~/gitlab/LDscnR/")  # ohta_fast_prepare() (LDscnR package)
   source("dev/R/parallelism_stats.R")
   source("dev/R/eMLG_parallelism.R")
 

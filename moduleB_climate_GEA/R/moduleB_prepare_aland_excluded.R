@@ -3,7 +3,7 @@
 # poolsize-ordering fix) and R/moduleC_prepare_with_aland.R for the full-dataset
 # counterpart used for comparison.
 
-source("./moduleB_BayPass/R/moduleB_write_baypass_inputs.R")
+source("./moduleB_climate_GEA/R/moduleB_write_baypass_inputs.R")
 
 load("./data/hybrids_only_maf005.Rdata")
 pruned_markers <- readRDS("./data/pruned_markers.rds")

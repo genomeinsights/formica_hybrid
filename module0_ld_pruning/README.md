@@ -39,8 +39,8 @@ Shared, in repo-root `data/`:
 ## Outputs
 
 `data/` (module intermediates & the clustering):
-- `eMLG_5loci_0025_cM1.rds` — **canonical clustering (1 cM), consumed by `moduleA_sorting`**
-- `eMLG_5loci_0025_cM05.rds` — 0.5 cM variant
+- `eMLG_5loci_0025_cM05.rds` — **canonical clustering (0.5 cM), consumed by all downstream modules (A, B, C)**
+- `eMLG_5loci_0025_cM1.rds` — 1 cM variant (sensitivity only)
 - `pruned_stage1.rds`, `pruned_markers.rds`, `eMLG_groups.rds` — clustering intermediates
 - `diem_parsed.rds`, `ld_decay_DIEM_100w.rds`, `ld_decay_DI.rds` — parsed genotypes & LD-decay fits
 - `ld_tracks_a_windows.rds`, `ld_tracks_ldw_persnp.rds`, `ldw_a_recmap_comparison.rds` — track/comparison data
@@ -57,5 +57,5 @@ Shared, in repo-root `data/`:
 
 Hybrid MAF ≥ 0.05 (1,114,340 markers) · LD-decay: 20 windows/chr, 0.95 `r²`
 quantile · Stage 1: relative LD threshold ρ = 0.5 · Stage 2: `ld_w` > 0.025 or
-≥5 markers, consensus fidelity ≥ 0.80, `r²` floor 0.2, 1 cM distance restriction
+≥5 markers, consensus fidelity ≥ 0.80, `r²` floor 0.2, 0.5 cM distance restriction (canonical; 1 cM built as a sensitivity variant)
 · final partition **470,035 clusters; 32,871 with a stored consensus**.

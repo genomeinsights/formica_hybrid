@@ -192,7 +192,7 @@ plot_clustered_manhattan_with_background <- function(baypass_result, fig_prefix,
     theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
 
   fname <- paste0(
-    "./moduleB_BayPass/Figures/manhattan_", fig_prefix, "_eMLG_clustered_min", min_n_sig_loci, "SigLoci_withBackground.png"
+    "./moduleB_climate_GEA/Figures/manhattan_", fig_prefix, "_eMLG_clustered_min", min_n_sig_loci, "SigLoci_withBackground.png"
   )
   ggsave(fname, p, width = 16, height = 5, dpi = 150)
   message(

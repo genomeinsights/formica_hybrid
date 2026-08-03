@@ -24,7 +24,7 @@ comparisons.
 ## Directory layout
 
 ```
-moduleB_BayPass/
+moduleB_climate_GEA/
 ├── README.md                 (this file)
 ├── R/                        pipeline scripts (run from the repo root)
 ├── data/                     output objects (.rds/.csv) + null_env/ (archived null draws)
@@ -33,9 +33,9 @@ moduleB_BayPass/
                               doc/tables/  standalone candidate tables (.tex/.pdf)
 ```
 
-**Run scripts from the repo root**, e.g. `Rscript moduleB_BayPass/R/moduleB_climate_candidates.R`.
+**Run scripts from the repo root**, e.g. `Rscript moduleB_climate_GEA/R/moduleB_climate_candidates.R`.
 Scripts read shared/raw inputs at their repo-root locations and write all
-products under `moduleB_BayPass/`.
+products under `moduleB_climate_GEA/`.
 
 ---
 
@@ -68,17 +68,17 @@ and live at the **repo root**, not inside the module.
 ## Pipeline & run order
 
 Steps marked **[BayPass]** are the external BayPass runs (shell scripts that call
-the `g_baypass` binary); all other steps are `Rscript … moduleB_BayPass/R/<script>`.
+the `g_baypass` binary); all other steps are `Rscript … moduleB_climate_GEA/R/<script>`.
 
 | # | Script | Does | Key output |
 |---|---|---|---|
 | 1 | `moduleB_prepare_with_aland.R`, `moduleB_prepare_aland_excluded.R` (source `moduleB_write_baypass_inputs.R`) | Build BayPass genotype-count / poolsize / PC-covariate inputs | files in `with_aland/`, `aland_excluded/` |
 | 2 | **[BayPass]** `with_aland/run_baypass.sh`, `aland_excluded/run_baypass.sh` | Ω + PC1/PC2 association, with & without fixed Ω | `…/PC{1,2}_DIEM_{noOmega,withOmega}_summary_*.out` |
 | 3 | `moduleB_analyse_baypass.R` | SNP-level Manhattans (8 configs; member-count candidate colouring) | `Figures/manhattan_*_min5SigLoci_*.png` |
-| 4 | `moduleB_ancestry_confound.R` | PC provenance + PC–ancestry confound check | `data/moduleC_ancestry_confound.rds`, `Figures/moduleC_ancestry_confound.png` |
+| 4 | `moduleB_ancestry_confound.R` | PC provenance + PC–ancestry confound check | `data/moduleB_ancestry_confound.rds`, `Figures/moduleB_ancestry_confound.png` |
 | 5 | `moduleB_climate_candidates.R` | Member-count candidates → eMLG-BF gate → candidate table | `data/moduleB_climate_candidates.rds`, `doc/tables/climate_candidate_*.{tex,pdf}` |
 | 6 | `moduleB_write_eMLG_baypass_inputs.R` | Build eMLG count file (round eMLG dosage → per-pop counts; reuse fixed Ω) | `aland_excluded_eMLG/u_eMLG.geno` (+ staged Ω/covariates) |
-| 7 | **[BayPass]** `moduleB_BayPass/R/run_baypass_eMLG.sh` | PC1/PC2 association on the 32,840 eMLGs, fixed Ω | `aland_excluded_eMLG/PC{1,2}_eMLG_withOmega_summary_betai_reg.out` |
+| 7 | **[BayPass]** `moduleB_climate_GEA/R/run_baypass_eMLG.sh` | PC1/PC2 association on the 32,840 eMLGs, fixed Ω | `aland_excluded_eMLG/PC{1,2}_eMLG_withOmega_summary_betai_reg.out` |
 | 8 | `moduleB_eMLG_manhattan.R` | eMLG-level Manhattan + eMLG-only outlier set | `data/moduleB_eMLG_association.rds`, `data/moduleB_eMLG_outliers.csv`, `Figures/moduleB_eMLG_manhattan.png` |
 | 9 | `moduleB_eMLG_null.R` | 10 000 Ω-structured null covariates (10×1000 batches) → per-eMLG sim-FDR. **~21 h**; checkpointed; parses & deletes the ~43 GB raw output | `data/moduleB_eMLG_null.rds`; null draws archived in `data/null_env/` |
 | 10 | re-run `moduleB_eMLG_manhattan.R` | picks up step 9 → adds FDR floor-survivor overlays | `Figures/moduleB_eMLG_manhattan.png` (triangles) + `Figures/moduleB_fdr_snp_manhattan.png` |
@@ -99,12 +99,12 @@ Notes:
 | `moduleB_eMLG_association.rds` | all 32,840 eMLGs: position, member sig counts, eMLG BF per axis, support category |
 | `moduleB_eMLG_outliers.csv` | 51 eMLG outliers (BF ≥ 15) with per-SNP `n_sig`/`pct_sig` retained |
 | `moduleB_eMLG_null.rds` | 10k sim-FDR: `BF1/BF2`, `k1/k2` (#nulls ≥ obs), `p1/p2`, `null_max`, `floor1/floor2`; `attr(.,"meta")` |
-| `moduleC_ancestry_confound.rds` | per-population PC1/PC2 vs aquilonia ancestry |
+| `moduleB_ancestry_confound.rds` | per-population PC1/PC2 vs aquilonia ancestry |
 | `null_env/null_b01…b10.env` | the 10,000 Ω-structured null covariates (byte-exact reproducibility of step 9) |
 
 **`Figures/`** — 2 primary SNP Manhattans (`manhattan_PC{1,2}_aland_excluded_withOmega_…png`),
 `moduleB_eMLG_manhattan.png` (eMLG Manhattan; FDR survivors = triangles),
-`moduleB_fdr_snp_manhattan.png` (all SNPs; FDR clusters coloured), `moduleC_ancestry_confound.png`.
+`moduleB_fdr_snp_manhattan.png` (all SNPs; FDR clusters coloured), `moduleB_ancestry_confound.png`.
 (Step 3 also writes the other 6-config sensitivity Manhattans to `Figures/`.)
 
 **`doc/`** — `moduleB_summary.{md,pdf}` (results write-up: main-text conclusions,
@@ -112,7 +112,7 @@ supplementary methods, complete Tables S1–S4, figures); `doc/tables/climate_ca
 Rebuild the PDF with:
 
 ```bash
-bash moduleB_BayPass/doc/render_moduleB_summary.sh
+bash moduleB_climate_GEA/doc/render_moduleB_summary.sh
 ```
 
 ---

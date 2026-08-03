@@ -1,0 +1,126 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=25mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage[round,authoryear]{natbib}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+
+\title{Supplementary Methods\\Genome-wide structured-null analysis of climate association}
+\author{Poikela et al.}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Analytical objective}
+
+We tested whether genomic evidence of association with the measured climate gradients was distributed non-randomly with respect to parental diagnosticity, recombination rate, or repeated ancestry sorting. This analysis addressed a genome-wide question rather than attempting to validate individual climate-associated loci. In particular, weak association evidence may be concentrated in a genomic category even when no individual locus passes genome-wide error control. We therefore analysed climate-association strength continuously across all linkage-disequilibrium-reduced units and calibrated the resulting genome-wide statistics against population-structured null covariates.
+
+\section{Genomic units and primary BayPass analysis}
+
+The unit of analysis was an extended multilocus genotype (eMLG), representing the consensus genotype of a linkage-disequilibrium cluster \citep{Li2018}. We used the complete set of 32,840 clusters containing at least five loci and a defined eMLG. Analyses used the primary climate-association configuration: the \AA{}land population was excluded, leaving 19 hybrid populations and 154 individuals, and the among-population covariance matrix, $\boldsymbol{\Omega}$, was estimated previously from an LD-pruned marker set and supplied as fixed to BayPass v3 \citep{Gautier2015}.
+
+For each eMLG, consensus diploid genotypes were aggregated to population allele counts and tested against two population-level climate covariates, PC1 and PC2, using the BayPass standard covariate model. Bayes factors were reported on the deciban scale, hereafter $\mathrm{BF(dB)}$. BayPass was run without internal covariate scaling, with 5,000 burn-in iterations, 500 posterior samples retained every 25 iterations, and a fixed random seed of 74. All 32,840 eMLGs were analysed together because the BayPass allele-frequency prior is estimated from the full marker set and can change when the input is subset.
+
+\section{eMLG annotations}
+
+All annotations were joined to the association results by the unique eMLG identifier, and one-to-one membership and ordering were verified before analysis. Diagnostic Index (DI), sorting class, and sorting summaries were calculated from eMLG consensus genotypes using the same allele orientation and population-frequency definitions as in the ancestry-sorting analyses.
+
+An eMLG entered the sorting classification when its pooled parental minor-allele frequency was at least 0.15. No minimum-DI threshold was applied, leaving DI free to vary in the subsequent genome-wide test. Within each hybrid population, an eMLG was considered near-fixed toward one parental ancestry when its oriented allele frequency was at least 0.85, and toward the other when it was at most 0.15. Letting $n_{\mathrm{aqu}}$ and $n_{\mathrm{pol}}$ denote the respective population counts, the unidirectional component was $(n_{\mathrm{aqu}}-n_{\mathrm{pol}})/n_{\mathrm{obs}}$ and the opposing-direction component was $2\min(n_{\mathrm{aqu}},n_{\mathrm{pol}})/n_{\mathrm{obs}}$. An eligible eMLG was classified as directionally sorted when the absolute unidirectional component was at least the opposing-direction component and at least 0.5. Thus, directional sorting represented repeated near-fixation toward the same parental ancestry in at least half of the sampled populations. The continuous magnitude of sorting was quantified by
+\begin{equation}
+  p_{\mathrm{fixed}} =
+  \frac{n_{\mathrm{aqu}}+n_{\mathrm{pol}}}{n_{\mathrm{obs}}},
+\end{equation}
+where $n_{\mathrm{aqu}}$ and $n_{\mathrm{pol}}$ are the numbers of populations near-fixed toward \textit{F. aquilonia} and \textit{F. polyctena}, respectively, and $n_{\mathrm{obs}}$ is the number with an observed oriented frequency. The signed statistic $(n_{\mathrm{aqu}}-n_{\mathrm{pol}})/n_{\mathrm{obs}}$ was retained only as a supplementary measure of sorting orientation and was not interpreted as sorting magnitude.
+
+Map-based recombination rate was assigned to each eMLG by linear interpolation of cM/Mb at its representative marker. Cluster size was obtained independently from the clustering and sorting objects and required to agree exactly. The final annotation table contained the same 32,840 eMLGs, in the same order, as the BayPass input.
+
+\section{Population-structured null covariates}
+
+To distinguish climate-specific genomic organisation from patterns expected whenever a covariate follows the sampled population structure, we generated 10,000 null covariates from the fixed covariance matrix $\boldsymbol{\Omega}$. Let
+\begin{equation}
+  \boldsymbol{\Omega}=\mathbf{V}\boldsymbol{\Lambda}\mathbf{V}^{\mathsf{T}}
+\end{equation}
+be its eigendecomposition, with negative numerical eigenvalues truncated to zero. For null covariate $j$, we drew $\mathbf{z}_j\sim N(\mathbf{0},\mathbf{I})$ and calculated
+\begin{equation}
+  \mathbf{x}_j =
+  \operatorname{scale}\!\left(
+  \mathbf{V}\boldsymbol{\Lambda}^{1/2}\mathbf{z}_j
+  \right),
+\end{equation}
+where $\operatorname{scale}(\cdot)$ centres the population vector and gives it unit variance. Each null covariate therefore reproduced the covariance expected from population structure but was generated without reference to eMLG genotypes or climate.
+
+The null covariates were analysed in ten batches of 1,000. Every batch used the complete eMLG set, fixed $\boldsymbol{\Omega}$, population sample sizes, and BayPass settings used for PC1 and PC2. The same 10,000 covariates used in the locus-level calibration were retained and rerun for the present genome-wide analysis. The large eMLG-by-covariate BayPass output was reduced in memory after each batch; only the genome-wide summary statistics defined below were retained.
+
+\section{Genome-wide association statistics}
+
+Different covariates can produce different genome-wide Bayes-factor distributions. We therefore used the within-covariate rank of $\mathrm{BF(dB)}$ as the primary association score. For eMLG $i$ under covariate $j$, the percentile score was
+\begin{equation}
+  q_{ij}=\frac{r_{ij}-0.5}{N},
+\end{equation}
+where $r_{ij}$ is the average rank of its Bayes factor and $N=32{,}840$.
+
+For each observed climate axis and each of the 10,000 null covariates, we calculated three primary genome-wide statistics:
+\begin{enumerate}
+  \item Spearman's rank correlation between Bayes-factor rank and eMLG DI;
+  \item Spearman's rank correlation between Bayes-factor rank and recombination rate; and
+  \item the difference in mean Bayes-factor percentile between directionally sorted and non-directional eMLGs, restricted to parentally differentiated eMLGs:
+  \begin{equation}
+    T_{\mathrm{sort},j}=
+    \overline{q}_{\mathrm{directional},j}
+    -\overline{q}_{\mathrm{non-directional},j}.
+  \end{equation}
+\end{enumerate}
+
+Restricting the sorting contrast to differentiated eMLGs separates repeated sorting from the prerequisite that a unit contains informative parental-frequency differences. Supplementary statistics comprised the analogous sorting contrast over all eMLGs, Spearman correlations with continuous sorting magnitude and signed sorting orientation, and corresponding raw-Bayes-factor sensitivities. Missing sorting-magnitude values were handled using a fixed complete-case subset that was identical for the observed and null covariates. eMLGs were not resampled independently; each null covariate constituted one complete genome-wide pseudo-analysis, thereby retaining the observed dependence among genomic units in the statistic being calibrated.
+
+\section{Empirical calibration and multiple testing}
+
+For an observed statistic $T_{\mathrm{obs}}$ and its values $T_1,\ldots,T_{10{,}000}$ under the structured null, we calculated the two-sided empirical probability
+\begin{equation}
+  P_{\mathrm{emp}}=
+  \frac{1+\sum_{j=1}^{10{,}000}
+  \mathbb{I}\!\left(
+  \left|T_j-\widetilde{T}\right|
+  \geq
+  \left|T_{\mathrm{obs}}-\widetilde{T}\right|
+  \right)}{10{,}001},
+\end{equation}
+where $\widetilde{T}$ is the median of the null distribution and $\mathbb{I}$ is the indicator function. Null medians and central 95\% intervals were reported alongside the observed statistics. The six primary tests, comprising PC1 and PC2 crossed with DI, recombination rate, and differentiated-only directional sorting, were corrected together using the Benjamini--Hochberg false-discovery-rate procedure. Supplementary and threshold-sensitivity statistics were not included in this primary testing family.
+
+\section{Rank-threshold sensitivity}
+
+As a secondary analysis, we described the eMLGs in the upper 0.1\%, 0.5\%, and 1\% of the within-covariate Bayes-factor ranking. For each fraction we calculated median DI, median recombination rate, the proportion of eMLGs that were parentally differentiated, and the proportion directionally sorted among differentiated eMLGs. The identical rank thresholds and summaries were applied to PC1, PC2, and every structured null covariate. Observed values were then compared with the corresponding 10,000-value null distributions. These analyses evaluated robustness across predefined upper-tail fractions and were not used to select a favourable association threshold. Because membership of an extreme upper tail was more sensitive to BayPass Monte Carlo variation than the genome-wide rank statistics, these summaries were treated as descriptive sensitivity analyses rather than as an additional confirmatory testing family.
+
+\section{Validation and reproducibility}
+
+Observed association results, null output, and annotations were required to contain the same unique eMLG identifiers and canonical BayPass row order. Observed Bayes-factor vectors were required to reproduce the stored PC1 and PC2 association values within $10^{-6}$. For every null batch, the complete covariate and marker ordering, row count, and finiteness of all Bayes factors and derived statistics were verified.
+
+Because the original batchwise BayPass matrices had been discarded after locus-level calibration, the retained null-covariate files were rerun and reduced on the fly. BayPass produced independent Monte Carlo realizations even when supplied with the same random seed, so faithful regeneration was defined by identity of the inputs and statistical procedure rather than exact equality of individual Bayes factors. Input files, analysis definitions, BayPass options, and numerical parameters were fingerprinted in each checkpoint to prevent batches calculated under different settings from being combined.
+
+As a mandatory Monte Carlo equivalence check, the regenerated null Bayes factors were used to reconstruct, for every eMLG, the numbers of null covariates exceeding the observed PC1 and PC2 Bayes factors. For each climate axis, analysis proceeded only when the Pearson correlation between regenerated and archived per-eMLG exceedance counts exceeded 0.99 and the regenerated total differed from the archived total by less than 3\%. The completed regeneration comfortably met these criteria: the correlations were 0.99996 for PC1 and 0.99995 for PC2, and the relative differences in total counts were 0.0019\% and 0.0046\%, respectively. Maximum per-eMLG count differences were recorded as diagnostics but were not used as rejection criteria.
+
+We separately evaluated whether BayPass Monte Carlo variation affected the genome-wide statistics used for inference. Twenty null covariates were analysed in two independent BayPass realizations. For each statistic, within-covariate Monte Carlo variability was compared with its variation among null covariates. The ratio of within-realization to between-covariate standard deviations was 0.009 for the DI correlation, 0.062 for the recombination correlation, and 0.047 for the differentiated-only sorting contrast; the largest absolute difference between realizations was 0.0018. Thus, variation in the primary null distributions was dominated by differences among structured covariates rather than by Monte Carlo error. Exact checks of eMLG identity and ordering, completion of all 10,000 covariates, and finiteness of all outputs remained mandatory.
+
+\begin{thebibliography}{9}
+
+\bibitem[Gautier(2015)]{Gautier2015}
+Gautier, M. (2015).
+Genome-wide scan for adaptive divergence and association with population-specific covariates.
+\textit{Genetics}, 201, 1555--1579.
+
+\bibitem[Li et al.(2018)]{Li2018}
+Li, Z., Kemppainen, P., Rastas, P., and Meril\"a, J. (2018).
+Linkage disequilibrium clustering-based approach for association mapping with tightly linked genomewide data.
+\textit{Molecular Ecology Resources}, 18, 809--824.
+
+\end{thebibliography}
+
+\end{document}

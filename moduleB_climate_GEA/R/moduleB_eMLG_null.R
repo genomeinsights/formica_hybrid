@@ -35,9 +35,9 @@
 ##
 ## Reads : aland_excluded_eMLG/{u_eMLG.geno,omega_mat_omega.out,u_DIEM.size,
 ##           eMLG_group_order.txt}, aland_excluded_eMLG/PC{1,2}_eMLG_withOmega_summary_betai_reg.out
-## Writes: moduleB_BayPass/data/moduleB_eMLG_null.rds  (per-eMLG: real BF1/BF2, exceedance counts
+## Writes: moduleB_climate_GEA/data/moduleB_eMLG_null.rds  (per-eMLG: real BF1/BF2, exceedance counts
 ##           k1/k2, empirical p1/p2 = (1+k)/(NSIM+1), null_max; floor flags; + meta)
-##         moduleB_BayPass/data/moduleB_eMLG_null_ckpt.rds  (resume checkpoint, removed on success)
+##         moduleB_climate_GEA/data/moduleB_eMLG_null_ckpt.rds  (resume checkpoint, removed on success)
 ##         aland_excluded_eMLG/null/null_b*.env  (the null covariates per batch, kept)
 ## Run from the formica_hybrid repo root. LONG (~21 h for NSIM_TOTAL=10000).
 
@@ -48,7 +48,7 @@ SEED_SIM   <- 2026               # base RNG seed for null-covariate draws (per b
 MCMC_SEED  <- 74                 # BayPass MCMC seed (same each batch -> identical core chain)
 stopifnot(NSIM_TOTAL %% BATCH == 0); NBATCH <- NSIM_TOTAL / BATCH
 D  <- "aland_excluded_eMLG"; ND <- file.path(D, "null"); dir.create(ND, showWarnings = FALSE)
-CKPT <- "moduleB_BayPass/data/moduleB_eMLG_null_ckpt.rds"
+CKPT <- "moduleB_climate_GEA/data/moduleB_eMLG_null_ckpt.rds"
 BAYPASS <- "/Users/petrikem/gitlab/baypass_public-master/sources/g_baypass"
 OPT <- sprintf("-nthreads 6 -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed %d", MCMC_SEED)
 
@@ -106,7 +106,7 @@ attr(res, "meta") <- list(NSIM = NSIM_TOTAL, batch = BATCH, seed_sim = SEED_SIM,
   run = "aland_excluded/withOmega", p_floor = 1 / (NSIM_TOTAL + 1),
   null_exp_floor = exp_null,
   note = "candidate = floor survivor (k==0); FDR ~= null_exp_floor / #survivors")
-saveRDS(res, "moduleB_BayPass/data/moduleB_eMLG_null.rds")
+saveRDS(res, "moduleB_climate_GEA/data/moduleB_eMLG_null.rds")
 
 n1 <- res[floor1 == TRUE, .N]; n2 <- res[floor2 == TRUE, .N]
 cat(sprintf("\n=== NSIM=%d sim-FDR filter ===\n", NSIM_TOTAL))
@@ -117,4 +117,4 @@ cat("\nfloor-survivor candidates:\n")
 print(rbind(res[floor1 == TRUE, .(group_id, axis = "PC1", BF = round(BF1, 1), k = k1)],
             res[floor2 == TRUE, .(group_id, axis = "PC2", BF = round(BF2, 1), k = k2)])[order(axis, -BF)])
 if (file.exists(CKPT)) file.remove(CKPT)
-cat("\nSaved moduleB_BayPass/data/moduleB_eMLG_null.rds\n")
+cat("\nSaved moduleB_climate_GEA/data/moduleB_eMLG_null.rds\n")

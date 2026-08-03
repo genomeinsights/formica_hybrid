@@ -13,7 +13,7 @@
 ## detect, because a small cluster can never reach 5 significant members. These
 ## are genuine cluster-level signals recovered by aggregating to the consensus.
 ##
-## If the sim-FDR results (moduleB_BayPass/data/moduleB_eMLG_null.rds, produced by
+## If the sim-FDR results (moduleB_climate_GEA/data/moduleB_eMLG_null.rds, produced by
 ## moduleB_eMLG_null.R -- runs AFTER this script in the pipeline) are present,
 ## two extra things are drawn: (a) in the eMLG Manhattan the FDR floor-survivors
 ## (k = 0 of 10,000 structure nulls) are marked as LARGER TRIANGLES; (b) a
@@ -30,16 +30,16 @@
 ##         aland_excluded/PC{1,2}_DIEM_withOmega_summary_betai_reg.out (member SNP BF),
 ##         aland_excluded_eMLG/PC{1,2}_eMLG_withOmega_summary_betai_reg.out (eMLG BF),
 ##         aland_excluded_eMLG/eMLG_group_order.txt,
-##         moduleB_BayPass/data/moduleB_eMLG_null.rds  (OPTIONAL -- FDR floor flags for the overlays)
-## Writes: moduleB_BayPass/data/moduleB_eMLG_association.rds, moduleB_BayPass/data/moduleB_eMLG_outliers.csv,
-##         moduleB_BayPass/Figures/moduleB_eMLG_manhattan.png       (Fig 3; FDR survivors = triangles),
-##         moduleB_BayPass/Figures/moduleB_fdr_snp_manhattan.png    (all SNPs; FDR clusters coloured)
+##         moduleB_climate_GEA/data/moduleB_eMLG_null.rds  (OPTIONAL -- FDR floor flags for the overlays)
+## Writes: moduleB_climate_GEA/data/moduleB_eMLG_association.rds, moduleB_climate_GEA/data/moduleB_eMLG_outliers.csv,
+##         moduleB_climate_GEA/Figures/moduleB_eMLG_manhattan.png       (Fig 3; FDR survivors = triangles),
+##         moduleB_climate_GEA/Figures/moduleB_fdr_snp_manhattan.png    (all SNPs; FDR clusters coloured)
 ## Run from the formica_hybrid repo root.
 
 suppressMessages({ library(data.table); library(ggplot2); library(patchwork) })
 SIG_THR <- 15; EMLG_THR <- 15; MIN5 <- 5
 PRIM_POP <- "aland_excluded"; PRIM_OM <- "withOmega"; D <- "aland_excluded_eMLG"
-dir.create("moduleB_BayPass/Figures", showWarnings = FALSE)
+dir.create("moduleB_climate_GEA/Figures", showWarnings = FALSE)
 
 ## ---- clustering + representative positions ------------------------------
 g  <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$groups
@@ -70,7 +70,7 @@ cat_axis <- function(eBF, nsig) fifelse(eBF < EMLG_THR, "ns",
 dt[, `:=`(cat1 = cat_axis(eBF1, nsig1), cat2 = cat_axis(eBF2, nsig2))]
 
 ## ---- OPTIONAL: sim-FDR floor-survivor flags (from the downstream null) --
-NULLF <- "moduleB_BayPass/data/moduleB_eMLG_null.rds"; have_fdr <- file.exists(NULLF)
+NULLF <- "moduleB_climate_GEA/data/moduleB_eMLG_null.rds"; have_fdr <- file.exists(NULLF)
 if (have_fdr) {
   nul <- readRDS(NULLF)[, .(group_id, floor1, floor2)]
   dt <- nul[dt, on = "group_id"]
@@ -82,14 +82,14 @@ if (have_fdr) {
 }
 
 ## ---- save the association table + the outlier-eMLG summary --------------
-saveRDS(dt, "moduleB_BayPass/data/moduleB_eMLG_association.rds")
+saveRDS(dt, "moduleB_climate_GEA/data/moduleB_eMLG_association.rds")
 mkout <- function(bfcol, nsigcol, catcol, ax)
   dt[get(bfcol) >= EMLG_THR, .(group_id, Chr, Pos, size, axis = ax,
       eMLG_BF = get(bfcol), n_sig = get(nsigcol),
       pct_sig = round(100 * get(nsigcol) / size, 1), support = get(catcol))]
 outl <- rbind(mkout("eBF1", "nsig1", "cat1", "PC1"),
               mkout("eBF2", "nsig2", "cat2", "PC2"))[order(axis, -eMLG_BF)]
-fwrite(outl, "moduleB_BayPass/data/moduleB_eMLG_outliers.csv")
+fwrite(outl, "moduleB_climate_GEA/data/moduleB_eMLG_outliers.csv")
 cat(sprintf("outlier eMLGs (BF>=%d): PC1 %d, PC2 %d  |  of which eMLG-only (0 sig SNPs): PC1 %d, PC2 %d\n",
             EMLG_THR, outl[axis == "PC1", .N], outl[axis == "PC2", .N],
             outl[axis == "PC1" & n_sig == 0, .N], outl[axis == "PC2" & n_sig == 0, .N]))
@@ -135,7 +135,7 @@ p <- panel("eBF1", "cat1", "floor1", "PC1") / panel("eBF2", "cat2", "floor2", "P
 if (have_fdr) p <- p + plot_annotation(
   caption = "Triangles = FDR floor-survivors (real eMLG BF exceeds all 10,000 population-structure nulls).",
   theme = theme(plot.caption = element_text(size = 9, hjust = 0)))
-ggsave("moduleB_BayPass/Figures/moduleB_eMLG_manhattan.png", p, width = 15, height = 7, dpi = 150)
+ggsave("moduleB_climate_GEA/Figures/moduleB_eMLG_manhattan.png", p, width = 15, height = 7, dpi = 150)
 
 ## ---- NEW: all-SNP Manhattan, only FDR-passing eMLG clusters coloured ----
 if (have_fdr) {
@@ -161,8 +161,8 @@ if (have_fdr) {
   ps <- snp_panel(b1, fdr1, "PC1") / snp_panel(b2, fdr2, "PC2") +
     plot_annotation(title = "All SNPs (grey); member SNPs of FDR-passing eMLG clusters coloured (one colour per cluster)",
                     theme = theme(plot.title = element_text(size = 11)))
-  ggsave("moduleB_BayPass/Figures/moduleB_fdr_snp_manhattan.png", ps, width = 15, height = 7, dpi = 150)
+  ggsave("moduleB_climate_GEA/Figures/moduleB_fdr_snp_manhattan.png", ps, width = 15, height = 7, dpi = 150)
 }
 
-cat("\nWrote moduleB_BayPass/data/moduleB_eMLG_association.rds, moduleB_BayPass/data/moduleB_eMLG_outliers.csv, moduleB_BayPass/Figures/moduleB_eMLG_manhattan.png",
-    if (have_fdr) ", moduleB_BayPass/Figures/moduleB_fdr_snp_manhattan.png" else "", "\n", sep = "")
+cat("\nWrote moduleB_climate_GEA/data/moduleB_eMLG_association.rds, moduleB_climate_GEA/data/moduleB_eMLG_outliers.csv, moduleB_climate_GEA/Figures/moduleB_eMLG_manhattan.png",
+    if (have_fdr) ", moduleB_climate_GEA/Figures/moduleB_fdr_snp_manhattan.png" else "", "\n", sep = "")
