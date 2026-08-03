@@ -10,7 +10,7 @@ All scripts run **from the repo root** (`~/gitlab/formica_hybrid`), e.g. `Rscrip
 
 ## Conventions (locked)
 
-Parental-MAF gate ≥ 0.15 · sorting threshold **τ = 0.5** · near-fixation floor **φ = 0.90** (`fix_th = 0.1`, on the major/fixed-for allele) · **cM05** clustering · diagnostic index (DI) kept **ungated** as a covariate · magnitude gate on **total near-fixation** (`sort_rule = "prop_fixed"`, i.e. `prop_fixed ≥ τ` then the uni/bi split — replaces the original "component" rule that under-called bidirectional loci \~6×).
+Parental-MAF gate ≥ 0.15 · sorting threshold **τ = 0.5** · near-fixation floor **φ = 0.90** (`fix_th = 0.1`, on the major/fixed-for allele) · **cM05** clustering · diagnostic index (DI) kept **ungated** as a covariate · sorting call `sort_rule = "binom"` (α = 0.05): magnitude gate = total near-fixation (`prop_fixed ≥ τ`), **direction** by the binomial random-direction test — unidirectional only when the split is significantly biased toward one parent, else bidirectional (or ambiguous when too few populations fixed to test). Replaces the original "component" rule (which under-called bidirectional) and its `prop_fixed` interim (which used a fixed ¼ split, not sample-size aware).
 
 ## Pipeline (`R/`)
 

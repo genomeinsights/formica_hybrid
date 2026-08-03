@@ -38,7 +38,7 @@ source("moduleA_sorting/R/eMLG_parallelism.R")   # build_group_consensus(), clus
 ## ---- LOCKED parameters (match moduleA_sorting_phenomenon.R) --------------
 MIN_PARENT_MAF <- 0.15    # PRIMARY sorting gate (pooled-parental MAF floor)
 SORT_TH        <- 0.5     # unified sort_class threshold
-SORT_RULE      <- "prop_fixed"  # magnitude gate on total near-fixation (see parallelism_stats)
+SORT_RULE      <- "binom"       # prop_fixed magnitude gate + binomial direction test (see parallelism_stats)
 FIX_TH         <- 0.1     # per-pop near-fixation tolerance (locked; NOT 0.15)
 MIN_DI         <- NULL    # DI is a covariate, never a gate
 DI_AGG         <- "max"   # cluster DI = max over members

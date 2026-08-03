@@ -43,11 +43,12 @@ DI_AGG      <- "max"    # cluster DI = max over members (not representative only
 
 ## Open knobs -- defaults chosen, review/override as needed:
 SORT_TH     <- 0.5      # unified sort_class threshold (a population fraction)
-SORT_RULE   <- "prop_fixed"  # magnitude gate = TOTAL near-fixation (prop_fixed >= sort_th),
-                        #   not the larger of |uni_score|/bi_score. Fixes the "valley" that
-                        #   demoted both-directions loci to unsorted (bidirectional was
-                        #   ~6x under-called under the original "component" rule). See
-                        #   parallelism_stats() sort_rule.
+SORT_RULE   <- "binom" # magnitude gate = TOTAL near-fixation (prop_fixed >= sort_th);
+                        #   DIRECTION by the binomial random-direction test (alpha = 0.05
+                        #   default), so a locus is unidirectional only when the split is
+                        #   SIGNIFICANTLY biased toward one parent (p_binom < alpha). A
+                        #   majority-but-not-significant lean (e.g. 7:2) is "bidirectional";
+                        #   too few fixed pops to test is "ambiguous". See parallelism_stats().
 MIN_PARENT_MAF <- 0.15  # PRIMARY sorting gate: pooled-parental MAF floor. Keeps loci
                         #   polymorphic in the parents, so a high sorting index isn't just
                         #   a founding near-monomorphism. 0.15 retains ~59% of loci (chosen
@@ -187,6 +188,7 @@ sweep_res <- rbindlist(lapply(FIX_MAJOR_GRID, function(fm) {
     )
   }))
 }))
+
 sweep_res[, `:=`(
   pct_sorted        = 100 * sorted        / n_diff,
   pct_aquilonia     = 100 * aquilonia     / n_diff,
@@ -231,18 +233,43 @@ cat("Saved: moduleA_sorting/Figures/moduleA_sorting_sweep.png\n")
 ## ---- real gated pass (primary gate = MIN_PARENT_MAF; DI ungated covariate) ----
 cat("\n[A1] gated pass (min_parent_maf =", MIN_PARENT_MAF, ") ...\n")
 t0 <- Sys.time()
+
+#SORT_TH=0.5
+#FIX_TH=0.1
 par_res_snp <- parallelism_stats(
   prep=prep_snp,
   hybrid_pops = hybrid_pops, aqu_pops = aqu_pops, pol_pops = pol_pops,
-  DI = DI_vec, min_DI = MIN_DI, parent_maf = parent_maf_vec, min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = FIX_TH, sort_rule = SORT_RULE
+  DI = DI_vec, min_DI = MIN_DI, parent_maf = parent_maf_vec, min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = FIX_TH, sort_rule = "binom",alpha = 0.05
 )
 
 snp_tab <- par_res_snp[differentiated == TRUE, .N, by = sort_class][order(-N)]
-snp_tab[, pct := round(100 * N / sum(N), 3)]
+snp_tab[, pct := round(100 * N / sum(N), 4)]
 cat("\n--- A1: per-SNP sort_class (parent_maf >=", MIN_PARENT_MAF, ") ---\n")
 print(snp_tab)
+# 
+# image(t(GTs_wp[,par_res_snp[sort_class=="bidirectional",marker][1:1000]]))
+# image(t(GTs_wp[,par_res_snp[sort_class=="aquilonia",marker][1:1000]]))
+# image(t(GTs_wp[,par_res_snp[sort_class=="polyctena",marker][1:1000]]))
+# 
+#par_res_snp[sort_class=="bidirectional"]
+# plot(par_res_snp[sort_class=="bidirectional",abs(uni_score)],par_res_snp[sort_class=="bidirectional",2 * pmin(n_aqu, n_pol)/n_obs])
+# geom_abline(0,1)
+# 
+# 
+# 
+# sorted <- ok & prop_fixed >= sort_th
+# is_bi  <- sorted & bi_score > uni_mag
+# is_uni <- sorted & !is_bi
+# 
+# saveRDS(par_res_snp, "moduleA_sorting/data/moduleA_snp.rds")
+# 
+# par_res_snp[sort_class=="bidirectional"]
+# 
+# par_res_snp[sort_class=="aquilonia" & n_pol>3,ifelse(n_obs > 0, (n_aqu - n_pol) / n_obs, NA_real_) ]
+# par_res_snp[sort_class=="aquilonia" & n_pol>3,ifelse(n_obs > 0, (n_aqu - n_pol) / n_obs, NA_real_) ]
+# par_res_snp[sort_class=="aquilonia" & n_pol>3,ifelse(n_obs > 0, 2 * pmin(n_aqu, n_pol) / n_obs, NA_real_)]
 
-saveRDS(par_res_snp, "moduleA_sorting/data/moduleA_snp.rds")
+
 
 sorted_markers <- par_res_snp[differentiated == TRUE & sort_class != "unsorted", marker]
 cat("\nSorted markers (differentiated, sort_class != unsorted):", length(sorted_markers), "\n")

@@ -89,14 +89,18 @@ library(data.table)
 ##                  bi_score > |uni_score| & bi_score >= sort_th
 ##                     -> "bidirectional"
 ##                  else "unsorted".
-## sort_rule    : magnitude gate for the class call. "component" (default) is the
-##                ORIGINAL rule above (the larger of |uni_score|/bi_score must
-##                reach sort_th). "prop_fixed" is a prototype that gates on the
-##                TOTAL near-fixation (prop_fixed >= sort_th) and then applies the
-##                SAME uni/bi direction split -- it removes the "valley" that
-##                otherwise demotes both-directions loci to "unsorted", so
-##                "bidirectional" is no longer systematically under-called. See
-##                the inline note at the sort_class block.
+## sort_rule    : how sort_class is called from the fixation counts.
+##                "prop_fixed" (DEFAULT): magnitude gate = total near-fixation
+##                (prop_fixed >= sort_th), then the uni/bi split (bidirectional iff
+##                minority > 1/4 of fixed pops). "component" (ORIGINAL): the larger
+##                of |uni_score|/bi_score must itself reach sort_th (under-calls
+##                bidirectional). "binom": magnitude gate = prop_fixed >= sort_th,
+##                but DIRECTION is the binomial random-direction test -- unidirectional
+##                only when the split is SIGNIFICANTLY biased toward one parent
+##                (p_binom < alpha); non-significant sorted loci are "bidirectional"
+##                if n_fixed had power (n_fixed >= smallest n with 2*0.5^n < alpha),
+##                else "ambiguous". See the inline note at the sort_class block.
+## alpha        : significance level for the "binom" direction test (default 0.05).
 ##                Because all three scores are population fractions, the SAME
 ##                sort_th is comparable across SNPs and eMLGs (run this
 ##                function on eMLG consensus genotypes) and genome
@@ -143,7 +147,8 @@ parallelism_stats <- function(prep,
                               min_parent_diff = 0,
                               admix_prop = 0.5,
                               sort_th = 0.5,
-                              sort_rule = c("component", "prop_fixed"),
+                              sort_rule = c("prop_fixed","component","binom"),
+                              alpha = 0.05,
                               orient = c("parents", "dosage"),
                               dosage_is_aqu = TRUE) {
 
@@ -293,29 +298,50 @@ parallelism_stats <- function(prep,
   bi_score  <- ifelse(n_obs > 0, 2 * pmin(n_aqu, n_pol) / n_obs, NA_real_)
 
   uni_mag <- abs(uni_score)
+  ## two-sided binomial p that the fixation DIRECTION is unbiased under the
+  ## random-direction null k_aqu ~ Binomial(n_fixed, 0.5). Vectorised exact form
+  ## (symmetric null): twice the lower tail at the minority count, capped at 1;
+  ## NA where nothing fixed. Used only by sort_rule = "binom" but always reported.
+  p_binom <- ifelse(n_fixed > 0,
+                    pmin(1, 2 * stats::pbinom(pmin(n_aqu, n_pol), n_fixed, 0.5)),
+                    NA_real_)
+
   sort_class <- rep(NA_character_, length(markers))
   ok <- differentiated & n_obs > 0 & !is.na(uni_score)
   sort_class[ok] <- "unsorted"
-  ## Two magnitude gates, SAME direction split (bidirectional iff the minority
-  ## direction exceeds 1/4 of the fixed populations, i.e. bi_score > uni_mag):
-  ##   "component" (default, ORIGINAL): the larger population-fraction component
-  ##     must itself clear sort_th (uni_mag or bi_score >= sort_th). Because a
-  ##     both-directions split shrinks BOTH components, near-balanced loci need
+  is_uni <- is_bi <- is_amb <- logical(length(markers))
+  ## Magnitude gate + direction call. All three share the fixation counts:
+  ##   "component" (ORIGINAL): the larger of |uni_score|/bi_score must itself reach
+  ##     sort_th. A both-directions split shrinks BOTH, so near-balanced loci need
   ##     prop_fixed ~ 1 to pass -> "bidirectional" is systematically under-called.
-  ##   "prop_fixed" (decoupled prototype): the magnitude gate is the TOTAL
-  ##     near-fixation prop_fixed (= uni_mag + bi_score) >= sort_th; direction is
-  ##     then the same uni/bi split. Removes the "valley" that demoted split loci
-  ##     to "unsorted". Kept opt-in so the locked pipeline is unchanged by default.
+  ##   "prop_fixed" (default): magnitude gate = TOTAL near-fixation
+  ##     (prop_fixed = uni_mag + bi_score) >= sort_th; direction = the same uni/bi
+  ##     split (bidirectional iff the minority > 1/4 of fixed pops). Removes the
+  ##     "valley" but the 1/4 split is a fixed ratio, not sample-size aware.
+  ##   "binom": magnitude gate = prop_fixed >= sort_th; DIRECTION is decided by the
+  ##     binomial random-direction test, so "unidirectional" means the split is
+  ##     SIGNIFICANTLY biased toward one parent (predictable), not merely a majority.
+  ##     Sorted-but-not-significant loci are "bidirectional" when n_fixed had power
+  ##     to detect a one-way bias (n_fixed >= n_pow, the smallest n at which an
+  ##     all-one-way split reaches p < alpha), else "ambiguous" (underpowered).
   if (sort_rule == "component") {
     is_uni <- ok & uni_mag >= bi_score & uni_mag >= sort_th
     is_bi  <- ok & bi_score >  uni_mag & bi_score >= sort_th
-  } else {                                   # "prop_fixed"
+  } else if (sort_rule == "prop_fixed") {
     sorted <- ok & prop_fixed >= sort_th
     is_bi  <- sorted & bi_score > uni_mag
     is_uni <- sorted & !is_bi
+  } else {                                   # "binom"
+    n_pow  <- ceiling(log(alpha / 2) / log(0.5))     # smallest n_fixed with 2*0.5^n < alpha
+    sorted <- ok & prop_fixed >= sort_th
+    sig    <- sorted & !is.na(p_binom) & p_binom < alpha
+    is_uni <- sig
+    is_bi  <- sorted & !sig & n_fixed >= n_pow
+    is_amb <- sorted & !sig & n_fixed <  n_pow
   }
   sort_class[is_uni] <- ifelse(uni_score[is_uni] > 0, "aquilonia", "polyctena")
   sort_class[is_bi]  <- "bidirectional"
+  sort_class[is_amb] <- "ambiguous"
 
   out <- data.table(
     marker       = markers,
@@ -337,6 +363,7 @@ parallelism_stats <- function(prep,
     direction    = direction,
     uni_score    = uni_score,
     bi_score     = bi_score,
+    p_binom      = p_binom,
     sort_class   = sort_class
   )
   setkey(out, marker)
