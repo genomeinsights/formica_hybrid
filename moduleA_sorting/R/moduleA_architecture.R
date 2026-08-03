@@ -40,8 +40,8 @@ set.seed(1)
 
 ## ---- PARAMETERS (clean _PK conventions) --------------------------------
 MIN_PARENT_MAF <- 0.15
-FIX_TH         <- 0.1                          # major-allele fixation floor 0.90
-SORT_TH        <- 0.5
+FIX_TH         <- 0.15                         # major-allele fixation floor 0.85
+SORT_TH        <- 0.6
 SORT_RULE      <- "binom"                       # prop_fixed magnitude gate + binomial direction test (see parallelism_stats)
 SNP_SAMPLE     <- 200000L
 SORT_TH_SWEEP  <- c(0.5, 0.6, 0.7, 0.8)        # for the [SUPP S3] direction sweep

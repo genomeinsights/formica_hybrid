@@ -42,7 +42,7 @@ suppressPackageStartupMessages({
 DI_AGG      <- "max"    # cluster DI = max over members (not representative only)
 
 ## Open knobs -- defaults chosen, review/override as needed:
-SORT_TH     <- 0.5      # unified sort_class threshold (a population fraction)
+SORT_TH     <- 0.6      # unified sort_class threshold (a population fraction)
 SORT_RULE   <- "binom" # magnitude gate = TOTAL near-fixation (prop_fixed >= sort_th);
                         #   DIRECTION by the binomial random-direction test (alpha = 0.05
                         #   default), so a locus is unidirectional only when the split is
@@ -55,7 +55,7 @@ MIN_PARENT_MAF <- 0.15  # PRIMARY sorting gate: pooled-parental MAF floor. Keeps
                         #   from the A1 diagnostic); revisit that table if you change it.
 MIN_DI      <- NULL     # DI is a COVARIATE, not a gate -- keep its full variation
                         #   (gating DI would truncate range & make DI->sorting circular)
-FIX_TH      <- 0.1      # per-pop near-fixation tolerance (parallelism_stats default
+FIX_TH      <- 0.15     # per-pop near-fixation tolerance (parallelism_stats default
                         #   is 0.1; small pops of 3-20 diploids are sensitive -- open Q6)
 DROP_SIELVA <- FALSE    # exclude Sielva from hybrid_pops (some earlier analyses do;
                         #   there is also a Sielva-excluded BayPass config)
@@ -234,8 +234,8 @@ cat("Saved: moduleA_sorting/Figures/moduleA_sorting_sweep.png\n")
 cat("\n[A1] gated pass (min_parent_maf =", MIN_PARENT_MAF, ") ...\n")
 t0 <- Sys.time()
 
-#SORT_TH=0.5
-#FIX_TH=0.1
+SORT_TH=0.6
+FIX_TH=0.15
 par_res_snp <- parallelism_stats(
   prep=prep_snp,
   hybrid_pops = hybrid_pops, aqu_pops = aqu_pops, pol_pops = pol_pops,
