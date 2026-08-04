@@ -17,9 +17,9 @@
 ##            -> rho(DI,recomb) -0.03, rho(DI,MAF) -0.02,
 ##               rho(DI,pi) -0.46, rho(DI,dxy) +0.13; Fig 1a
 ##   [PDF S2] "Sorting is depleted ... in low recombination" tag: == [PDF S2]
-##            -> unit 0.06 vs ~0.42, SNP 0.17; magnitude slope +0.05 (z=117); Fig 1b
+##            -> unit 0.04 vs ~0.32, SNP 0.14; magnitude slope +0.05 (z=117); Fig 1b
 ##   [PDF S3] "Direction is governed by diagnostic index"    tag: == [PDF S3]
-##            -> DI +1.46 (z=125), recomb -0.09 (z=-7.6), ~16x weaker; Fig 1c
+##            -> DI +1.57 (z=112), recomb -0.09 (z=-6.5), ~17x weaker; Fig 1c
 ##   [SUPP]   direction coefficients vs sorting threshold    tag: == [SUPP S3]
 ##            -> moduleA_supp_th_sensitivity.tex Fig S3
 ##   assembled 3-panel figure (Fig 1 a/b/c)                  tag: == [FIG 1]
@@ -152,7 +152,7 @@ cat(sprintf("      classification done | %.0fs\n", elapsed(t0)))
 
 ## ========================================================================
 ## == [PDF S2] "Sorting is depleted, not enriched, in low-recombination regions."
-##    feeds: unit-level 0.06 vs ~0.42, SNP-level 0.17; magnitude slope; Fig 1b
+##    feeds: unit-level 0.04 vs ~0.32, SNP-level 0.14; magnitude slope; Fig 1b
 ## ========================================================================
 brk <- quantile(map$recomb, 0:10 / 10, na.rm = TRUE); uni <- c("aquilonia", "polyctena")
 bin_it <- function(x) x[, rbin := cut(recomb, brk, include.lowest = TRUE, labels = FALSE)][]
@@ -181,7 +181,7 @@ print(round(coef(summary(lm_mag))["zr", ], 4))
 ## ========================================================================
 ## == [PDF S3] "Direction is governed by diagnostic index; recombination adds
 ##             only a weak independent pull."
-##    feeds: DI +1.46/z=125, recomb -0.09/z=-7.6, ~16x weaker; Fig 1c
+##    feeds: DI +1.57/z=112, recomb -0.09/z=-6.5, ~17x weaker; Fig 1c
 ## ========================================================================
 cu <- du[sort_class %in% uni]; cu[, is_aqu := as.integer(sort_class == "aquilonia")]
 glm_dir <- glm(is_aqu ~ zDI + zr + zmaf + zcs, data = cu, family = binomial())

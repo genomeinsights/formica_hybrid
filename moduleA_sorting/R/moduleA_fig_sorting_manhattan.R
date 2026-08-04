@@ -7,16 +7,19 @@
 ##       one line per sorting threshold tau (nested bands; sorted-at-higher-tau
 ##       is a subset of lower-tau).
 ##   (2) moduleA_sorting_manhattan_directional.png -- stacked rows: fraction
-##       fixing toward AQUILONIA, toward POLYCTENA, the NET direction (aqu - pol),
-##       and the diagnostic-index (DI) landscape (tau-independent).
+##       fixing toward AQUILONIA, toward POLYCTENA, the BIDIRECTIONAL fraction,
+##       the NET direction (aqu - pol), and the diagnostic-index (DI) landscape.
 ##
-## Classification is recomputed at each tau from the stored population-fraction
-## scores in moduleA_sorting/data/moduleA_snp.rds:
-##   sorted (any) iff   max(|uni_score|, bi_score) >= tau
-##   aquilonia    iff   |uni_score| >= bi_score & |uni_score| >= tau & uni_score > 0
-##   polyctena    iff   |uni_score| >= bi_score & |uni_score| >= tau & uni_score < 0
-## so no parallelism_stats re-run is needed. Coordinates are parsed from the
-## marker id "Chr:Pos".
+## Classification is recomputed at each tau from the stored per-SNP counts in
+## moduleA_sorting/data/moduleA_snp.rds, using the sort_rule = "binom" rule:
+##   sorted (any)  iff   prop_fixed >= tau                        (magnitude gate)
+##   aquilonia     iff   sorted & p_binom < ALPHA & uni_score > 0  (predictable, aqu)
+##   polyctena     iff   sorted & p_binom < ALPHA & uni_score < 0
+##   bidirectional iff   sorted & p_binom >= ALPHA & n_fixed >= N_POW
+## i.e. DIRECTION is the binomial random-direction test (p_binom; tau-independent),
+## not the fixed 1/4 split -- a majority-but-not-significant lean is bidirectional,
+## not unidirectional. No parallelism_stats re-run is needed. Coordinates are
+## parsed from the marker id "Chr:Pos".
 ##
 ## (A random-direction null overlay was tried here but removed: conditioning on
 ## the observed amount of near-fixation is easy to misread, and the appropriate
@@ -33,7 +36,9 @@ suppressPackageStartupMessages({
 })
 
 ## ---- knobs --------------------------------------------------------------
-SORT_TH_GRID <- c(0.5, 0.6, 0.7, 0.8)   # thresholds to overlay
+SORT_TH_GRID <- c(0.5, 0.6, 0.7, 0.8)   # magnitude thresholds tau to overlay
+ALPHA        <- 0.05                     # binom direction-test significance (matches Module A)
+N_POW        <- ceiling(log(ALPHA/2)/log(0.5))  # smallest n_fixed testable (=6 at 0.05)
 WIN          <- 100000L                 # window width (bp)
 MIN_DENS     <- 50L                     # drop windows with < this many SNPs/100kb (low density)
 SMOOTH_K     <- 5L                      # rolling-mean width (in windows) for the trend
@@ -41,7 +46,7 @@ SMOOTH_K     <- 5L                      # rolling-mean width (in windows) for th
 ## ---- data ---------------------------------------------------------------
 snp <- as.data.table(readRDS("moduleA_sorting/data/moduleA_snp.rds"))
 d <- snp[differentiated == TRUE & is.finite(uni_score),
-         .(marker, uni_score, bi_score, DI)]
+         .(marker, uni_score, bi_score, prop_fixed, p_binom, n_fixed, DI)]
 d[, c("Chr", "Pos") := tstrsplit(marker, ":", fixed = TRUE)]
 d[, Pos := as.integer(Pos)]
 d[, `:=`(uni_mag = abs(uni_score), win = Pos %/% WIN)]
@@ -65,11 +70,12 @@ chr_lv <- unique(d$Chr)[order(num)]
 ## ---- per-window fractions at each tau (any / aquilonia / polyctena) ------
 land <- rbindlist(lapply(SORT_TH_GRID, function(th)
   d[, .(n   = .N,
-        any = mean(pmax(uni_mag, bi_score) >= th),
-        aqu = mean(uni_mag >= bi_score & uni_mag >= th & uni_score > 0),
-        pol = mean(uni_mag >= bi_score & uni_mag >= th & uni_score < 0)),
+        any = mean(prop_fixed >= th),
+        aqu = mean(prop_fixed >= th & p_binom <  ALPHA & uni_score > 0),
+        pol = mean(prop_fixed >= th & p_binom <  ALPHA & uni_score < 0),
+        bi  = mean(prop_fixed >= th & p_binom >= ALPHA & n_fixed >= N_POW)),
     by = .(Chr, win)][, sort_th := th][]))
-valcols <- c("any", "aqu", "pol")
+valcols <- c("any", "aqu", "pol", "bi")
 land[n < MIN_DENS, (valcols) := NA_real_]
 land[, pos_mb := (win * WIN + WIN / 2) / 1e6]
 setorder(land, sort_th, Chr, win)
@@ -118,8 +124,8 @@ p_any <- ggplot(land, aes(pos_mb, any, colour = factor(sort_th), group = sort_th
   geom_line(linewidth = 0.35) + tau_layers +
   labs(x = "position (Mbp)", y = "fraction sorted (100 kb window)",
        title = "Ancestry-sorting landscape across sorting thresholds",
-       subtitle = sprintf("fraction of differentiated SNPs sorted per %d-kb window (windows < %d SNPs removed as low-density); %d-window rolling mean; fix_major = 0.90",
-                          WIN %/% 1000L, MIN_DENS, SMOOTH_K)) +
+       subtitle = sprintf("fraction of differentiated SNPs sorted (prop_fixed >= tau) per %d-kb window (windows < %d SNPs removed as low-density); %d-window rolling mean; fix_major = 0.85; sort_rule = binom (alpha = %.2f)",
+                          WIN %/% 1000L, MIN_DENS, SMOOTH_K, ALPHA)) +
   theme(legend.position = "top")
 ggsave("moduleA_sorting/Figures/moduleA_sorting_manhattan.png", p_any, width = 16, height = 4, dpi = 300)
 
@@ -140,6 +146,14 @@ p_dir_sort <- ggplot(dir_long, aes(pos_mb, value, colour = factor(sort_th), grou
   scale_y_continuous(limits = c(0, frac_max)) +
   labs(x = NULL, y = "fraction fixing toward parent", colour = expression(tau)) +
   strip_theme
+
+p_bi <- ggplot(land, aes(pos_mb, bi, colour = factor(sort_th), group = sort_th)) +
+  geom_line(linewidth = 0.35) +
+  facet_grid(. ~ Chr, scales = "free_x", space = "free_x") +
+  scale_colour_manual(values = pal) +
+  scale_x_continuous(expand = expansion(mult = 0.02)) +
+  labs(x = NULL, y = "fraction\nbidirectional", colour = expression(tau)) +
+  strip_theme + theme(strip.text = element_blank())
 
 p_net <- ggplot(land, aes(pos_mb, net, colour = factor(sort_th), group = sort_th)) +
 
@@ -174,11 +188,11 @@ p_ldw <- ggplot() +
   strip_theme + theme(strip.text = element_blank())
 
 ## no plot title/subtitle: the supplementary caption describes the figure
-p_dir <- (p_dir_sort / p_net / p_di / p_ldw) +
-  plot_layout(heights = c(2, 1, 1, 1), guides = "collect") &
+p_dir <- (p_dir_sort / p_bi / p_net / p_di / p_ldw) +
+  plot_layout(heights = c(2, 1, 1, 1, 1), guides = "collect") &
   theme(legend.position = "top")
 ggsave("moduleA_sorting/Figures/moduleA_sorting_manhattan_directional.png", p_dir,
-       width = 16, height = 6, dpi = 300)
+       width = 16, height = 7, dpi = 300)
 
 cat("Saved: moduleA_sorting/Figures/moduleA_sorting_manhattan.png,",
     "moduleA_sorting/Figures/moduleA_sorting_manhattan_directional.png\n")
