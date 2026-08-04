@@ -105,49 +105,50 @@ difference. Units for which the parents did not differ had no defined parental
 direction. Within each hybrid population, a unit was classified as near-fixed
 toward \Faq{} when the oriented allele frequency was at least \(\phi\),
 near-fixed toward \Fpo{} when it was at most \(1-\phi\), and otherwise not
-near-fixed. Here \(\phi=0.90\) is the frequency the fixed-for (major) allele must
+near-fixed. Here \(\phi=0.85\) is the frequency the fixed-for (major) allele must
 reach, equivalently the requirement that the opposing allele fall to at most
-\(1-\phi=0.10\). The same threshold was used throughout because the attainable
+\(1-\phi=0.15\). The same threshold was used throughout because the attainable
 frequency values depend on the number of sampled diploid individuals in a
 population.
 
-\subsection{Sorting decomposition and classification}
+\subsection{Sorting magnitude and direction}
 
 Let \(n_{\mathrm{obs}}\) be the number of populations with an observed and
 oriented frequency, and \(n_{\mathrm{aqu}}\) and \(n_{\mathrm{pol}}\) the
-numbers near-fixed toward \Faq{} and \Fpo{}, respectively. The total proportion
-near-fixed was decomposed as
+numbers near-fixed toward \Faq{} and \Fpo{}, respectively. Sorting magnitude was
+the total proportion near-fixed,
 \begin{equation}
-\frac{n_{\mathrm{aqu}}+n_{\mathrm{pol}}}{n_{\mathrm{obs}}}
-=
-\left|\frac{n_{\mathrm{aqu}}-n_{\mathrm{pol}}}{n_{\mathrm{obs}}}\right|
-+
-\frac{2\min(n_{\mathrm{aqu}},n_{\mathrm{pol}})}{n_{\mathrm{obs}}},
-\label{eq:sorting}
+ p_{\mathrm{fixed}}=
+ \frac{n_{\mathrm{aqu}}+n_{\mathrm{pol}}}{n_{\mathrm{obs}}}.
 \end{equation}
-where the first term is the unidirectional component and the second the
-bidirectional component. With \(\tau=0.5\), a unit was classified as
-unidirectional when the absolute unidirectional component was at least the
-bidirectional component and at least \(\tau\); bidirectional when the
-bidirectional component exceeded the absolute unidirectional component and was
-at least \(\tau\); and unsorted otherwise. Exchanging the parental labels
-changes the direction but not the magnitude or class.
+A unit passed the sorting-magnitude gate when
+\(p_{\mathrm{fixed}}\geq\tau=0.6\). Among units passing this gate, directional
+consistency was assessed by an exact two-sided binomial test of
+\(n_{\mathrm{aqu}}\) successes in
+\(n_{\mathrm{fixed}}=n_{\mathrm{aqu}}+n_{\mathrm{pol}}\) trials under a
+random-direction null probability of 0.5. A significant imbalance
+(\(P<0.05\)) defined unidirectional sorting, with the parental direction set by
+the larger count. A non-significant split was classified as bidirectional when
+\(n_{\mathrm{fixed}}\) was sufficient for the test to reject an all-one-parent
+outcome under the null; otherwise it was labelled ambiguous. Units failing the
+magnitude gate were unsorted. Exchanging parental labels changes the direction
+but not sorting magnitude or class.
 
 The two thresholds were treated separately. The near-fixation floor \(\phi\) is
-the per-population convention and was held constant; the sorting threshold
+the per-population convention; the sorting threshold
 \(\tau\) is the cross-population comparison. Their influence on the results was
 evaluated over a grid of \(\tau\in\{0.5,0.6,0.7,0.8\}\) and
 \(\phi\in\{0.80,0.85,0.90,0.95\}\): the estimated prevalence of sorting declines
-monotonically with either threshold, but the composition (predominantly
-unidirectional) and the diagnostic-index direction reversal are preserved
-throughout (threshold-sensitivity supplement, Figs~S1--S3).
+monotonically with either threshold, whereas the diagnostic-index direction
+reversal is preserved (threshold-sensitivity supplement, Figs~S1--S2).
 
 Nouhaud et al.~\cite{nouhaud2022} evaluated predictable ancestry sorting by
 asking whether the same ancestry component repeatedly fixed across three hybrid
 populations and summarising the outcome in fixed 20-kb windows. The present
 classification retains that biological contrast but extends it to twenty
 populations, estimates the outcome directly from population allele frequencies,
-and separates consistent-direction from opposing-direction near-fixation.
+and separates the prevalence of near-fixation from evidence that its parental
+direction is repeated more consistently than expected under random direction.
 Applying the statistic first to SNPs and then to LD-reduced units also avoids
 assigning equal analytical status to physical windows that may contain very
 different amounts of redundant information.
@@ -257,8 +258,8 @@ regression with standardised DI, standardised \(\log_{10}(\mathrm{recombination}
 +0.1)\), standardised pooled parental MAF, and standardised log cluster size as
 predictors (architecture results summary, Fig.~1c). The recombination
 coefficient is treated as an association rather than as evidence of linked
-selection; its stability across the sorting threshold is shown in the
-threshold-sensitivity supplement (Fig.~S3).
+selection. Coefficient sensitivity will be regenerated with the same binomial
+direction rule before it is included in the supplementary results.
 
 \subsection{Consensus-versus-representative validation}
 
@@ -289,7 +290,8 @@ the \texttt{formica\_hybrid} repository, folder \texttt{moduleA\_sorting/R/}:
 consensus construction, dilution check, and the \(\tau\)/\(\phi\)
 threshold-sensitivity sweeps) and \texttt{moduleA\_architecture.R} (genomic
 architecture and sorting-direction models); shared statistical functions are in
-\texttt{Ohta.R}, \texttt{parallelism\_stats.R} and \texttt{eMLG\_parallelism.R}.
+\texttt{parallelism\_stats.R} and \texttt{eMLG\_parallelism.R}. Ohta-statistic
+functions used elsewhere in the project are supplied by \texttt{LDscnR}.
 Shared genotype inputs and the Module~0 clustering are read from \texttt{data/}
 and \texttt{module0\_ld\_pruning/data/}; module intermediates are cached to
 \texttt{moduleA\_sorting/data/} with a parameter-stamped validity check so that
@@ -312,15 +314,16 @@ Analysis & Parameter & Value \\
 Analysis & Parameter & Value \\
 \midrule
 \endhead
-Sorting & Near-fixation floor & \(\phi=0.90\) (fixed-for allele) \\
-        & Classification threshold & \(\tau=0.5\) \\
+Sorting & Near-fixation floor & \(\phi=0.85\) (fixed-for allele) \\
+        & Sorting-magnitude threshold & \(\tau=0.6\) \\
+        & Direction test & exact binomial, null probability 0.5, \(\alpha=0.05\) \\
         & Parental MAF gate & \(\geq0.15\) \\
         & Cluster DI aggregation & maximum over members \\
 \midrule
 Threshold & Sorting threshold grid & \(\tau\in\{0.5,0.6,0.7,0.8\}\) \\
 sensitivity & Near-fixation floor grid & \(\phi\in\{0.80,0.85,0.90,0.95\}\) \\
 \midrule
-Architecture & DI criterion (diagnostic) & \(\mathrm{DI}>-25\) \\
+Architecture & DI treatment & continuous, ungated covariate \\
              & Direction model & logistic: DI, \(\log_{10}\)(recomb+0.1), parental MAF, \(\log\) size \\
              & Magnitude model & \(\mathrm{prop\_fixed}\sim\) recombination (+ DI) \\
 \bottomrule

@@ -234,8 +234,8 @@ cat("Saved: moduleA_sorting/Figures/moduleA_sorting_sweep.png\n")
 cat("\n[A1] gated pass (min_parent_maf =", MIN_PARENT_MAF, ") ...\n")
 t0 <- Sys.time()
 
-SORT_TH=0.6
-FIX_TH=0.15
+#SORT_TH=0.6
+#FIX_TH=0.15
 par_res_snp <- parallelism_stats(
   prep=prep_snp,
   hybrid_pops = hybrid_pops, aqu_pops = aqu_pops, pol_pops = pol_pops,
@@ -261,7 +261,7 @@ print(snp_tab)
 # is_bi  <- sorted & bi_score > uni_mag
 # is_uni <- sorted & !is_bi
 # 
-# saveRDS(par_res_snp, "moduleA_sorting/data/moduleA_snp.rds")
+saveRDS(par_res_snp, "moduleA_sorting/data/moduleA_snp.rds")
 # 
 # par_res_snp[sort_class=="bidirectional"]
 # 
