@@ -9,6 +9,11 @@ annotation into Module A). Kept — not deleted — in case an intermediate is n
 here.** Those modules read their upstream siblings' `data/` folders and the five
 shared inputs still in `data/`.
 
+> **Moved back out (2026-08-04):** `results_min_loci5.rds` (the ≥5-marker eMLG
+> construction sweep) was moved to its canonical home `module0_ld_pruning/data/`,
+> where `module0_ld_pruning/R/module0_fig_fidelity_hist.R` reads it to build the
+> consensus-fidelity figure (manuscript Fig S6).
+
 `moduleA_cM1/` holds Module A's caches built on the **old cM1** clustering, cleared
 so the cM05 rerun starts clean (moduleA's `cache_rds` keys on sorting params, not
 the clustering, so a warm rerun would otherwise silently reuse them). All are
