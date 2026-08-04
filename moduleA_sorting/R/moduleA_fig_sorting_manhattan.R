@@ -7,7 +7,7 @@
 ##       one line per sorting threshold tau (nested bands; sorted-at-higher-tau
 ##       is a subset of lower-tau).
 ##   (2) moduleA_sorting_manhattan_directional.png -- stacked rows: fraction
-##       fixing toward AQUILONIA, toward POLYCTENA, the BIDIRECTIONAL fraction,
+##       fixing toward AQUILONIA, toward POLYCTENA, the DIRECTION-UNRESOLVED fraction,
 ##       the NET direction (aqu - pol), and the diagnostic-index (DI) landscape.
 ##
 ## Classification is recomputed at each tau from the stored per-SNP counts in
@@ -15,9 +15,9 @@
 ##   sorted (any)  iff   prop_fixed >= tau                        (magnitude gate)
 ##   aquilonia     iff   sorted & p_binom < ALPHA & uni_score > 0  (predictable, aqu)
 ##   polyctena     iff   sorted & p_binom < ALPHA & uni_score < 0
-##   bidirectional iff   sorted & p_binom >= ALPHA & n_fixed >= N_POW
+##   unresolved   iff   sorted & p_binom >= ALPHA & n_fixed >= N_POW  (direction unresolved)
 ## i.e. DIRECTION is the binomial random-direction test (p_binom; tau-independent),
-## not the fixed 1/4 split -- a majority-but-not-significant lean is bidirectional,
+## not the fixed 1/4 split -- a majority-but-not-significant lean is direction-unresolved,
 ## not unidirectional. No parallelism_stats re-run is needed. Coordinates are
 ## parsed from the marker id "Chr:Pos".
 ##
@@ -152,7 +152,7 @@ p_bi <- ggplot(land, aes(pos_mb, bi, colour = factor(sort_th), group = sort_th))
   facet_grid(. ~ Chr, scales = "free_x", space = "free_x") +
   scale_colour_manual(values = pal) +
   scale_x_continuous(expand = expansion(mult = 0.02)) +
-  labs(x = NULL, y = "fraction\nbidirectional", colour = expression(tau)) +
+  labs(x = NULL, y = "fraction\ndirection-\nunresolved", colour = expression(tau)) +
   strip_theme + theme(strip.text = element_blank())
 
 p_net <- ggplot(land, aes(pos_mb, net, colour = factor(sort_th), group = sort_th)) +

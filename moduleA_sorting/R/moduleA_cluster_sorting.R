@@ -25,9 +25,13 @@
 ##
 ## Reads : data/hybrids_and_parents_maf005.Rdata, data/hybrids_only_maf005.Rdata,
 ##         module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds
-## Writes: moduleA_sorting/data/moduleA_cluster_sorting.rds
+## Writes: moduleA_sorting/data/moduleA_cluster_sorting_{tau05,tau06,tau08}.rds
 ##         (group_id, n_loci, differentiated, sort_class, DI, prop_fixed,
-##          uni_score, directional, sorted)
+##          uni_score, directional, sorted) -- one per threshold in the sensitivity
+##         series; the primary (tau06) is ALSO written to the unstamped name
+##         moduleA_cluster_sorting.rds (what Module C reads). Plus
+##         moduleA_cluster_sorting_counts.rds (the tau-independent per-eMLG counts,
+##         for cheap re-classification at any tau).
 ## Run from the formica_hybrid repo root.
 
 suppressMessages(library(data.table))
@@ -39,6 +43,7 @@ source("moduleA_sorting/R/eMLG_parallelism.R")   # build_group_consensus(), clus
 MIN_PARENT_MAF <- 0.15    # PRIMARY sorting gate (pooled-parental MAF floor)
 SORT_TH        <- 0.6     # unified sort_class threshold
 SORT_RULE      <- "binom"       # prop_fixed magnitude gate + binomial direction test (see parallelism_stats)
+ALPHA          <- 0.05          # binom direction-test significance
 FIX_TH         <- 0.15    # per-pop near-fixation tolerance (near-fixation floor 0.85)
 MIN_DI         <- NULL    # DI is a covariate, never a gate
 DI_AGG         <- "max"   # cluster DI = max over members
@@ -78,13 +83,31 @@ ps <- parallelism_stats(prep_units, hybrid_pops = hybrid_pops, aqu_pops = aqu_po
 setnames(ps, "marker", "group_id")
 message(sprintf("      done | %.0fs", as.numeric(difftime(Sys.time(), t0, units = "secs"))))
 
-cl <- groups[.(has_ids), on = "group_id", .(group_id, n_loci)][
-        ps[, .(group_id, differentiated, sort_class, DI, prop_fixed, uni_score)],
-        on = "group_id"]
-cl[, `:=`(directional = as.integer(sort_class %in% uni_cls),
-          sorted      = as.integer(sort_class %in% c(uni_cls, "bidirectional")))]
+## The per-eMLG counts are tau-INDEPENDENT: keep them once, then classify at each
+## tau in the predefined series (MODULEA_TAU_SERIES). Saving the counts lets any
+## future tau be re-classified cheaply (classify_sort) without this expensive build.
+base <- groups[.(has_ids), on = "group_id", .(group_id, n_loci)][
+  ps[, .(group_id, differentiated, n_aqu, n_pol, n_obs, prop_fixed, uni_score, p_binom, DI)],
+  on = "group_id"]
+saveRDS(base, "moduleA_sorting/data/moduleA_cluster_sorting_counts.rds")
 
-saveRDS(cl, OUT)
-cat(sprintf("\n[A cluster-sorting] wrote %s\n  %d has_eMLG clusters | %d directional | %d differentiated\n",
-            OUT, nrow(cl), sum(cl$directional == 1L, na.rm = TRUE),
-            sum(cl$differentiated, na.rm = TRUE)))
+emit <- function(tau) {
+  cl <- copy(base)[, sort_class := NA_character_]
+  ok <- cl$differentiated & cl$n_obs > 0 & !is.na(cl$uni_score)
+  cl[ok, sort_class := classify_sort(n_aqu, n_pol, n_obs, sort_th = tau,
+                                     sort_rule = SORT_RULE, alpha = ALPHA)]
+  cl[, `:=`(directional = as.integer(sort_class %in% uni_cls),
+            sorted      = as.integer(sort_class %in% c(uni_cls, "unresolved")))]
+  out <- cl[, .(group_id, n_loci, differentiated, sort_class, DI, prop_fixed, uni_score,
+                directional, sorted)]
+  saveRDS(out, sprintf("moduleA_sorting/data/moduleA_cluster_sorting_%s.rds", tau_stamp(tau)))
+  if (isTRUE(all.equal(tau, MODULEA_TAU_PRIMARY))) saveRDS(out, OUT)  # primary -> unstamped (Module C)
+  cat(sprintf("  %s | %5d directional | %4d unresolved | %5d differentiated\n",
+              tau_stamp(tau), sum(out$directional == 1L, na.rm = TRUE),
+              sum(out$sort_class == "unresolved", na.rm = TRUE),
+              sum(out$differentiated, na.rm = TRUE)))
+  invisible(out)
+}
+cat(sprintf("\n[A cluster-sorting] has_eMLG universe (%d clusters), tau series:\n", nrow(base)))
+invisible(lapply(MODULEA_TAU_SERIES, emit))
+cat(sprintf("  primary %s also written to %s\n", tau_stamp(MODULEA_TAU_PRIMARY), OUT))

@@ -45,9 +45,10 @@ DI_AGG      <- "max"    # cluster DI = max over members (not representative only
 SORT_TH     <- 0.6      # unified sort_class threshold (a population fraction)
 SORT_RULE   <- "binom" # magnitude gate = TOTAL near-fixation (prop_fixed >= sort_th);
                         #   DIRECTION by the binomial random-direction test (alpha = 0.05
-                        #   default), so a locus is unidirectional only when the split is
+                        #   default), so a locus is directionally resolved only when the split is
                         #   SIGNIFICANTLY biased toward one parent (p_binom < alpha). A
-                        #   majority-but-not-significant lean (e.g. 7:2) is "bidirectional";
+                        #   majority-but-not-significant lean (e.g. 7:2) is direction
+                        #   unresolved, not evidence of equal parental directions;
                         #   too few fixed pops to test is "ambiguous". See parallelism_stats().
 MIN_PARENT_MAF <- 0.15  # PRIMARY sorting gate: pooled-parental MAF floor. Keeps loci
                         #   polymorphic in the parents, so a high sorting index isn't just
@@ -183,7 +184,7 @@ sweep_res <- rbindlist(lapply(FIX_MAJOR_GRID, function(fm) {
       sort_th = st, fix_major = fm, n_diff = nrow(d),
       aquilonia     = sum(d$sort_class == "aquilonia",na.rm = TRUE),
       polyctena     = sum(d$sort_class == "polyctena",na.rm = TRUE),
-      bidirectional = sum(d$sort_class == "bidirectional",na.rm = TRUE),
+      unresolved = sum(d$sort_class %chin% c("unresolved", "ambiguous"), na.rm = TRUE),
       sorted        = sum(d$sort_class != "unsorted",na.rm = TRUE)   # any of the three
     )
   }))
@@ -193,7 +194,7 @@ sweep_res[, `:=`(
   pct_sorted        = 100 * sorted        / n_diff,
   pct_aquilonia     = 100 * aquilonia     / n_diff,
   pct_polyctena     = 100 * polyctena     / n_diff,
-  pct_bidirectional = 100 * bidirectional / n_diff
+  pct_unresolved = 100 * unresolved / n_diff
 )]
 
 cat("\n--- A1b: sorting sensitivity sweep -- % of", sweep_res$n_diff[1],
@@ -204,12 +205,12 @@ saveRDS(sweep_res, "moduleA_sorting/data/moduleA_sortth_fixth_sweep.rds")
  ## long form: one panel for the "any sorted" total + one per sort_class
 sweep_long <- melt(
   sweep_res, id.vars = c("sort_th", "fix_major"),
-  measure.vars = c("pct_sorted", "pct_aquilonia", "pct_polyctena", "pct_bidirectional"),
+  measure.vars = c("pct_sorted", "pct_aquilonia", "pct_polyctena", "pct_unresolved"),
   variable.name = "metric", value.name = "pct"
 )
 sweep_long[, metric := factor(metric,
-  levels = c("pct_sorted", "pct_aquilonia", "pct_polyctena", "pct_bidirectional"),
-  labels = c("any sorted", "aquilonia", "polyctena", "bidirectional"))]
+  levels = c("pct_sorted", "pct_aquilonia", "pct_polyctena", "pct_unresolved"),
+  labels = c("any sorted", "aquilonia", "polyctena", "direction unresolved"))]
 
 p_sweep <- ggplot(sweep_long,
                   aes(sort_th, pct, colour = factor(fix_major), group = fix_major)) +
@@ -247,12 +248,12 @@ snp_tab[, pct := round(100 * N / sum(N), 4)]
 cat("\n--- A1: per-SNP sort_class (parent_maf >=", MIN_PARENT_MAF, ") ---\n")
 print(snp_tab)
 # 
-# image(t(GTs_wp[,par_res_snp[sort_class=="bidirectional",marker][1:1000]]))
+# image(t(GTs_wp[,par_res_snp[sort_class=="unresolved",marker][1:1000]]))
 # image(t(GTs_wp[,par_res_snp[sort_class=="aquilonia",marker][1:1000]]))
 # image(t(GTs_wp[,par_res_snp[sort_class=="polyctena",marker][1:1000]]))
 # 
-#par_res_snp[sort_class=="bidirectional"]
-# plot(par_res_snp[sort_class=="bidirectional",abs(uni_score)],par_res_snp[sort_class=="bidirectional",2 * pmin(n_aqu, n_pol)/n_obs])
+#par_res_snp[sort_class=="unresolved"]
+# plot(par_res_snp[sort_class=="unresolved",abs(uni_score)],par_res_snp[sort_class=="unresolved",2 * pmin(n_aqu, n_pol)/n_obs])
 # geom_abline(0,1)
 # 
 # 
@@ -263,7 +264,7 @@ print(snp_tab)
 # 
 saveRDS(par_res_snp, "moduleA_sorting/data/moduleA_snp.rds")
 # 
-# par_res_snp[sort_class=="bidirectional"]
+# par_res_snp[sort_class=="unresolved"]
 # 
 # par_res_snp[sort_class=="aquilonia" & n_pol>3,ifelse(n_obs > 0, (n_aqu - n_pol) / n_obs, NA_real_) ]
 # par_res_snp[sort_class=="aquilonia" & n_pol>3,ifelse(n_obs > 0, (n_aqu - n_pol) / n_obs, NA_real_) ]

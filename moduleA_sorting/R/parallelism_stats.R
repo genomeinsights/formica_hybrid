@@ -87,19 +87,22 @@ library(data.table)
 ##                  |uni_score| >= bi_score & |uni_score| >= sort_th
 ##                     -> "aquilonia" / "polyctena" (unidirectional)
 ##                  bi_score > |uni_score| & bi_score >= sort_th
-##                     -> "bidirectional"
+##                     -> "unresolved" (direction unresolved; see note below)
 ##                  else "unsorted".
 ## sort_rule    : how sort_class is called from the fixation counts.
 ##                "prop_fixed" (DEFAULT): magnitude gate = total near-fixation
-##                (prop_fixed >= sort_th), then the uni/bi split (bidirectional iff
-##                minority > 1/4 of fixed pops). "component" (ORIGINAL): the larger
-##                of |uni_score|/bi_score must itself reach sort_th (under-calls
-##                bidirectional). "binom": magnitude gate = prop_fixed >= sort_th,
-##                but DIRECTION is the binomial random-direction test -- unidirectional
-##                only when the split is SIGNIFICANTLY biased toward one parent
-##                (p_binom < alpha); non-significant sorted loci are "bidirectional"
-##                if n_fixed had power (n_fixed >= smallest n with 2*0.5^n < alpha),
-##                else "ambiguous". See the inline note at the sort_class block.
+##                (prop_fixed >= sort_th), then the direction split. "component"
+##                (ORIGINAL): the larger of |uni_score|/bi_score must itself reach
+##                sort_th. "binom" (used by Module A): magnitude gate = prop_fixed >=
+##                sort_th, DIRECTION by the binomial random-direction test --
+##                unidirectional only when the split is SIGNIFICANTLY biased toward
+##                one parent (p_binom < alpha); a sorted locus whose direction is NOT
+##                significant is "unresolved" (direction unresolved, formerly
+##                "bidirectional") when n_fixed had power, else "ambiguous" (too few
+##                fixed to test). NOTE: "unresolved" does NOT assert genuine both-
+##                direction sorting -- a ~20-population panel cannot separate a
+##                balanced locus from a mild directional lean (see
+##                doc/moduleA_tau_sensitivity.md).
 ## alpha        : significance level for the "binom" direction test (default 0.05).
 ##                Because all three scores are population fractions, the SAME
 ##                sort_th is comparable across SNPs and eMLGs (run this
@@ -120,7 +123,7 @@ library(data.table)
 ##   n_aqu, n_pol pops near-fixed toward aquilonia / polyctena
 ##   n_fixed      n_aqu + n_pol
 ##   n_unsorted   n_obs - n_fixed
-##   prop_fixed   n_fixed / n_obs  (magnitude of sorting; bidirectional axis)
+##   prop_fixed   n_fixed / n_obs  (magnitude of sorting; both-directions axis)
 ##   f_aqu_pooled mean hybrid aquilonia-allele frequency
 ##   f_aqu_parent aquilonia-allele freq in the aquilonia parents (oriented)
 ##   f_pol_parent aquilonia-allele freq in the polyctena parents (oriented)
@@ -132,9 +135,68 @@ library(data.table)
 ##   dir_bias     (n_aqu - n_pol) / n_fixed  in [-1, 1]
 ##   direction    "aquilonia" / "polyctena" / "tie"
 ##   uni_score    (n_aqu - n_pol) / n_obs  (signed unidirectional fraction)
-##   bi_score     2*min(n_aqu,n_pol) / n_obs  (bidirectional fraction)
-##   sort_class   "aquilonia"/"polyctena"/"bidirectional"/"unsorted" at sort_th
+##   bi_score     2*min(n_aqu,n_pol) / n_obs  (both-directions fraction)
+##   sort_class   "aquilonia"/"polyctena"/"unresolved"/"unsorted" at sort_th
 ## ---------------------------------------------------------
+## ---------------------------------------------------------
+## classify_sort() -- assign a sorting class from a unit's fixation counts.
+## Vectorised; the shared core of parallelism_stats()'s sort_class, exposed so a
+## unit can be re-classified post-hoc at any sort_th (e.g. the tau sensitivity
+## series) from STORED counts, without re-running the expensive prep. See the
+## sort_rule / sort_th argument docs of parallelism_stats() for the three rules.
+## Returns "aquilonia"/"polyctena"/"unresolved"/"ambiguous"/"unsorted", or NA
+## where n_obs <= 0 or the counts are NA.
+classify_sort <- function(n_aqu, n_pol, n_obs, sort_th,
+                          sort_rule = c("prop_fixed", "component", "binom"),
+                          alpha = 0.05) {
+  sort_rule <- match.arg(sort_rule)
+  n_fixed <- n_aqu + n_pol
+  uni  <- ifelse(n_obs > 0, (n_aqu - n_pol) / n_obs, NA_real_)
+  bi   <- ifelse(n_obs > 0, 2 * pmin(n_aqu, n_pol) / n_obs, NA_real_)
+  prop <- ifelse(n_obs > 0, n_fixed / n_obs, NA_real_)
+  um   <- abs(uni)
+  cls  <- rep(NA_character_, length(uni))
+  ok   <- is.finite(uni)
+  cls[ok] <- "unsorted"
+  is_uni <- is_bi <- is_amb <- logical(length(uni))
+  if (sort_rule == "component") {
+    is_uni <- ok & um >= bi & um >= sort_th
+    is_bi  <- ok & bi >  um & bi >= sort_th
+  } else if (sort_rule == "prop_fixed") {
+    sorted <- ok & prop >= sort_th
+    is_bi  <- sorted & bi > um
+    is_uni <- sorted & !is_bi
+  } else {                                   # "binom"
+    p_binom <- ifelse(n_fixed > 0, pmin(1, 2 * stats::pbinom(pmin(n_aqu, n_pol), n_fixed, 0.5)), NA_real_)
+    n_pow   <- ceiling(log(alpha / 2) / log(0.5))
+    sorted  <- ok & prop >= sort_th
+    sig     <- sorted & !is.na(p_binom) & p_binom < alpha
+    is_uni  <- sig
+    is_bi   <- sorted & !sig & n_fixed >= n_pow
+    is_amb  <- sorted & !sig & n_fixed <  n_pow
+  }
+  cls[is_uni] <- ifelse(uni[is_uni] > 0, "aquilonia", "polyctena")
+  ## sorted, direction NOT significantly biased: "unresolved" (= direction
+  ## unresolved). This is NOT evidence of genuine both-direction sorting -- with a
+  ## ~20-population panel the binomial test cannot separate a balanced 50:50 locus
+  ## from a mild directional lean (it resolves only down to ~75:25 even at full
+  ## fixation), so a majority-but-not-significant lean lands here too. Reported as
+  ## direction-unresolved rather than "bidirectional" to avoid over-claiming.
+  cls[is_bi]  <- "unresolved"
+  cls[is_amb] <- "ambiguous"
+  cls
+}
+
+## Predefined Module A sorting-threshold (tau) sensitivity series. tau = 0.6 is the
+## PRIMARY reported operating point; 0.5 (relaxed) and 0.8 (stringent) flank it.
+## Everything else is held fixed (fix_th 0.15, min_parent_maf 0.15, cM05 clustering,
+## sort_rule "binom" at alpha 0.05, DI ungated). Results are parameter-stamped
+## tau05 / tau06 / tau08; the manuscript reports tau06 and uses 0.5/0.8 only to show
+## what is gained (relaxed) or lost (stringent) -- never to pick the strongest.
+MODULEA_TAU_SERIES  <- c(0.5, 0.6, 0.8)
+MODULEA_TAU_PRIMARY <- 0.6
+tau_stamp <- function(tau) sprintf("tau%02d", round(tau * 10))
+
 parallelism_stats <- function(prep,
                               hybrid_pops,
                               aqu_pops = NULL,
@@ -297,51 +359,20 @@ parallelism_stats <- function(prep,
   uni_score <- ifelse(n_obs > 0, (n_aqu - n_pol) / n_obs, NA_real_)   # signed, + = aquilonia
   bi_score  <- ifelse(n_obs > 0, 2 * pmin(n_aqu, n_pol) / n_obs, NA_real_)
 
-  uni_mag <- abs(uni_score)
   ## two-sided binomial p that the fixation DIRECTION is unbiased under the
-  ## random-direction null k_aqu ~ Binomial(n_fixed, 0.5). Vectorised exact form
-  ## (symmetric null): twice the lower tail at the minority count, capped at 1;
-  ## NA where nothing fixed. Used only by sort_rule = "binom" but always reported.
+  ## random-direction null k_aqu ~ Binomial(n_fixed, 0.5). Reported for every unit;
+  ## classify_sort() recomputes it internally for the "binom" rule.
   p_binom <- ifelse(n_fixed > 0,
                     pmin(1, 2 * stats::pbinom(pmin(n_aqu, n_pol), n_fixed, 0.5)),
                     NA_real_)
 
+  ## sort_class via the shared classifier (see classify_sort() above). The counts
+  ## (n_aqu/n_pol/n_obs) are tau-INDEPENDENT, so downstream can re-classify at any
+  ## sort_th without re-running this function.
   sort_class <- rep(NA_character_, length(markers))
   ok <- differentiated & n_obs > 0 & !is.na(uni_score)
-  sort_class[ok] <- "unsorted"
-  is_uni <- is_bi <- is_amb <- logical(length(markers))
-  ## Magnitude gate + direction call. All three share the fixation counts:
-  ##   "component" (ORIGINAL): the larger of |uni_score|/bi_score must itself reach
-  ##     sort_th. A both-directions split shrinks BOTH, so near-balanced loci need
-  ##     prop_fixed ~ 1 to pass -> "bidirectional" is systematically under-called.
-  ##   "prop_fixed" (default): magnitude gate = TOTAL near-fixation
-  ##     (prop_fixed = uni_mag + bi_score) >= sort_th; direction = the same uni/bi
-  ##     split (bidirectional iff the minority > 1/4 of fixed pops). Removes the
-  ##     "valley" but the 1/4 split is a fixed ratio, not sample-size aware.
-  ##   "binom": magnitude gate = prop_fixed >= sort_th; DIRECTION is decided by the
-  ##     binomial random-direction test, so "unidirectional" means the split is
-  ##     SIGNIFICANTLY biased toward one parent (predictable), not merely a majority.
-  ##     Sorted-but-not-significant loci are "bidirectional" when n_fixed had power
-  ##     to detect a one-way bias (n_fixed >= n_pow, the smallest n at which an
-  ##     all-one-way split reaches p < alpha), else "ambiguous" (underpowered).
-  if (sort_rule == "component") {
-    is_uni <- ok & uni_mag >= bi_score & uni_mag >= sort_th
-    is_bi  <- ok & bi_score >  uni_mag & bi_score >= sort_th
-  } else if (sort_rule == "prop_fixed") {
-    sorted <- ok & prop_fixed >= sort_th
-    is_bi  <- sorted & bi_score > uni_mag
-    is_uni <- sorted & !is_bi
-  } else {                                   # "binom"
-    n_pow  <- ceiling(log(alpha / 2) / log(0.5))     # smallest n_fixed with 2*0.5^n < alpha
-    sorted <- ok & prop_fixed >= sort_th
-    sig    <- sorted & !is.na(p_binom) & p_binom < alpha
-    is_uni <- sig
-    is_bi  <- sorted & !sig & n_fixed >= n_pow
-    is_amb <- sorted & !sig & n_fixed <  n_pow
-  }
-  sort_class[is_uni] <- ifelse(uni_score[is_uni] > 0, "aquilonia", "polyctena")
-  sort_class[is_bi]  <- "bidirectional"
-  sort_class[is_amb] <- "ambiguous"
+  sort_class[ok] <- classify_sort(n_aqu[ok], n_pol[ok], n_obs[ok],
+                                  sort_th = sort_th, sort_rule = sort_rule, alpha = alpha)
 
   out <- data.table(
     marker       = markers,
@@ -425,7 +456,7 @@ if (FALSE) {
   markers <- par_res[differentiated==TRUE & sort_class=="polyctena" ,marker]
   image(t(GTs[,markers]))
   
-  markers <- par_res[differentiated==TRUE & sort_class=="bidirectional",marker]
+  markers <- par_res[differentiated==TRUE & sort_class=="unresolved",marker]
   image(t(GTs[,markers]))
  
   ## example code for heatmaps

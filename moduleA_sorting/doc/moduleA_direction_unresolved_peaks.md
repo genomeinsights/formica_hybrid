@@ -1,26 +1,26 @@
-# Module A — are the per-SNP "bidirectional" manhattan peaks real?
+# Module A — are the per-SNP "direction-unresolved" manhattan peaks real?
 
-**Script:** `moduleA_sorting/R/moduleA_bidirectional_peaks.R`
-**Figure:** `moduleA_sorting/Figures/moduleA_bidirectional_peaks.png`
-**Table:** `moduleA_sorting/data/moduleA_bidirectional_peaks.csv`
+**Script:** `moduleA_sorting/R/moduleA_direction_unresolved_peaks.R`
+**Figure:** `moduleA_sorting/Figures/moduleA_direction_unresolved_peaks.png`
+**Table:** `moduleA_sorting/data/moduleA_direction_unresolved_peaks.csv`
 
 ## Question
 
 The binom sorting manhattan (`moduleA_fig_sorting_manhattan.R`) shows local peaks
-in the **per-SNP bidirectional fraction at τ = 0.5**, concentrated on Chr1, Chr8,
+in the **per-SNP direction-unresolved fraction at τ = 0.5**, concentrated on Chr1, Chr8,
 Chr17, Chr22, Chr24, Chr26. Several coincide with high‑`ld_w` regions, so they
 could be single large LD clusters counted once per SNP rather than genomic regions
-of genuinely heterogeneous ancestry outcomes. We test four things (bidirectional
+of genuinely heterogeneous ancestry outcomes. We test four things (direction-unresolved
 defined at τ = 0.5: `prop_fixed ≥ 0.5 & p_binom ≥ 0.05 & n_fixed ≥ 6`).
 
 ## Findings
 
 ### 1. Per SNP vs per LD‑reduced unit — the peaks collapse
 
-Across all peaks, **1,946 per‑SNP bidirectional calls reduce to 192 distinct LD
-clusters, and only 61 bidirectional cluster representatives.** The prominent peaks
+Across all peaks, **1,946 per‑SNP direction-unresolved calls reduce to 192 distinct LD
+clusters, and only 61 direction-unresolved cluster representatives.** The prominent peaks
 are each essentially *one* high‑`ld_w` cluster whose representative is not even
-bidirectional:
+direction-unresolved:
 
 | peak | n_bi SNP | LD clusters | bi reps | LD‑inflation | mean `ld_w` |
 |---|--:|--:|--:|--:|--:|
@@ -38,7 +38,7 @@ the visually striking high‑`ld_w` peaks are single blocks.
 
 ### 2. `n_fixed` inside the peaks
 
-**1,641 of 1,946 (84%) peak‑bidirectional SNPs have `n_fixed` = 10 or 11**
+**1,641 of 1,946 (84%) peak‑direction-unresolved SNPs have `n_fixed` = 10 or 11**
 (`prop_fixed` 0.50–0.55). The primary τ = 0.6 gate needs `n_fixed ≥ 12`, so almost
 all of them drop out between τ = 0.5 and τ = 0.6 — this is exactly why the peaks
 are blue (τ = 0.5) only in the manhattan.
@@ -63,7 +63,7 @@ high‑`ld_w`), plus scattered low‑`ld_w` windows on Chr3/4/12. Full list in t
 
 ## Conclusion
 
-The peaks **collapse under LD reduction**: at the eMLG/consensus level bidirectional
+The peaks **collapse under LD reduction**: at the eMLG/consensus level direction-unresolved
 is already 0 (`moduleA_cluster_sorting.rds`), and the per‑SNP peaks are LD‑inflated
 single blocks of marginally sorted loci (`n_fixed` 10–11) with region‑specific
 population splits. They are therefore a **demonstration of why the primary τ = 0.6
@@ -72,8 +72,8 @@ heterogeneous‑ancestry regions. The residue of genuine both‑direction units 
 genome‑wide, mostly the low‑`ld_w` Chr3/4/12 windows) is marginal and would require
 Module E's neutral null before it could be interpreted.
 
-**Figure — `moduleA_bidirectional_peaks.png`:** hybrid population (rows) × the ten
-largest bidirectional peaks (columns); tile colour = mean per‑locus fixation
+**Figure — `moduleA_direction_unresolved_peaks.png`:** hybrid population (rows) × the ten
+largest direction-unresolved peaks (columns); tile colour = mean per‑locus fixation
 direction (blue = aquilonia, orange = polyctena), label = #loci aquilonia‑fixed /
 polyctena‑fixed. Each column is a clean partition; the partitions differ between
 peaks.

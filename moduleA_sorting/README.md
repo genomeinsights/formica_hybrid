@@ -10,7 +10,7 @@ All scripts run **from the repo root** (`~/gitlab/formica_hybrid`), e.g. `Rscrip
 
 ## Conventions (locked)
 
-Parental-MAF gate ≥ 0.15 · sorting threshold **τ = 0.6** · near-fixation floor **φ = 0.85** (`fix_th = 0.15`, on the major/fixed-for allele) · **cM05** clustering · diagnostic index (DI) kept **ungated** as a covariate · sorting call `sort_rule = "binom"` (α = 0.05): magnitude gate = total near-fixation (`prop_fixed ≥ τ`), **direction** by the binomial random-direction test — unidirectional only when the split is significantly biased toward one parent, else bidirectional (or ambiguous when too few populations fixed to test). Replaces the original "component" rule (which under-called bidirectional) and its `prop_fixed` interim (which used a fixed ¼ split, not sample-size aware).
+Parental-MAF gate ≥ 0.15 · sorting threshold **τ = 0.6** · near-fixation floor **φ = 0.85** (`fix_th = 0.15`, on the major/fixed-for allele) · **cM05** clustering · diagnostic index (DI) kept **ungated** as a covariate · sorting call `sort_rule = "binom"` (α = 0.05): magnitude gate = total near-fixation (`prop_fixed ≥ τ`), with direction resolved only when the split is significantly biased toward one parent. A non-significant direction is reported as **direction unresolved** (or ambiguous when too few populations are fixed to test); this is not positive evidence of equal sorting toward both parents. The earlier component rule is retained only for provenance.
 
 ## Pipeline (`R/`)
 
@@ -22,7 +22,8 @@ Parental-MAF gate ≥ 0.15 · sorting threshold **τ = 0.6** · near-fixation fl
 | 2 | `moduleA_architecture.R` | Reproduces the genomic-architecture results (the old manuscript "Module B"): DI–recombination/π/dxy correlations + decile table; sorting depleted in low recombination + magnitude slope; the `P(aquilonia)` direction logistic model + its threshold sweep; assembles the 3-panel architecture figure. |
 | 3 | `moduleA_fig_sorting_manhattan.R` | Genome-wide sorting landscape (toward-aquilonia, toward-polyctena, net direction, DI, and marker-level `ld_w`), across thresholds. Pure post-hoc on `moduleA_snp.rds`. |
 | 4 | `moduleA_cluster_sorting.R` | The per-eMLG sorting call over the **full has_eMLG universe** (`colnames($eMLG)`) with the locked conventions — the annotation the climate modules (B, C) join on. Formerly the flat `R/moduleC_sorting_climate.R` checkpoint ("C3_cl"); relocated here because it is a sorting product. Own full-universe parent-side consensus, so it is independent of A3's sorted-focused companion set. |
-| 5 | `moduleA_bidirectional_peaks.R` | **Diagnostic** (post-hoc on `moduleA_snp.rds`): tests whether the per-SNP bidirectional manhattan peaks at τ=0.5 are real or LD-cluster artifacts — per-SNP vs LD-reduced recount, `n_fixed` tabulation, and the per-peak population split. They collapse (single high-`ld_w` blocks; 84% have `n_fixed` 10–11). See `doc/moduleA_bidirectional_peaks.md`. |
+| 5 | `moduleA_direction_unresolved_peaks.R` | **Diagnostic** (legacy filename; post-hoc on `moduleA_snp.rds`): tests whether the per-SNP direction-unresolved Manhattan peaks at τ=0.5 are LD-cluster artifacts — per-SNP vs LD-reduced recount, `n_fixed` tabulation, and the per-peak population split. They collapse (single high-`ld_w` blocks; 84% have `n_fixed` 10–11). |
+| 6 | `moduleA_tau_sensitivity.R` | **Diagnostic only**: compares stored τ-independent counts across {0.5, 0.6, 0.8}. The reported analysis remains τ=0.6; direction-unresolved calls increase at relaxed τ partly because directional power is lower. |
 
 ## Inputs
 
@@ -34,7 +35,7 @@ Shared, repo-root `data/`: `hybrids_and_parents_maf005.Rdata`, `hybrids_only_maf
 
 `Figures/`: - `moduleA_sorting_sweep.png`, `moduleA_panelB_sweep.png` — sweep supplements S1, S2 - `moduleA_direction_sweep.png` — direction-model coefficients vs τ (supplement S3) - `moduleA_sorting_manhattan{,_directional}.png` — genome-wide landscape (S4) - `moduleA_architecture_fig.{pdf,png}` — 3-panel architecture figure (Fig 1)
 
-`doc/`: - `supplementary_methods_moduleA.{tex,pdf}` — Materials & Methods (sorting + architecture) - `moduleA_architecture_summary.{tex,pdf}` — architecture results summary - `moduleA_supp_th_sensitivity.{tex,pdf}` — threshold-sensitivity supplementary figures (S1–S4) - `moduleA_bidirectional_peaks.md` — diagnostic write-up: the τ=0.5 bidirectional peaks are LD-cluster artifacts
+`doc/`: - `supplementary_methods_moduleA.{tex,pdf}` — Materials & Methods (sorting + architecture) - `moduleA_architecture_summary.{tex,pdf}` — architecture results summary - `moduleA_supp_th_sensitivity.{tex,pdf}` — threshold-sensitivity supplementary figures (S1–S4) - `moduleA_tau_sensitivity.md` — diagnostic notes for the τ sensitivity series. Files or objects retaining “bidirectional” in their names are legacy identifiers; manuscript-facing text uses “direction unresolved.”
 
 ## Not yet in this module
 

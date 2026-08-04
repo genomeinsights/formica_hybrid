@@ -1,5 +1,5 @@
 ## =========================================================
-## MODULE A -- diagnosing the per-SNP "bidirectional" manhattan peaks
+## MODULE A -- diagnosing the per-SNP "direction-unresolved" manhattan peaks
 ## =========================================================
 ## The binom sorting manhattan (moduleA_fig_sorting_manhattan.R) shows local
 ## peaks in the per-SNP BIDIRECTIONAL fraction at tau = 0.5. Several coincide with
@@ -22,8 +22,8 @@
 ##         p_binom, n_fixed, uni_score, ...), module0_ld_pruning/data/
 ##         eMLG_5loci_0025_cM05.rds (LD clusters + representatives),
 ##         data/hybrids_and_parents_maf005.Rdata (genotypes, populations)
-## Writes: moduleA_sorting/data/moduleA_bidirectional_peaks.csv (peak summary),
-##         moduleA_sorting/Figures/moduleA_bidirectional_peaks.png (pop x peak split)
+## Writes: moduleA_sorting/data/moduleA_direction_unresolved_peaks.csv (peak summary),
+##         moduleA_sorting/Figures/moduleA_direction_unresolved_peaks.png (pop x peak split)
 ## Run from the repo root.
 
 suppressPackageStartupMessages({ library(data.table); library(ggplot2) })
@@ -36,7 +36,7 @@ WIN   <- 100000L                           # 100-kb windows
 QUAL_FRAC <- 0.08; QUAL_NBI <- 3L; PEAK_MINBI <- 10L   # peak-calling thresholds
 N_TOP_PEAKS <- 10L                         # peaks carried into the population analysis
 
-## ---- per-SNP, bidirectional at tau = 0.5 ---------------------------------
+## ---- per-SNP, direction-unresolved at tau = 0.5 ---------------------------------
 snp <- as.data.table(readRDS("moduleA_sorting/data/moduleA_snp.rds"))
 snp <- snp[differentiated == TRUE & is.finite(uni_score) & !is.na(p_binom)]
 snp[, c("Chr", "Pos") := tstrsplit(marker, ":", fixed = TRUE)][, Pos := as.integer(Pos)]
@@ -50,7 +50,7 @@ snp[, is_rep := marker %in% unique(groups$representative)]
 e <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e)
 snp[as.data.table(e$map_hyb_005)[, .(marker, ld_w_095)], on = "marker", ld_w := i.ld_w_095]
 
-## ---- (3) peaks: contiguous 100-kb windows enriched for bidirectional -----
+## ---- (3) peaks: contiguous 100-kb windows enriched for direction-unresolved -----
 w <- snp[, .(n = .N, n_bi = sum(is_bi)), by = .(Chr, win)][, bi_frac := n_bi / n]
 w[, qual := n_bi >= QUAL_NBI & bi_frac >= QUAL_FRAC]
 setorder(w, Chr, win)
@@ -71,14 +71,14 @@ red <- bi[, .(n_bi_SNP = .N, n_clusters = uniqueN(group_id), n_bi_rep = sum(is_r
               LDinflation = round(.N / uniqueN(group_id), 1),
               mean_ldw = round(mean(ld_w, na.rm = TRUE), 2)), by = peak]
 tab <- peaks[, .(peak, bi_frac = round(n_bi / n_diff, 3))][red, on = "peak"][order(-n_bi_SNP)]
-fwrite(tab, "moduleA_sorting/data/moduleA_bidirectional_peaks.csv")
+fwrite(tab, "moduleA_sorting/data/moduleA_direction_unresolved_peaks.csv")
 cat("=== (1)+(3) PEAK INTERVALS: per-SNP vs LD-reduced (representative) ===\n")
 print(tab, row.names = FALSE)
-cat(sprintf("\nTOTAL across peaks: %d per-SNP bidirectional -> %d distinct LD clusters -> %d bidirectional representatives\n",
+cat(sprintf("\nTOTAL across peaks: %d per-SNP direction-unresolved -> %d distinct LD clusters -> %d direction-unresolved representatives\n",
             nrow(bi), uniqueN(bi$group_id), sum(bi$is_rep)))
 
 ## ---- (2) n_fixed distribution within peaks -------------------------------
-cat("\n=== (2) n_fixed of bidirectional SNPs within peaks (n_obs = 20) ===\n")
+cat("\n=== (2) n_fixed of direction-unresolved SNPs within peaks (n_obs = 20) ===\n")
 print(bi[, .N, keyby = n_fixed])
 cat(sprintf("  n_fixed in {10,11}: %d of %d (%.0f%%) -- these have prop_fixed 0.50-0.55 and drop out at tau = 0.6\n",
             bi[n_fixed %in% 10:11, .N], nrow(bi), 100 * bi[n_fixed %in% 10:11, .N] / nrow(bi)))
@@ -119,10 +119,10 @@ p <- ggplot(grid, aes(peak, Population, fill = net)) +
   geom_text(aes(label = sprintf("%d/%d", n_aqu, n_pol)), size = 2.3) +
   scale_fill_gradient2(low = "#d95f0e", mid = "#f7f7f7", high = "#2c7fb8", midpoint = 0,
                        limits = c(-1, 1), name = "net\n(+aqu / -pol)") +
-  labs(title = "Population direction within per-SNP bidirectional peaks (tau = 0.5)",
+  labs(title = "Population direction within per-SNP direction-unresolved peaks (tau = 0.5)",
        subtitle = "tile = mean per-locus fixation direction; label = #loci aquilonia-fixed / polyctena-fixed",
-       x = "peak (bidirectional region)", y = "hybrid population (ordered by mean net)") +
+       x = "peak (direction-unresolved region)", y = "hybrid population (ordered by mean net)") +
   theme_minimal(base_size = 10) + theme(axis.text.x = element_text(angle = 30, hjust = 1))
-ggsave("moduleA_sorting/Figures/moduleA_bidirectional_peaks.png", p, width = 9, height = 6, dpi = 150)
-cat("\nSaved: moduleA_sorting/Figures/moduleA_bidirectional_peaks.png,",
-    "moduleA_sorting/data/moduleA_bidirectional_peaks.csv\n")
+ggsave("moduleA_sorting/Figures/moduleA_direction_unresolved_peaks.png", p, width = 9, height = 6, dpi = 150)
+cat("\nSaved: moduleA_sorting/Figures/moduleA_direction_unresolved_peaks.png,",
+    "moduleA_sorting/data/moduleA_direction_unresolved_peaks.csv\n")
