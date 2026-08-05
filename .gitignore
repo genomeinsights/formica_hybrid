@@ -99,3 +99,6 @@ high_a_whitelist*.txt
 # legacy pre-reorg data moved out of data/ (large, regenerable) -- keep only the note
 data_legacy/*
 !data_legacy/README.md
+
+# local archive of pre-reorg dev figures (kept on disk, not tracked)
+Figures_legacy/
