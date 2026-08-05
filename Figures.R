@@ -393,6 +393,83 @@ make_arch_table <- function() {
   cat("Saved: Tables/moduleA_architecture_deciles.tex\n")
 }
 
+## ---- [Table S] sorting across recombination deciles, by analytical level -
+## Backs Fig 1b/c: fraction sorted and fraction toward F. aquilonia per decile,
+## for LD-reduced units vs the random SNP sample. The decile-1 SNP inflation is
+## the spatial-pseudoreplication signature. Uses \Faq (manuscript macro), booktabs
+## + \cmidrule. Writes Tables/moduleA_sorting_by_level.tex.
+make_sorting_level_table <- function() {
+  dir.create("Tables", showWarnings = FALSE, recursive = TRUE)
+  a  <- readRDS("moduleA_sorting/data/moduleA_architecture.rds")
+  u  <- as.data.table(a$unit_by_recomb)[order(rbin)]
+  s  <- as.data.table(a$snp_by_recomb)[order(rbin)]
+  at <- as.data.table(a$arch_tab)[order(rbin)]
+  stopifnot("decile rows misaligned across objects" =
+              all(u$rbin == s$rbin) && all(u$rbin == at$rbin))
+  rows <- sprintf("%d & %.2f & %.3f & %.3f & %.3f & %.3f \\\\",
+                  at$rbin, at$med_recomb, u$frac_sorted, s$frac_sorted,
+                  u$frac_aqu_of_unidir, s$frac_aqu_of_unidir)
+  tex <- c(
+    "\\begin{table}[h]",
+    "\\centering",
+    "\\caption{\\textbf{Ancestry sorting across recombination-rate deciles, by",
+    "analytical level.} Per decile (decile~1 = lowest recombination): median",
+    "recombination rate, the fraction of eligible loci sorted, and the fraction of",
+    "directionally resolved loci fixing toward \\Faq{}, for LD-reduced units and for a",
+    "random sample of individual markers (SNP). The inflated SNP values in decile~1",
+    "reflect spatial pseudoreplication---redundant markers within a few large",
+    "low-recombination blocks.}",
+    "\\label{tabS:sorting_by_level}",
+    "\\begin{tabular}{cccccc}",
+    "\\toprule",
+    " & & \\multicolumn{2}{c}{Fraction sorted} & \\multicolumn{2}{c}{Fraction toward \\Faq{}} \\\\",
+    "\\cmidrule(lr){3-4}\\cmidrule(lr){5-6}",
+    "Decile & Median recomb. (cM/Mb) & Unit & SNP & Unit & SNP \\\\",
+    "\\midrule",
+    rows,
+    "\\bottomrule",
+    "\\end{tabular}",
+    "\\end{table}")
+  writeLines(tex, "Tables/moduleA_sorting_by_level.tex")
+  cat("Saved: Tables/moduleA_sorting_by_level.tex\n")
+}
+
+## ---- [Table] architecture regression models (magnitude + direction) -----
+## Combines the two unit-level models so their coefficients need not sit in prose;
+## supersedes/merges with the manuscript's direction-model table. booktabs.
+make_models_table <- function() {
+  dir.create("Tables", showWarnings = FALSE, recursive = TRUE)
+  a   <- readRDS("moduleA_sorting/data/moduleA_architecture.rds")
+  mag <- coef(summary(a$lm_magnitude)); dr <- coef(summary(a$glm_direction))
+  row <- function(label, est, stat, sy)
+    sprintf("\\quad %s & $%s$ & $%s=%s$ \\\\", label,
+            formatC(est, format = "f", digits = 3), sy, formatC(stat, format = "f", digits = 1))
+  tex <- c(
+    "\\begin{table}[h]", "\\centering",
+    "\\caption{\\textbf{Architecture regression models of ancestry sorting among",
+    "LD-reduced units.} Standardised coefficients. \\emph{Magnitude}: linear model of",
+    "the sorted fraction $p_{\\mathrm{fixed}}$ on recombination and DI.",
+    "\\emph{Direction}: logistic model of the probability of fixing toward \\Faq{} among",
+    "directionally resolved units, on DI, recombination, parental MAF and log cluster",
+    "size. All predictors standardised over the differentiated-unit set; $t$/$z$ are",
+    "Wald statistics. All terms significant (weakest: parental MAF, $P=0.009$).}",
+    "\\label{tab:architecture-models}",
+    "\\begin{tabular}{lrr}", "\\toprule",
+    "Predictor & Coefficient & Statistic \\\\", "\\midrule",
+    "\\multicolumn{3}{l}{\\emph{Magnitude} ($p_{\\mathrm{fixed}}$, linear)} \\\\",
+    row("Recombination", mag["zr", "Estimate"],  mag["zr", "t value"],  "t"),
+    row("DI",            mag["zDI", "Estimate"], mag["zDI", "t value"], "t"),
+    "\\addlinespace",
+    "\\multicolumn{3}{l}{\\emph{Direction} ($P(\\text{fix}\\rightarrow\\Faq)$, logistic)} \\\\",
+    row("DI",               dr["zDI", "Estimate"],  dr["zDI", "z value"],  "z"),
+    row("Recombination",    dr["zr", "Estimate"],   dr["zr", "z value"],   "z"),
+    row("Parental MAF",     dr["zmaf", "Estimate"], dr["zmaf", "z value"], "z"),
+    row("Log cluster size", dr["zcs", "Estimate"],  dr["zcs", "z value"],  "z"),
+    "\\bottomrule", "\\end{tabular}", "\\end{table}")
+  writeLines(tex, "Tables/moduleA_architecture_models.tex")
+  cat("Saved: Tables/moduleA_architecture_models.tex\n")
+}
+
 ## =====================================================================
 ## build all
 ## =====================================================================
@@ -402,5 +479,5 @@ cat("== Module A ==\n")
 fig_sorting_sweep(); fig_panelB_sweep(); fig_direction_sweep()
 fig_architecture(); fig_manhattan_directional()
 cat("== Tables ==\n")
-make_arch_table()
+make_arch_table(); make_sorting_level_table(); make_models_table()
 cat("\nAll figures and tables written.\n")

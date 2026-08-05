@@ -1,0 +1,26 @@
+\begin{table}[h]
+\centering
+\caption{\textbf{Architecture regression models of ancestry sorting among
+LD-reduced units.} Standardised coefficients. \emph{Magnitude}: linear model of
+the sorted fraction $p_{\mathrm{fixed}}$ on recombination and DI.
+\emph{Direction}: logistic model of the probability of fixing toward \Faq{} among
+directionally resolved units, on DI, recombination, parental MAF and log cluster
+size. All predictors standardised over the differentiated-unit set; $t$/$z$ are
+Wald statistics. All terms significant (weakest: parental MAF, $P=0.009$).}
+\label{tab:architecture-models}
+\begin{tabular}{lrr}
+\toprule
+Predictor & Coefficient & Statistic \\
+\midrule
+\multicolumn{3}{l}{\emph{Magnitude} ($p_{\mathrm{fixed}}$, linear)} \\
+\quad Recombination & $0.052$ & $t=116.7$ \\
+\quad DI & $0.027$ & $t=61.0$ \\
+\addlinespace
+\multicolumn{3}{l}{\emph{Direction} ($P(\text{fix}\rightarrow\Faq)$, logistic)} \\
+\quad DI & $1.567$ & $z=111.7$ \\
+\quad Recombination & $-0.091$ & $z=-6.5$ \\
+\quad Parental MAF & $-0.035$ & $z=-2.6$ \\
+\quad Log cluster size & $0.048$ & $z=4.6$ \\
+\bottomrule
+\end{tabular}
+\end{table}
