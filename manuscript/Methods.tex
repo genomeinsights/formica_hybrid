@@ -1,0 +1,341 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{natbib} 
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{rotating}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{NoteBlue}{HTML}{EAF2F8}
+\definecolor{NoteBorder}{HTML}{7BA5C4}
+\definecolor{Muted}{HTML}{5B6570}
+
+\hypersetup{
+  pdftitle={Materials and Methods},
+  pdfauthor={Poikela et al.},
+  pdfsubject={Hybrid genome evolution in Formica wood ants}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+\setlist[itemize]{leftmargin=1.5em,itemsep=0.2em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=1.7em,itemsep=0.25em,topsep=0.25em}
+\renewcommand{\arraystretch}{1.15}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\rsq}{\ensuremath{r^{2}}}
+\newcommand{\ldw}{\ensuremath{\mathrm{ld}_w}}
+\newcommand{\Fst}{\ensuremath{F_{\mathrm{ST}}}}
+\newcommand{\dxy}{\ensuremath{d_{xy}}}
+
+\newcommand{\todo}[1]{%
+  \par\noindent
+  \fcolorbox{NoteBorder}{NoteBlue}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      \textbf{Open item.} #1}}%
+  \par}
+
+\title{\vspace{-3em}
+  \textbf{\color{Accent}Materials and Methods}\\[0.3em]}
+\author{Poikela et al.}
+
+\begin{document}
+\maketitle
+\section*{LD decay and LD-based complexity reduction}
+
+\subsection*{Marker processing and ancestry orientation}
+
+These methods describe LD decay estimation and LD-based complexity reduction,
+which transform the marker data into the shared set of LD-reduced analytical units \citep{FangEtAl2021,li2018linkage-744} used by the downstream ancestry-sorting and genomic-architecture analyses. Genotypes and marker-level ancestry information were obtained from the DIEM output restricting sites to biallelic markers with minor allele frequency (MAF) \(\geq 0.05\)  calculated among hybrid individuals only. The resulting analysis set contained 1,114,340 markers. The hybrids-only matrix was used for LD estimation, clustering, and complexity reduction. A second matrix containing hybrids and parental references was used when parental allele frequencies were required, including ancestry orientation and marker-level parental summaries. Keeping the parents out of the LD calculations prevents parent--hybrid differentiation from dominating estimates intended to describe LD within the hybrid populations.
+
+\section*{LD decay and local LD support}
+
+\subsection*{Chromosome-specific LD decay}
+
+
+LD decay was modelled separately for each chromosome as
+\begin{equation}
+  r^2(d) = b + \frac{c-b}{1+a d},
+  \label{eq:lddecay}
+\end{equation}
+where \(d\) is physical distance in base pairs, \(a\) is the decay rate, \(b\) is long-range background \(r^2\), and \(c\) is short-range \(r^2\). Background LD was estimated from inter-chromosomal marker pairs. Within each chromosome, the curve was fitted across 100 nominal windows with 50\% overlap. Up to 5,000 marker pairs were sampled per window, stratified across twenty distance classes to represent short and long distances comparably.
+
+Within each distance class, LD was summarized by the \(0.95\) quantile of \(r^2\) to characterize the upper LD landscape, which was the primary interest of this analysis. Parameter estimates were subsequently aggregated over the central 95\% of windows to limit the influence of extreme outlier window-level fits (Fig. \ref{figS:lddecay}).
+
+Only pairs for which both markers had MAF \(>0.1\) contributed to the background and decay-curve fits. This restriction reduces the frequency-driven depression of \(r^2\) at rare alleles.
+
+Since crossover number generally scales less than proportionally with physical chromosome length, this predicts  greater recombination per unit physical distance, and consequently faster LD decay, on shorter chromosomes. A robust regression of \(a\) on chromosome size was therefore fitted genome-wide. For a relative decay threshold \(\rho\), defined as the proportion of the fitted short distance LD that had decayed, the corresponding physical distance was calculated as
+\begin{equation}
+  d = \frac{\rho}{a(1-\rho)}.
+  \label{eq:distance}
+\end{equation}
+ This allowed window sizes to reflect each chromosome's fitted decay behaviour rather than imposing a single physical-distance threshold across the genome.
+
+\subsection*{Per-marker local LD support}
+
+For each marker, local LD support (\(\mathrm{ld}_w\)) was calculated as the median \(r^2\) between that marker and neighbouring markers within the window corresponding to \(\rho=0.95\) that denotes the distance at which LD has declined by 95\% relative to its fitted short-distance value. Unlike map-based recombination rate, \(\mathrm{ld}_w\) is measured directly from the genotype data at marker resolution and requires no interpolation.
+
+We evaluated \(\mathrm{ld}_w\) and the window-level decay rate \(a\) as indicators of low recombination using map-based recombination rate as a reference. Across definitions based on the lowest 5\%, 10\%, and 25\% of recombination windows, the area under the receiver-operating-characteristic curve was 0.91--0.98 for \(a\) and 0.73--0.86 for \(\mathrm{ld}_w\) (Fig.~\ref{figS:ROC}). Accordingly, \(a\) was the stronger window-level indicator, whereas \(\mathrm{ld}_w\) supplied the marker-resolution measure needed to identify clusters for reconsideration during complexity reduction (Fig.~\ref{figS:lddecay}).
+
+\section*{Two-stage LD-based complexity reduction}
+
+The procedure has two stages: (i) local clustering with a complete-linkage refinement and (ii) targeted, quality-gated merging. The final partition was represented by one marker per unit and, for units containing at least five markers, an eMLG consensus dosage. The resulting ``LD cluster'' or ``LD-reduced unit'' are not haplotype blocks: markers are grouped by the partition of sampled chromosomes that they report, and clusters may therefore overlap in physical position. The procedure reduces redundancy and constrains residual LD but does not make them strictly independent; the remaining dependence is assessed or controlled where it matters downstream.
+
+\subsection*{Stage 1: local clustering}
+
+For each chromosome, the clustering distance was derived from its fitted LD decay curve at the half-way decay distance \(\rho=0.5\). The threshold was not allowed to vary further within chromosomes, because redundant markers should group more where local LD is high.
+
+Clustering was performed on a sparse LD graph constructed from pairwise LD estimates between markers separated by no more than 400 SNPs, a neighborhood spanning approximately the $\rho=0.99$ decay distance. Markers were first assigned to connected components of the thresholded graph (single linkage clustering). Each component was then refined by complete-linkage hierarchical clustering using the dense pairwise \(r^2\) matrix within the component. The complete-linkage step limits single-linkage chaining, in which two weakly correlated markers could otherwise be joined through an intermediate marker correlated with both. The representative marker of a cluster was the member with the highest median \(r^2\) to the other cluster members.
+
+\subsection*{Stage 2: within chromosome quality-gated merging}
+
+The finite window used to construct the Stage 1 edge list makes the first stage conservative in extended low-recombination regions: marker pairs outside the window are not evaluated and therefore cannot satisfy complete linkage. Stage 2 reconsidered candidate clusters directly from their genotypes, without the Stage 1 window restriction.
+
+A Stage 1 cluster was carried forward as a candidate for Stage 2 merging (flagged) if any member had \(\mathrm{ld}_w>0.025\) or if the cluster contained at least five markers. This screening reduced unnecessary graph comparisons: small clusters composed entirely of low-\(\mathrm{ld}_w\) markers were unlikely to show sufficient LD with neighbouring clusters to merge and were therefore left unchanged. The size criterion nevertheless retained larger Stage 1 clusters for evaluation even when none of their individual markers exceeded the local-LD threshold.
+
+Flagged clusters were considered for merging using a distance-restricted, average-linkage dynamic tree cut. A candidate merge was accepted only while both of the following criteria were satisfied:
+\begin{enumerate}
+  \item consensus fidelity
+  \[
+    \mathrm{score}_{\mathrm{eMLG}}(x)
+    =\mathrm{cor}\{\mathrm{round}(x),x\}^{2} \geq 0.80;
+  \]
+  \item a pairwise correlation floor of \(r^2\geq0.2\) between the sides being
+        merged.
+\end{enumerate}
+
+The fidelity criterion evaluates whether the resulting consensus remains close to a discrete genotype. The correlation floor prevents a small, weakly related set of markers from being absorbed into a large cluster whose existing consensus would otherwise dominate the fidelity score. [Observed residual correlations among neighbouring merged units were of order \(r^2\approx0.3\) after correction for relatedness and were local in genetic distance.]
+
+Candidate merges were restricted to clusters separated by no more than 0.5~cM on the genetic map so that the resulting units primarily represented local linkage. Persistent LD across greater recombinational distances is less readily attributable to limited recombination alone and may instead reflect processes such as population structure, admixture history or selection. Such long-range associations were therefore retained as relationships between distinct units rather than used to collapse them into a single cluster.
+
+\subsection*{Output and validation}
+
+The final partition contained 474,014 LD clusters. Of these, 32,840 contained at least five markers and had an eMLG consensus. Smaller clusters remain valid LD-reduced units and retain their representative marker; the five-marker threshold is therefore a threshold for storing a consensus, not for defining a cluster.
+
+The procedure was evaluated by comparing Stage 1 and combined Stage 1--2 clusterings in extended-LD regions (Fig.~\ref{figS:complex_red}), by examining the distribution of consensus fidelity across \(\mathrm{ld}_w\) thresholds (Fig. \ref{figS:fidelity}), and by quantifying the ability of \(\mathrm{ld}_w\) to identify low-recombination regions. These checks assess whether Stage 2 consolidates fragmentation where long-range LD is present without broadly collapsing weakly correlated markers.
+
+\section*{Extent and direction of ancestry sorting}
+
+\subsection*{Near-fixation and ancestry orientation}
+We restricted sorting analyses to loci with pooled parental MAF ($\ge0.15$) so that near-fixation in hybrid populations reflected sorting of variation plausibly present in the founding parental pool, rather than the inheritance of alleles already rare or nearly fixed in the parental samples. For each marker or cluster consensus (eMLG), dosage was oriented as the \Faq-allele frequency using the sign of the parental allele-frequency difference thus excluding units for which the parents did not differ. The two representations agreed on the parental direction for approximately 99\% of these clusters. This confirms that using representatives for genome-wide architecture models does not materially change the parental direction assigned to clusters, while the consensus remains preferable for aggregate sorting magnitude and cluster-level LD analyses.
+
+Within each hybrid population, a unit was considered near-fixed toward \Faq{} or \Fpo{} when the corresponding parental-ancestry allele frequency was at least \(\phi=0.85\).  
+
+\subsection*{Sorting magnitude and direction}
+
+
+
+Sorting magnitude was the total proportion near-fixed,
+\begin{equation}
+ p_{\mathrm{fixed}}=
+ \frac{n_{\mathrm{aqu}}+n_{\mathrm{pol}}}{n_{\mathrm{obs}}},
+\end{equation}
+
+where, \(n_{\mathrm{aqu}}\) and \(n_{\mathrm{pol}}\) are the numbers of populations near-fixed toward \Faq{} and \Fpo{}, respectively, and \(n_{\mathrm{obs}}\) is the number with data and a defined parental orientation. A unit was classified as sorted when \(p_{\mathrm{fixed}}\geq\tau=0.6\). Among sorted units, directional bias was assessed using an exact two-sided binomial test of \(n_{\mathrm{aqu}}\) successes among \(n_{\mathrm{fixed}}=n_{\mathrm{aqu}}+n_{\mathrm{pol}}\) trials under a null probability of 0.5. A significant imbalance (\(P<0.05\)) resolved the direction toward the parent represented by the larger count. Otherwise, direction was classified as unresolved when \(n_{\mathrm{fixed}}\) was sufficient for an entirely one-sided outcome to be significant, or ambiguous when directional information was insufficient. Direction unresolved includes both genuinely opposing-direction outcomes (bidirectional sorting) and directional effects that could not be resolved with the available number of near-fixed populations.
+
+The influence of \(\phi\) (the per-population convention) and \(\tau\) (the cross-population comparison) on sensitivity of the sorting classification and DI-dependent directional pattern, was evaluated over a grid of \(\tau\in\{0.5,0.6,0.7,0.8\}\) and \(\phi\in\{0.80,0.85,0.90,0.95\}\).
+
+Nouhaud et al.~\citep{nouhaud2022rapid-cfc} evaluated predictable ancestry sorting by asking whether the same ancestry component repeatedly fixed across three hybrid populations and summarising the outcome in fixed 20-kb windows. The present classification retains that biological contrast but extends it to twenty populations, estimates the outcome directly from population allele frequencies, and separates the prevalence of near-fixation from evidence that its parental direction is repeated more consistently than expected under random direction. Applying the statistic first to SNPs and then to LD-reduced units also avoids assigning equal analytical status to physical windows that may contain very different amounts of redundant information.
+
+\section*{Genomic architecture of sorting}
+
+\subsection*{Marker-level genomic summaries}
+Genomic architecture was evaluated primarily in the parental reference samples. These populations describe the diversity and differentiation landscape inherited by the recently formed hybrid populations, whereas diversity within the hybrids is additionally shaped by admixture proportions, local ancestry and the sorting process being tested. Hybrid heterozygosity would therefore not provide an independent measure of the pre-existing genomic background.
+
+Map-based recombination rates were assigned to markers by linear interpolation and expressed in cM/Mb. For each retained marker, let \(p_{\mathrm{aqu}}\) and \(p_{\mathrm{pol}}\) denote the allele frequencies in the \Faq{} and \Fpo{} reference samples, respectively, and let
+\[
+\bar p=\frac{p_{\mathrm{aqu}}+p_{\mathrm{pol}}}{2}.
+\]
+We calculated the mean expected heterozygosity within the parental species as
+\[
+H_S=
+\frac{
+2p_{\mathrm{aqu}}(1-p_{\mathrm{aqu}})
++
+2p_{\mathrm{pol}}(1-p_{\mathrm{pol}})
+}{2},
+\]
+and expected heterozygosity based on the equally weighted pooled parental allele frequency as
+\[
+H_T=2\bar p(1-\bar p).
+\]
+The between-parent allelic-difference summary was calculated as
+\[
+d_{xy}
+=
+p_{\mathrm{aqu}}(1-p_{\mathrm{pol}})
++
+p_{\mathrm{pol}}(1-p_{\mathrm{aqu}}),
+\]
+and relative parental differentiation as
+\[
+F_{\mathrm{ST}}=\frac{H_T-H_S}{H_T},
+\]
+for markers with \(H_T>0\).
+
+Because invariant sites were unavailable, \(H_S\) is a within-parent expected heterozygosity at retained SNPs rather than nucleotide diversity \(\pi\), and \(d_{xy}\) an allele-frequency difference rather than per-base sequence divergence.
+
+
+\subsection*{Association models}
+
+Relationships among DI, recombination rate, parental expected heterozygosity, between-parent allelic difference, relative differentiation, pooled parental MAF, and cluster size were first summarised using rank correlations and recombination deciles (architecture results summary, Fig.~1a). The magnitude of sorting was modelled against recombination rate $p_{\mathrm{fixed}}$ $\sim{}$   standardised log10(recombination + 0.1) + standardised DI. Cluster size was not included in this model because it can be a consequence of both recombination and local marker variability. Among directionally resolved units, sorting direction was analysed by logistic regression with standardised DI, standardised \(\log_{10}(\mathrm{recombination}+0.1)\), standardised pooled parental MAF, and standardised log cluster size as predictors.
+
+\clearpage
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\section*{Supplementary text}
+
+\subsection*{Ancestry sorting is widespread, shifts direction with parental differentiation, and is reduced in low-recombination regions}
+
+The primary analysis used a sorting threshold of \(\tau=0.6\), a near-fixation floor of \(\phi=0.85\), pooled parental minor-allele frequency \(\geq0.15\), the canonical 0.5-cM LD-reduced partition, and the binomial random-direction test. At these settings 138,705 of 661,312 eligible SNPs (21.0\%) were classified as sorted. Among these, 62,504 (45.1\%) were resolved toward \Faq{}, 75,416 (54.4\%) toward \Fpo{}, and 785 (0.6\%) remained direction unresolved. However, the overall numbers of sorted loci was a negative function of both \(\tau\) and near-fixation floors \(\phi\) (Fig.~\ref{figS:sortingsweep}). Across the full grid, the fraction classified as sorted declined from 50.0\% under the least stringent combination to 1.3\% under the most stringent combination. The proportion of unresolved loci grew non-linearly with decreasing \(\tau\) because a moderate directional imbalance is less readily resolved by the binomial test. We thus consider sorted loci without a statistically resolved parental direction as \emph{directionally unresolved} rather than considering it as direct evidence for bidirectional sorting. Across the threshold grid, sorting direction was also strongly contingent on the diagnostic index (DI) (Fig.~\ref{figS:panelBsweep}); the fraction of directionally resolved loci assigned to \Faq{} was 0.14--0.19 in the two lowest DI deciles, crossed 0.5 between deciles five and six, and reached 0.73--0.77 in the four highest deciles. 
+
+% ---- Figure S1: sorting-classification sweep ---------------------------
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{Figures/moduleA_sorting_sweep.png}
+   \caption{\textbf{Sensitivity of the per-SNP sorting classification.} Left: percentage of eligible SNPs directionally resolved toward \Faq{} (solid) and toward \Fpo{} (dashed), as a function of the sorting threshold \(\tau\) and the near-fixation floor \(\phi\). Right: the direction-unresolved class expressed as a percentage of \emph{sorted} loci (unresolved\,/\,sorted), which falls from \(\sim\!13\%\) to \(<\!1\%\) as \(\tau\) increases---direction-unresolved calls are a negligible fraction of the sorting signal except at the most permissive thresholds. The directional classes shown represent genome-wide average; the \Faq{}:\Fpo{} balance itself depends on DI (Fig.~\ref{figS:panelBsweep}).}
+\label{figS:sortingsweep}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{Figures/moduleA_panelB_sweep.png}
+    \caption{\textbf{Robustness of the DI-dependent sorting direction.} Fraction of directionally resolved loci sorting toward \Faq{} across DI deciles for combinations of \(\tau\) and \(\phi\). The dashed line denotes no net directional bias. Although threshold choice changes which loci qualify, the reversal from \Fpo{} at low DI to \Faq{} at high DI is retained.}
+\label{figS:panelBsweep}
+\end{figure}
+
+Of 96,461 clusters carrying at least one SNP-level sorting signal, 8,306 fell below the pooled-parental MAF threshold after aggregation and 54 lacked a consensus estimate in every hybrid population; of the remaining 88,101, 13,191 (15.0\%) no longer met the sorting criterion once correlated markers were collapsed to a joint consensus. These losses were not consensus-quality failures---only nine clusters had fidelity below 0.80 (median 0.856)---but cases where the SNP-level signal was confined to part of the cluster or too weak to recur cluster-wide. Treating correlated SNPs separately therefore overstates the number of independent units showing recurrent ancestry sorting.
+
+\section*{Genomic architecture: results}
+
+DI was nearly orthogonal to recombination and to pooled parental MAF (Spearman \(\rho=-0.03\) and \(-0.02\)); its strongest correlate was low within-parent heterozygosity (\(\rho=-0.46\)), not the between-parent difference (\(\rho=0.13\)). DI and recombination therefore describe separable features of the landscape (Fig.~\ref{figS:architecture}a). The lowest-recombination decile stood apart from the rest of the genome---higher \Fst{} and \dxy{}, lower within-parent heterozygosity, and very large LD clusters (Table~\ref{tabS:architecture_deciles})---the classic linked-selection signature. Yet DI stayed flat across deciles, so reduced diversity in low-recombination regions cannot by itself explain the low within-parent heterozygosity of high-DI loci; part of that link is simply that diagnostic markers approach alternative parental fixation.
+
+\input{Tables/moduleA_architecture_deciles.tex}
+
+Marker- and LD-cluster-level summaries gave different impressions of sorting, most starkly in the lowest-recombination decile (Table~\ref{tabS:sorting_by_level}; Fig.~\ref{figS:architecture}b,c): both the sorted fraction and the fraction fixing toward \Faq{} were inflated at the SNP level there, reflecting repeated observations from a few large LD clusters (the SNP-level peaks of Fig.~\ref{figS:sortinglandscape}). Counting independent units removes this pseudoreplication; elsewhere the two levels agree.
+
+Among LD-reduced units, sorting magnitude increased with recombination after accounting for DI, and DI itself had a smaller positive association (Table~\ref{tab:architecture-models}). Sorting direction was governed by DI—far stronger than the weak, opposite-signed recombination term, with negligible parental-MAF and cluster-size effects (Table~\ref{tab:architecture-models}). This DI polarity reproduces the per-SNP DI gradient (Fig.~\ref{figS:panelBsweep}), whereas sorting direction is flat across recombination at both levels (Table~\ref{tabS:sorting_by_level}); recombination therefore adds only a weak residual pull beyond DI.
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Ancestry sorting across recombination-rate deciles, by
+analytical level.} Per decile (decile~1 = lowest recombination): median
+recombination rate, the fraction of eligible loci sorted, and the fraction of
+directionally resolved loci fixing toward \Faq{}, for LD-reduced units (Unit) and for a random sample of individual markers (SNP). The inflated SNP values in decile~1 reflect spatial pseudoreplication---redundant markers within a few large low-recombination blocks.}
+\label{tabS:sorting_by_level}
+\begin{tabular}{cccccc}
+\toprule
+ & & \multicolumn{2}{c}{Fraction sorted} & \multicolumn{2}{c}{Fraction toward \Faq{}} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Decile & Median recomb. (cM/Mb) & Unit & SNP & Unit & SNP \\
+\midrule
+1 & 0.34 & 0.039 & 0.138 & 0.382 & 0.658 \\
+2 & 8.27 & 0.318 & 0.258 & 0.431 & 0.473 \\
+3 & 13.10 & 0.331 & 0.247 & 0.434 & 0.449 \\
+4 & 15.85 & 0.336 & 0.249 & 0.413 & 0.441 \\
+5 & 18.53 & 0.329 & 0.235 & 0.424 & 0.443 \\
+6 & 21.28 & 0.331 & 0.250 & 0.429 & 0.453 \\
+7 & 24.36 & 0.320 & 0.241 & 0.426 & 0.453 \\
+8 & 28.32 & 0.318 & 0.244 & 0.414 & 0.429 \\
+9 & 34.16 & 0.315 & 0.245 & 0.417 & 0.439 \\
+10 & 46.44 & 0.301 & 0.238 & 0.406 & 0.400 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\input{Tables/moduleA_architecture_models.tex}
+
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{Figures/moduleA_direction_sweep.png}
+    \caption{\textbf{Sorting direction is governed by the diagnostic index across sorting thresholds.} Standardised coefficients (points; \(95\%\) confidence intervals) of the logistic direction model P(\Faq)\,\(\sim\)\,diagnostic index \(+\) recombination \(+\) parental MAF \(+\) \(\log\) block size, fitted to directionally resolved LD-reduced units, as a function of the sorting threshold \(\tau\) (near-fixation floor \(\phi = 0.85\)). Panels, left to right: diagnostic index, recombination, parental minor-allele frequency and \(\log\) block size; the dashed line marks a null coefficient. The diagnostic index dominates at every threshold and strengthens as \(\tau\) increases (from \(+1.39\) at \(\tau = 0.5\) to \(+1.81\) at \(\tau = 0.8\); primary estimate \(+1.57\) at \(\tau=0.6\)), whereas recombination contributes only a small, stable negative coefficient (\(\approx -0.09\); low recombination leans \Faq{} once the diagnostic index, parental MAF and block size are controlled) that remains roughly an order of magnitude weaker than the diagnostic index throughout, losing precision only at the strictest threshold as the directionally resolved set shrinks. Parental MAF and block size stay near zero.}
+\label{figS:directionsweep}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{Figures/moduleA_architecture_fig.png}
+  \caption{\textbf{Genomic architecture of ancestry sorting at the primary
+threshold.} (\textbf{a}) Relative parental differentiation, between-parent
+allelic difference and mean within-parent expected heterozygosity at retained SNPs across recombination deciles. (\textbf{b}) Fraction sorted at the SNP (random sample of $n=2\times10^5$ markers) and LD-reduced-unit levels. (\textbf{c}) Fraction of directionally resolved LD-clusters sorting toward \Faq{}. The discrepancy between SNP- and LD-reduced-unit-level summaries in the lowest-recombination decile demonstrates the effect of LD redundancy.}
+\label{figS:architecture}
+\end{figure}
+
+
+\clearpage
+
+\begin{sidewaysfigure}
+\centering
+\includegraphics[width=1\textwidth]{Figures/moduleA_sorting_manhattan_directional.png}
+    \caption{\textbf{Genomic landscape of directional ancestry sorting across sorting thresholds.} For each 100-kb window along the genome (faceted by chromosome), from top to bottom: the fraction of differentiated SNPs with direction resolved toward \Faq{}, the fraction with direction resolved toward \Fpo{}, the fraction with direction unresolved, the net direction (\Faq{} minus \Fpo{}), the diagnostic-index landscape (grey points are individual markers, line is the 5-window rolling mean, view clipped to \([-100, 0]\), dashed line marks the \(\mathrm{DI} = -25\) diagnostic cut), and the marker-level local-LD statistic \(\mathrm{ld}_w(0.95)\) (grey points, line is the window mean). Sorting rows are coloured by sorting threshold \(\tau\) (near-fixation floor \(\phi = 0.85\); 5-window rolling mean). Windows with fewer than 50 differentiated SNPs are removed as low-density. Sorting peaks frequently overlapped regions of elevated local LD, whereas the diagnostic index primarily predicted the direction of sorting. Both patterns persisted at more stringent sorting thresholds. The direction-unresolved category includes both balanced outcomes and directional effects that could not be resolved at the available number of near-fixed populations.}
+\label{figS:sortinglandscape}
+\end{sidewaysfigure}
+\clearpage
+
+
+
+
+\section*{Supplementary Figures}
+
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{Figures/module0_roc_low_recombination.png}
+  \caption{\textbf{Discrimination of low-recombination regions.} Receiver-operating
+characteristic curves for the local LD support \ldw{} and the window-level decay rate
+\(a\), evaluated against map-based recombination rate at three definitions of low
+recombination (lowest 5\%, 10\%, 25\% of windows). The area under the curve is
+0.91--0.98 for \(a\) and 0.73--0.86 for \ldw{}; the decay rate is the stronger
+window-level indicator, whereas \ldw{} supplies the marker-resolution measure.}
+\label{figS:ROC}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{Figures/module0_ld_tracks_chr26_chr10.png}
+ \caption{\textbf{LD decay and local LD support.} Genome-wide linkage-disequilibrium decay and the per-marker local LD support statistic \ldw{}, computed as the median \(r^2\) between a marker and its neighbours within the \(\rho=0.95\) window. \ldw{} is measured directly from the genotypes at marker resolution and is used to flag clusters for reconsideration during complexity reduction.}
+\label{figS:lddecay}
+\end{figure}
+
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{Figures/module0_Chr26_stage1_vs_combined_high.png}
+  \caption{\textbf{Two-stage complexity reduction.} Stage 1 clustering compared with the combined two-stage result for chromosome 26, restricted to markers with high local LD support. Fragmented Stage-1 clusters within each low-recombination region are consolidated into single coherent clusters, the intended effect of the Stage 2 within 0.5 cM quality-gated merge.}
+  \label{figS:complex_red}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{Figures/module0_fidelity_hist.pdf}
+  \caption{\textbf{Consensus fidelity.} Distribution of consensus round-trip fidelity across five \ldw{} flagging thresholds, separating single-marker clusters (no merge possible) from genuine multi-marker merges. The separation clarifies that mass near the upper limit at permissive thresholds reflects isolated markers rather than merges stopping early.}
+\label{figS:fidelity}
+\end{figure}
+\vspace{-1.5em}
+\clearpage
+\bibliographystyle{plainnat}   % or unsrtnat, abbrvnat, apalike, etc.
+\bibliography{references}      % filename without the .bib extension
+\end{document}

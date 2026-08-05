@@ -102,3 +102,6 @@ data_legacy/*
 
 # local archive of pre-reorg dev figures (kept on disk, not tracked)
 Figures_legacy/
+
+# archived pre-streamline manuscript (kept on disk, not tracked)
+manuscript_legacy/

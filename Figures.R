@@ -441,30 +441,32 @@ make_models_table <- function() {
   dir.create("Tables", showWarnings = FALSE, recursive = TRUE)
   a   <- readRDS("moduleA_sorting/data/moduleA_architecture.rds")
   mag <- coef(summary(a$lm_magnitude)); dr <- coef(summary(a$glm_direction))
-  row <- function(label, est, stat, sy)
-    sprintf("\\quad %s & $%s$ & $%s=%s$ \\\\", label,
-            formatC(est, format = "f", digits = 3), sy, formatC(stat, format = "f", digits = 1))
+  ## SE at 4 dp so the tiny magnitude SEs (~0.0004) do not display as 0.000.
+  row <- function(label, est, se, stat, sy)
+    sprintf("\\quad %s & $%s$ & $%s$ & $%s=%s$ \\\\", label,
+            formatC(est, format = "f", digits = 3), formatC(se, format = "f", digits = 4),
+            sy, formatC(stat, format = "f", digits = 1))
   tex <- c(
-    "\\begin{table}[h]", "\\centering",
-    "\\caption{\\textbf{Architecture regression models of ancestry sorting among",
-    "LD-reduced units.} Standardised coefficients. \\emph{Magnitude}: linear model of",
-    "the sorted fraction $p_{\\mathrm{fixed}}$ on recombination and DI.",
-    "\\emph{Direction}: logistic model of the probability of fixing toward \\Faq{} among",
-    "directionally resolved units, on DI, recombination, parental MAF and log cluster",
-    "size. All predictors standardised over the differentiated-unit set; $t$/$z$ are",
-    "Wald statistics. All terms significant (weakest: parental MAF, $P=0.009$).}",
+    "\\begin{table}[!ht]", "\\centering",
+    "\\caption{\\textbf{Regression models of ancestry sorting among LD-reduced units.}",
+    "Standardised coefficients. \\emph{Magnitude}: linear model of the sorted fraction",
+    "$p_{\\mathrm{fixed}}$ on recombination and DI. \\emph{Direction}: logistic model of",
+    "the probability of fixing toward \\Faq{} among directionally resolved units, on DI,",
+    "recombination, parental MAF and log cluster size. All predictors standardised over",
+    "the differentiated-unit set; the statistic is a Wald $t$ (linear) or $z$ (logistic),",
+    "and all terms are significant (weakest, parental MAF: $P=0.009$).}",
     "\\label{tab:architecture-models}",
-    "\\begin{tabular}{lrr}", "\\toprule",
-    "Predictor & Coefficient & Statistic \\\\", "\\midrule",
-    "\\multicolumn{3}{l}{\\emph{Magnitude} ($p_{\\mathrm{fixed}}$, linear)} \\\\",
-    row("Recombination", mag["zr", "Estimate"],  mag["zr", "t value"],  "t"),
-    row("DI",            mag["zDI", "Estimate"], mag["zDI", "t value"], "t"),
+    "\\begin{tabular}{lrrr}", "\\toprule",
+    "Predictor & Estimate & Std.\\ error & Statistic \\\\", "\\midrule",
+    "\\multicolumn{4}{l}{\\emph{Magnitude} ($p_{\\mathrm{fixed}}$; linear)} \\\\",
+    row("$\\log_{10}$(recombination)", mag["zr", "Estimate"],  mag["zr", "Std. Error"],  mag["zr", "t value"],  "t"),
+    row("Diagnostic index",            mag["zDI", "Estimate"], mag["zDI", "Std. Error"], mag["zDI", "t value"], "t"),
     "\\addlinespace",
-    "\\multicolumn{3}{l}{\\emph{Direction} ($P(\\text{fix}\\rightarrow\\Faq)$, logistic)} \\\\",
-    row("DI",               dr["zDI", "Estimate"],  dr["zDI", "z value"],  "z"),
-    row("Recombination",    dr["zr", "Estimate"],   dr["zr", "z value"],   "z"),
-    row("Parental MAF",     dr["zmaf", "Estimate"], dr["zmaf", "z value"], "z"),
-    row("Log cluster size", dr["zcs", "Estimate"],  dr["zcs", "z value"],  "z"),
+    "\\multicolumn{4}{l}{\\emph{Direction} ($P(\\text{fix}\\rightarrow\\Faq)$; logistic)} \\\\",
+    row("Diagnostic index",            dr["zDI", "Estimate"],  dr["zDI", "Std. Error"],  dr["zDI", "z value"],  "z"),
+    row("$\\log_{10}$(recombination)", dr["zr", "Estimate"],   dr["zr", "Std. Error"],   dr["zr", "z value"],   "z"),
+    row("Pooled parental MAF",         dr["zmaf", "Estimate"], dr["zmaf", "Std. Error"], dr["zmaf", "z value"], "z"),
+    row("$\\log_{10}$(cluster size)",  dr["zcs", "Estimate"],  dr["zcs", "Std. Error"],  dr["zcs", "z value"],  "z"),
     "\\bottomrule", "\\end{tabular}", "\\end{table}")
   writeLines(tex, "Tables/moduleA_architecture_models.tex")
   cat("Saved: Tables/moduleA_architecture_models.tex\n")

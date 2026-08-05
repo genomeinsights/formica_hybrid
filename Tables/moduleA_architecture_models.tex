@@ -1,26 +1,26 @@
-\begin{table}[h]
+\begin{table}[!ht]
 \centering
-\caption{\textbf{Architecture regression models of ancestry sorting among
-LD-reduced units.} Standardised coefficients. \emph{Magnitude}: linear model of
-the sorted fraction $p_{\mathrm{fixed}}$ on recombination and DI.
-\emph{Direction}: logistic model of the probability of fixing toward \Faq{} among
-directionally resolved units, on DI, recombination, parental MAF and log cluster
-size. All predictors standardised over the differentiated-unit set; $t$/$z$ are
-Wald statistics. All terms significant (weakest: parental MAF, $P=0.009$).}
+\caption{\textbf{Regression models of ancestry sorting among LD-reduced units.}
+Standardised coefficients. \emph{Magnitude}: linear model of the sorted fraction
+$p_{\mathrm{fixed}}$ on recombination and DI. \emph{Direction}: logistic model of
+the probability of fixing toward \Faq{} among directionally resolved units, on DI,
+recombination, parental MAF and log cluster size. All predictors standardised over
+the differentiated-unit set; the statistic is a Wald $t$ (linear) or $z$ (logistic),
+and all terms are significant (weakest, parental MAF: $P=0.009$).}
 \label{tab:architecture-models}
-\begin{tabular}{lrr}
+\begin{tabular}{lrrr}
 \toprule
-Predictor & Coefficient & Statistic \\
+Predictor & Estimate & Std.\ error & Statistic \\
 \midrule
-\multicolumn{3}{l}{\emph{Magnitude} ($p_{\mathrm{fixed}}$, linear)} \\
-\quad Recombination & $0.052$ & $t=116.7$ \\
-\quad DI & $0.027$ & $t=61.0$ \\
+\multicolumn{4}{l}{\emph{Magnitude} ($p_{\mathrm{fixed}}$; linear)} \\
+\quad $\log_{10}$(recombination) & $0.052$ & $0.0004$ & $t=116.7$ \\
+\quad Diagnostic index & $0.027$ & $0.0004$ & $t=61.0$ \\
 \addlinespace
-\multicolumn{3}{l}{\emph{Direction} ($P(\text{fix}\rightarrow\Faq)$, logistic)} \\
-\quad DI & $1.567$ & $z=111.7$ \\
-\quad Recombination & $-0.091$ & $z=-6.5$ \\
-\quad Parental MAF & $-0.035$ & $z=-2.6$ \\
-\quad Log cluster size & $0.048$ & $z=4.6$ \\
+\multicolumn{4}{l}{\emph{Direction} ($P(\text{fix}\rightarrow\Faq)$; logistic)} \\
+\quad Diagnostic index & $1.567$ & $0.0140$ & $z=111.7$ \\
+\quad $\log_{10}$(recombination) & $-0.091$ & $0.0139$ & $z=-6.5$ \\
+\quad Pooled parental MAF & $-0.035$ & $0.0134$ & $z=-2.6$ \\
+\quad $\log_{10}$(cluster size) & $0.048$ & $0.0106$ & $z=4.6$ \\
 \bottomrule
 \end{tabular}
 \end{table}
