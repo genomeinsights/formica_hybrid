@@ -1,0 +1,120 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\captionsetup{width=\textwidth}
+
+\definecolor{Accent}{HTML}{315B7D}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+
+\title{\vspace{-3.5em}\textbf{\color{Accent}Admixture-geometry exposure diagnostic}\\[0.2em]
+\large Does near-fixation arise from admixture geometry rather than sorting?}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-3.5em}
+
+\section*{Question}
+Units are retained at pooled parental minor-allele frequency (MAF) $\ge 0.15$, so the two
+parental species need not differ by a fixed allele. In principle a unit could clear the
+near-fixation floor $\phi$ in a hybrid population through \emph{admixture geometry alone}---no
+sorting---if the population's ancestry is skewed and the parental frequencies are lopsided in
+the same direction. Because the reported sorting \emph{direction} depends on the diagnostic
+index (DI), a DI-structured geometric artefact would be a competing explanation for that
+result. This is a diagnostic: no null model, drift correction, or significance test.
+
+\section*{Method}
+For each unit $i$ and hybrid population $k$ the expected \Faq-allele frequency under pure
+admixture is
+\[
+\tilde q_{ik}=h_k\,p^{\mathrm{aqu}}_i+(1-h_k)\,p^{\mathrm{pol}}_i,
+\]
+where $p^{\mathrm{aqu}}_i,p^{\mathrm{pol}}_i$ are the oriented parental frequencies and $h_k$ is
+the genome-wide hybrid index. At $h=0.5$ this reduces to the pooled parental frequency
+$\bar p=(p^{\mathrm{aqu}}+p^{\mathrm{pol}})/2$, which the MAF filter confines to $[0.15,0.85]$;
+geometry therefore cannot clear $\phi=0.85$ at a balanced hybrid index and is strictly excluded
+at $0.90$ and $0.95$. A cell is \emph{exposed} when $\tilde q_{ik}\ge\phi$ (or $\le 1-\phi$).
+Orientation follows the sorting pipeline (higher oriented frequency $=$ \Faq{} allele). No
+pre-computed hybrid index exists in the data, so $h_k$ is derived from the \emph{same} oriented
+frequencies by least-squares regression of hybrid on parental frequencies---making an
+orientation sign error impossible by construction. The retained set is
+$658{,}057$ differentiated units across $20$ hybrid populations; $\phi\in\{0.80,0.85,0.90,0.95\}$.
+
+Across populations $h$ ranges $0.34$ (Aland) to $0.62$ (Heinamaki), most within $0.1$ of $0.5$:
+these are near-balanced hybrids, leaving little room for geometric exposure.
+
+\section*{Result}
+
+The key quantity is the fraction of \emph{observed} near-fixed calls (the actual sorting signal)
+that a cell's geometry would also predict.
+
+\begin{table}[h]
+\centering
+\caption*{\textbf{Fraction of observed near-fixed calls explainable by admixture geometry, by DI
+decile $\times\ \phi$.}}
+\begin{tabular}{ccccc}
+\toprule
+DI decile & $\phi=0.80$ & $\phi=0.85$ & $\phi=0.90$ & $\phi=0.95$ \\
+\midrule
+1 (low)  & 0.147 & 0.021 & 0 & 0 \\
+2        & 0.228 & 0.033 & 0 & 0 \\
+3        & 0.331 & 0.057 & 0 & 0 \\
+4        & 0.338 & 0.061 & 0 & 0 \\
+5        & 0.358 & 0.081 & 0 & 0 \\
+6        & 0.335 & 0.084 & 0 & 0 \\
+7        & 0.300 & 0.075 & 0 & 0 \\
+8        & 0.195 & 0.044 & 0 & 0 \\
+9        & 0.077 & 0.019 & 0 & 0 \\
+10 (high)& 0.016 & 0.004 & 0 & 0 \\
+\midrule
+\textbf{overall} & 0.242 & \textbf{0.051} & \textbf{0} & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At $\phi\ge0.90$ exposure is \textbf{exactly zero in every decile}. At the primary
+$\phi=0.85$ it is $\sim$5\% overall and---decisively---\emph{humped in the middle deciles}
+(5--7, where sorting direction is balanced near $0.5$) and \emph{lowest in exactly the deciles
+that drive the reported reversal}: the two lowest DI deciles (2--3\%) and the four highest,
+falling $7.5\%\!\to\!0.4\%$. Directionally, the high-DI\,$\to$\,\Faq{} calls that anchor the
+reversal are essentially unexposed ($0.7\%$ at decile~9, $0.4\%$ at decile~10; the exposed
+\Faq{} calls peak at $11.7\%$ in the balanced decile~6).
+
+\paragraph{Validation.} All checks pass. Forcing $h=0.5$ gives exactly zero exposed cells for
+$\phi>0.85$ (and only the $\bar p$ boundary at $0.85$), confirming orientation and machinery.
+Exposed cells concentrate in the most ancestry-skewed populations (per-population exposed cells
+vs.\ $|h-0.5|$, Spearman $\rho=0.87$; Aland, the most skewed at $h=0.34$, contributes the most).
+$\tilde q\in[0,1]$ throughout, and the retained set satisfies parental MAF $\ge0.15$.
+
+\paragraph{Discreteness sub-check.} Near-fixation is $\hat q\ge\phi$ on $2n_k$ gametes, and
+populations run $n_k=3$--$20$ diploids, so the effective bar varies: at $n_k=3$ it is $6/6=1.0$,
+at $n_k=4$ it is $7/8=0.875$, falling to $0.85$ for $n_k\ge10$. Despite this, observed near-fixed
+rates are similar across sizes ($0.34$--$0.52$), and small populations ($n_k\le5$) contribute a
+\emph{flat} $31$--$35\%$ of calls across all DI deciles---no DI-structured distortion.
+
+\section*{Conclusion}
+Admixture geometry does not reproduce the DI structure of sorting direction. At the primary
+floor only $\sim$5\% of near-fixed calls are geometry-compatible, concentrated where direction is
+balanced and negligible in the reversal-driving deciles; at $\phi\ge0.90$ geometric exposure is
+zero, so the DI-dependent reversal---which persists at those stricter floors---cannot be a
+geometric artefact. The competing explanation is retired; no re-analysis is warranted.
+
+\vfill
+{\footnotesize\color{gray}
+Diagnostic script: \path{moduleA_sorting/R/moduleA_admixture_exposure.R}\\
+Cached results: \path{moduleA_sorting/data/moduleA_admixture_exposure.rds}\\
+Retained set $658{,}057$ differentiated units $\times$ $20$ hybrid populations.}
+
+\end{document}

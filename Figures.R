@@ -472,6 +472,43 @@ make_models_table <- function() {
   cat("Saved: Tables/moduleA_architecture_models.tex\n")
 }
 
+## ---- [Table S] admixture-geometry exposure by DI decile x phi -----------
+## Reads the exposure diagnostic (moduleA_admixture_exposure.R must have run) and
+## writes the DI-decile x phi table: fraction of observed near-fixed calls whose
+## admixture expectation q_tilde = h*p_aqu + (1-h)*p_pol also clears phi (i.e. could
+## be geometry, not sorting). booktabs. Skipped with a note if the .rds is absent.
+make_exposure_table <- function() {
+  f <- "moduleA_sorting/data/moduleA_admixture_exposure.rds"
+  if (!file.exists(f)) { cat("[skip] exposure table:", f, "not found (run moduleA_admixture_exposure.R)\n"); return(invisible()) }
+  dir.create("Tables", showWarnings = FALSE, recursive = TRUE)
+  d <- as.data.table(readRDS(f)$tab_dec)
+  phis <- sort(unique(d$phi))
+  w  <- dcast(d, dec ~ phi, value.var = "frac_exp")[order(dec)]
+  ov <- d[, .(f = sum(frac_exp * n_call) / sum(n_call)), by = phi][order(phi)]   # call-weighted overall
+  fmt <- function(x) ifelse(x == 0, "0", formatC(x, format = "f", digits = 3))
+  declab <- function(i) ifelse(i == 1L, "1 (low)", ifelse(i == 10L, "10 (high)", as.character(i)))
+  body <- vapply(seq_len(nrow(w)), function(r)
+    sprintf("%s & %s \\\\", declab(w$dec[r]),
+            paste(vapply(as.character(phis), function(p) fmt(w[[p]][r]), character(1)), collapse = " & ")),
+    character(1))
+  overall <- sprintf("\\textbf{overall} & %s \\\\",
+    paste(vapply(ov$f, function(x) if (x == 0) "\\textbf{0}" else sprintf("\\textbf{%.3f}", x), character(1)), collapse = " & "))
+  tex <- c(
+    "\\begin{table}[h]", "\\centering",
+    "\\caption{\\textbf{Admixture-geometry exposure by diagnostic-index decile.} Fraction of",
+    "observed near-fixed calls whose per-population admixture expectation $\\tilde q = h\\,p_{\\mathrm{aqu}}",
+    "+ (1-h)\\,p_{\\mathrm{pol}}$ also clears the near-fixation floor $\\phi$---i.e.\\ that could arise from",
+    "admixture geometry rather than sorting---by DI decile (1 = lowest) and $\\phi$. Exposure is zero at",
+    "$\\phi \\ge 0.90$ and, at $\\phi = 0.85$, concentrated in the intermediate deciles rather than the",
+    "low/high deciles that drive the DI-dependent sorting direction.}",
+    "\\label{tabS:admixture_exposure}",
+    paste0("\\begin{tabular}{c", strrep("c", length(phis)), "}"), "\\toprule",
+    paste0("DI decile & ", paste(sprintf("$\\phi=%.2f$", phis), collapse = " & "), " \\\\"), "\\midrule",
+    body, "\\midrule", overall, "\\bottomrule", "\\end{tabular}", "\\end{table}")
+  writeLines(tex, "Tables/moduleA_admixture_exposure.tex")
+  cat("Saved: Tables/moduleA_admixture_exposure.tex\n")
+}
+
 ## =====================================================================
 ## build all
 ## =====================================================================
@@ -481,5 +518,5 @@ cat("== Module A ==\n")
 fig_sorting_sweep(); fig_panelB_sweep(); fig_direction_sweep()
 fig_architecture(); fig_manhattan_directional()
 cat("== Tables ==\n")
-make_arch_table(); make_sorting_level_table(); make_models_table()
+make_arch_table(); make_sorting_level_table(); make_models_table(); make_exposure_table()
 cat("\nAll figures and tables written.\n")
