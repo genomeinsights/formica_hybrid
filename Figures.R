@@ -155,23 +155,34 @@ fig_fidelity <- function() {
 ## =====================================================================
 
 ## ---- [Fig S1] per-SNP sorting-classification threshold sweep ------------
+## Two directionally-resolved class panels (free_y) + a dedicated panel for the
+## direction-unresolved share of sorted loci (the "any sorted" total is omitted).
 fig_sorting_sweep <- function() {
-  sw <- readRDS("moduleA_sorting/data/moduleA_sortth_fixth_sweep.rds")
-  ## NB: the saved sweep still uses the pre-relabel column "pct_bidirectional";
-  ## it is displayed with the current "direction unresolved" label.
+  sw <- as.data.table(readRDS("moduleA_sorting/data/moduleA_sortth_fixth_sweep.rds"))
+  taus <- sort(unique(sw$sort_th)); pal <- wes_grad(uniqueN(sw$fix_major))
+  ## (left) directionally-resolved classes, free_y, % of differentiated SNPs.
+  ## NB: the saved sweep still uses the pre-relabel column names.
   long <- melt(sw, id.vars = c("sort_th", "fix_major"),
-               measure.vars = c("pct_sorted", "pct_aquilonia", "pct_polyctena", "pct_bidirectional"),
+               measure.vars = c("pct_aquilonia", "pct_polyctena"),
                variable.name = "metric", value.name = "pct")
-  long[, metric := factor(metric,
-    levels = c("pct_sorted", "pct_aquilonia", "pct_polyctena", "pct_bidirectional"),
-    labels = c("'any sorted'", AQU, POL, "'direction unresolved'"))]   # plotmath strings
-  p <- ggplot(long, aes(sort_th, pct, colour = factor(fix_major), group = fix_major)) +
+  long[, metric := factor(metric, levels = c("pct_aquilonia", "pct_polyctena"),
+                          labels = c(AQU, POL))]
+  p_class <- ggplot(long, aes(sort_th, pct, colour = factor(fix_major), group = fix_major)) +
     geom_line() + geom_point(size = 1.1) +
-    facet_wrap(~ metric, nrow = 1, labeller = label_parsed) +
-    scale_x_continuous(breaks = sort(unique(long$sort_th))) +
-    scale_colour_manual(values = wes_grad(uniqueN(long$fix_major)), name = lab_phi) +
-    labs(x = lab_tau, y = lab_pctdiff) +
-    theme_plain(9)
+    facet_wrap(~ metric, nrow = 1, scales = "free_y", labeller = label_parsed) +
+    scale_x_continuous(breaks = taus) +
+    scale_colour_manual(values = pal, name = lab_phi) +
+    labs(x = lab_tau, y = lab_pctdiff) + theme_plain(9)
+  ## (right) direction-unresolved as a fraction of SORTED loci (unresolved / sorted)
+  sw[, prop_unres := bidirectional / sorted]
+  p_prop <- ggplot(sw, aes(sort_th, prop_unres, colour = factor(fix_major), group = fix_major)) +
+    geom_line() + geom_point(size = 1.1) +
+    scale_x_continuous(breaks = taus) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    scale_colour_manual(values = pal, name = lab_phi) +
+    labs(x = lab_tau, y = "direction unresolved\n(% of sorted loci)") + theme_plain(9)
+  p <- (p_class | p_prop) + plot_layout(widths = c(2, 1.15), guides = "collect") &
+    theme(legend.position = "right")
   save_fig(p, "moduleA_sorting_sweep", width = 200, height = 62)
 }
 
