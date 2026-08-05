@@ -160,30 +160,34 @@ fig_fidelity <- function() {
 fig_sorting_sweep <- function() {
   sw <- as.data.table(readRDS("moduleA_sorting/data/moduleA_sortth_fixth_sweep.rds"))
   taus <- sort(unique(sw$sort_th)); pal <- wes_grad(uniqueN(sw$fix_major))
-  ## (left) directionally-resolved classes, free_y, % of differentiated SNPs.
+  ## (left) directionally-resolved classes in ONE panel: phi = colour, direction = linetype.
+  ## The aquilonia/polyctena split here is POOLED over all DI; their balance is DI-dependent
+  ## -- that caveat belongs in the manuscript \caption, not baked into the figure.
   ## NB: the saved sweep still uses the pre-relabel column names.
   long <- melt(sw, id.vars = c("sort_th", "fix_major"),
                measure.vars = c("pct_aquilonia", "pct_polyctena"),
                variable.name = "metric", value.name = "pct")
-  long[, metric := factor(metric, levels = c("pct_aquilonia", "pct_polyctena"),
-                          labels = c(AQU, POL))]
-  p_class <- ggplot(long, aes(sort_th, pct, colour = factor(fix_major), group = fix_major)) +
-    geom_line() + geom_point(size = 1.1) +
-    facet_wrap(~ metric, nrow = 1, scales = "free_y", labeller = label_parsed) +
+  long[, direction := factor(metric, levels = c("pct_aquilonia", "pct_polyctena"),
+                             labels = c(AQU, POL))]
+  p_class <- ggplot(long, aes(sort_th, pct, colour = factor(fix_major),
+                              linetype = direction, group = interaction(fix_major, direction))) +
+    geom_line() + geom_point(size = 1.0) +
     scale_x_continuous(breaks = taus) +
     scale_colour_manual(values = pal, name = lab_phi) +
+    scale_linetype_manual(values = c("solid", "longdash"),
+                          labels = function(l) parse(text = l), name = "sorting direction") +
     labs(x = lab_tau, y = lab_pctdiff) + theme_plain(9)
   ## (right) direction-unresolved as a fraction of SORTED loci (unresolved / sorted)
   sw[, prop_unres := bidirectional / sorted]
   p_prop <- ggplot(sw, aes(sort_th, prop_unres, colour = factor(fix_major), group = fix_major)) +
-    geom_line() + geom_point(size = 1.1) +
+    geom_line() + geom_point(size = 1.0) +
     scale_x_continuous(breaks = taus) +
     scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
     scale_colour_manual(values = pal, name = lab_phi) +
     labs(x = lab_tau, y = "direction unresolved\n(% of sorted loci)") + theme_plain(9)
-  p <- (p_class | p_prop) + plot_layout(widths = c(2, 1.15), guides = "collect") &
+  p <- (p_class | p_prop) + plot_layout(widths = c(1.25, 1), guides = "collect") &
     theme(legend.position = "right")
-  save_fig(p, "moduleA_sorting_sweep", width = 200, height = 62)
+  save_fig(p, "moduleA_sorting_sweep", width = 195, height = 62)
 }
 
 ## ---- [Fig S2] DI-decile sorting direction, threshold sweep --------------
