@@ -25,18 +25,53 @@
 ## signed `uni_score`. `uni_score` is signed sorting ORIENTATION and is kept only
 ## as a supplementary "sorting orientation" statistic.
 
+## ---------------------------------------------------------------------------
+## SORTING-THRESHOLD (tau) SERIES. Only the DIRECTIONAL classification depends on
+## the fixation-fraction threshold tau (Module A's binom rule); the continuous
+## annotations DI, recomb, prop_fixed (magnitude), uni_score (orientation) and the
+## `differentiated` gate are tau-INDEPENDENT (verified: identical across the stamped
+## moduleA_cluster_sorting_tau05/06/08.rds). The annotation table therefore carries
+## ONE directional column per tau (directional_tau05/06/08) plus a `directional`
+## alias == the primary (tau06); `prepare_annotation_ranks(ann, dir_col=...)` selects
+## which one drives the directional-contrast statistics. All tau share the same
+## DI/recomb/magnitude/orientation ranks, so only sort_gap_* / bf_gap_* / *_pdir_diff
+## differ across the series.
+MODULEC_TAU_SERIES  <- c(0.5, 0.6, 0.8)
+MODULEC_TAU_PRIMARY <- 0.6
+tauC_stamp      <- function(tau) sprintf("tau%02d", round(tau * 10))   # 0.6 -> "tau06"
+dir_col_for_tau <- function(tau) paste0("directional_", tauC_stamp(tau))
+
+## ---------------------------------------------------------------------------
+## MINIMUM-CLUSTER-SIZE (min_n_loci) SERIES. Requiring >= min markers per eMLG
+## targets the high-local-LD clusters expected under recent selection. Because the
+## eMLG BayPass runs use a FIXED (LD-pruned) Omega passed via -omegafile, each
+## cluster's BF is computed conditionally on Omega and is INVARIANT to the size
+## threshold; a larger min is therefore a pure ROW-SUBSET of the same per-eMLG BF
+## vectors, re-reduced over the smaller universe (ranks/percentiles recomputed on
+## the subset). The null BF matrix is generated once over the primary (>=5) universe
+## and reduced against every (min, tau) cell -- min=5 is the full universe, min=10 a
+## strict subset (identical consensus genotypes). The genome-wide calibration is thus
+## reported over a min x tau grid without any extra BayPass.
+MODULEC_MIN_SERIES  <- c(5L, 10L)
+MODULEC_MIN_PRIMARY <- 5L
+minC_stamp <- function(m)      sprintf("min%02d", as.integer(m))       # 10 -> "min10"
+cell_key   <- function(m, tau) paste0(minC_stamp(m), "_", tauC_stamp(tau))  # -> "min05_tau06"
+
 ## Precompute the fixed annotation ranks/masks once (constant across covariates).
 ## `ann` must be ordered to match the BF vector row order and carry:
-##   DI, recomb, prop_fixed, uni_score (numeric); directional (0/1); differentiated (logical).
-prepare_annotation_ranks <- function(ann) {
-  need <- c("DI", "recomb", "prop_fixed", "uni_score", "directional", "differentiated")
+##   DI, recomb, prop_fixed, uni_score (numeric); <dir_col> (0/1); differentiated (logical).
+## `dir_col` names the directional column to use (default "directional" == primary tau);
+## pass dir_col_for_tau(tau) to score a specific threshold in the series.
+prepare_annotation_ranks <- function(ann, dir_col = "directional") {
+  need <- c("DI", "recomb", "prop_fixed", "uni_score", dir_col, "differentiated")
   stopifnot(all(need %in% names(ann)))
   mag_ok <- which(!is.na(ann$prop_fixed))       # sorting magnitude complete-case subset
   ori_ok <- which(!is.na(ann$uni_score))        # sorting orientation complete-case subset
   list(
     DI          = ann$DI,
     recomb      = ann$recomb,
-    directional = ann$directional == 1L,
+    directional = ann[[dir_col]] == 1L,
+    dir_col     = dir_col,
     differ      = ann$differentiated == TRUE,
     rDI         = rank(ann$DI,     ties.method = "average"),
     rRec        = rank(ann$recomb, ties.method = "average"),

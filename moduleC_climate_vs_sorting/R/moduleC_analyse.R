@@ -97,6 +97,42 @@ tab <- rbindlist(c(
 ))
 tab[family == "primary", p_adj := p.adjust(p_emp, method = "BH")]   # BH over the 6 primary
 
+## ---- (min_n_loci x tau) grid sensitivity --------------------------------
+## The genome-wide calibration is reported over a grid of two knobs: the minimum
+## eMLG cluster size (min = 5 = full universe; min = 10 = high-local-LD subset,
+## selection candidates) and the fixation-threshold tau (directional partition). The
+## primary report above is the min05_tau06 cell. Here every PRIMARY test (DI,
+## recombination, directional sorting) is recomputed at each cell so the manuscript
+## shows the result is not an artefact of either threshold. FDR stays defined by the
+## 6 primary tests at the primary cell; across the grid we report the empirical P
+## only. min varies the analysis universe (row-subset), so DI/recombination move with
+## min but are invariant to tau; sorting moves with both. Guarded so an older flat
+## null_stats (no by_cell) still analyses.
+grid_rows <- NULL
+if (!is.null(res_in$by_cell)) {
+  bc <- res_in$by_cell
+  GRID_STATS <- c("rho_DI", "rho_rec", "sort_gap_differentiated")
+  parse_cell <- function(k) list(min = as.integer(sub("min(\\d+)_.*", "\\1", k)),
+                                  tau = as.integer(sub(".*_tau(\\d+)", "\\1", k)) / 10)
+  grid_rows <- rbindlist(lapply(names(bc), function(k) {
+    pc <- parse_cell(k); o <- bc[[k]]$observed; nn <- bc[[k]]$null_stats
+    rbindlist(lapply(GRID_STATS, function(s) rbindlist(lapply(c("PC1", "PC2"), function(ax) {
+      tn <- nn[, s]; to <- o[ax, s]
+      data.table(cell = k, min_n_loci = pc$min, tau = pc$tau,
+                 test = if (s %in% names(LAB)) LAB[[s]] else s, stat = s, axis = ax,
+                 observed = to, null_median = median(tn),
+                 null_lo = unname(quantile(tn, 0.025)), null_hi = unname(quantile(tn, 0.975)),
+                 p_emp = emp_p_two_sided(to, tn))
+    }))))
+  }))
+  ## consistency: the primary-cell rows must equal the flat primary aliases used above
+  pcell <- res_in$primary_cell
+  chk <- grid_rows[cell == pcell & stat %in% c("rho_DI", "rho_rec", "sort_gap_differentiated")][order(stat, axis)]
+  ref <- tab[stat %in% c("rho_DI", "rho_rec", "sort_gap_differentiated")][order(stat, axis)]
+  stopifnot("grid primary-cell rows disagree with flat primary alias" =
+              isTRUE(all.equal(chk$observed, ref$observed)))
+}
+
 ## ---- threshold sensitivity table (explicit, safe label mapping) ---------
 th_stats <- grep("^top", colnames(null), value = TRUE)
 th_tab <- rbindlist(lapply(th_stats, function(s)
@@ -116,12 +152,35 @@ stopifnot("unresolved threshold fraction label" = all(!is.na(th_tab$frac)),
 ## ---- results object ----------------------------------------------------
 results <- list(
   primary = tab[family == "primary"], supplementary = tab[family == "supplementary"],
-  threshold = th_tab, observed = obs, null_stats = null,
+  threshold = th_tab, grid_sensitivity = grid_rows, observed = obs, null_stats = null,
   k_check = kc, params = res_in$params, fingerprint = res_in$fingerprint,
   session = res_in$session,
   meta = list(NSIM = NSIM, p_formula = "two-sided vs null median; (1+#{|Tn-med|>=|To-med|})/(NSIM+1)",
-              fdr = "BH across the 6 primary tests", built = as.character(Sys.time())))
+              fdr = "BH across the 6 primary tests",
+              tau_series = res_in$tau_series, tau_primary = res_in$tau_primary,
+              min_series = res_in$min_series, min_primary = res_in$min_primary,
+              primary_cell = res_in$primary_cell, n_eMLG_by_min = res_in$n_eMLG_by_min,
+              built = as.character(Sys.time())))
 saveRDS(results, file.path(BASE, "data", "moduleC_results.rds"))
+
+if (!is.null(grid_rows)) {
+  fwrite(grid_rows[, .(cell, min_n_loci, tau, test, axis, observed = round(observed, 4),
+          null_median = round(null_median, 4), null_lo = round(null_lo, 4),
+          null_hi = round(null_hi, 4), p_emp = signif(p_emp, 3))],
+         file.path(BASE, "data", "moduleC_grid_sensitivity.tsv"), sep = "\t")
+  nby <- res_in$n_eMLG_by_min
+  cat(sprintf("\n=== (min x tau) GRID SENSITIVITY (primary cell %s; eMLGs %s) ===\n",
+              res_in$primary_cell,
+              paste(sprintf("min%d=%d", res_in$min_series, nby), collapse = " ")))
+  cat("-- directional sorting across the grid --\n")
+  print(grid_rows[stat == "sort_gap_differentiated",
+        .(min_n_loci, tau, axis, observed = round(observed, 4),
+          null95 = sprintf("[%.3f, %.3f]", null_lo, null_hi), p_emp = signif(p_emp, 3))][order(min_n_loci, tau, axis)])
+  cat("-- DI / recombination across min (tau-invariant), at primary tau --\n")
+  print(grid_rows[stat %in% c("rho_DI", "rho_rec") & tau == res_in$tau_primary,
+        .(test, min_n_loci, axis, observed = round(observed, 4),
+          null95 = sprintf("[%.3f, %.3f]", null_lo, null_hi), p_emp = signif(p_emp, 3))][order(test, min_n_loci, axis)])
+}
 
 fwrite(tab[family == "primary", .(test, axis, observed = round(observed, 4),
         null_median = round(null_median, 4), null_lo = round(null_lo, 4),
@@ -249,6 +308,36 @@ supp_md <- tab[family == "supplementary"][order(stat, axis)]
 rep_lines <- c(rep_lines,
   supp_md[, sprintf("| %s | %s | %s | %s | [%s, %s] | %s |",
     test, axis, fmt(observed), fmt(null_median), fmt(null_lo), fmt(null_hi), signif(p_emp, 3))])
+
+## ---- (min x tau) grid sensitivity section -------------------------------
+if (!is.null(grid_rows)) {
+  ts_series <- paste(sprintf("%.1f", res_in$tau_series), collapse = ", ")
+  ms_series <- paste(res_in$min_series, collapse = ", ")
+  nby <- res_in$n_eMLG_by_min
+  rep_lines <- c(rep_lines, "",
+    "### Sensitivity to minimum cluster size and fixation threshold",
+    "",
+    sprintf("The calibration is reported over a grid of the minimum eMLG cluster size (min_n_loci in {%s}: min=5 is the full %s-eMLG universe; min=10 restricts to the %s high-local-LD clusters expected to carry recent-selection signal) and the fixation threshold tau in {%s}. Because the eMLG BayPass runs use a FIXED (LD-pruned) Omega, each cluster's BF is invariant to the size threshold, so min=10 is a strict row-subset of the SAME 10,000-null BF matrices, re-reduced over the smaller universe -- no extra BayPass. DI and recombination depend only on min (tau-invariant); directional sorting depends on both. Empirical P only (the FDR family is the six primary tests at the primary cell).",
+            ms_series, format(nby[[1]], big.mark = ","), format(nby[[2]], big.mark = ","), ts_series),
+    "",
+    "**Directional sorting (differentiated-only) across the grid:**",
+    "",
+    "| min_n_loci | tau | axis | observed | null 95% | p_emp |",
+    "|---|---|---|---|---|---|")
+  gsd <- grid_rows[stat == "sort_gap_differentiated"][order(min_n_loci, tau, axis)]
+  rep_lines <- c(rep_lines,
+    gsd[, sprintf("| %d | %.1f | %s | %s | [%s, %s] | %s |",
+      min_n_loci, tau, axis, fmt(observed), fmt(null_lo), fmt(null_hi), signif(p_emp, 3))],
+    "",
+    sprintf("**DI and recombination across min (tau-invariant), at primary tau = %.1f:**", res_in$tau_primary),
+    "",
+    "| test | min_n_loci | axis | observed | null 95% | p_emp |",
+    "|---|---|---|---|---|---|")
+  gdr <- grid_rows[stat %in% c("rho_DI", "rho_rec") & tau == res_in$tau_primary][order(test, min_n_loci, axis)]
+  rep_lines <- c(rep_lines,
+    gdr[, sprintf("| %s | %d | %s | %s | [%s, %s] | %s |",
+      test, min_n_loci, axis, fmt(observed), fmt(null_lo), fmt(null_hi), signif(p_emp, 3))])
+}
 
 ## ---- data-driven interpretation ----------------------------------------
 gp <- function(st, ax) tab[family == "primary" & stat == st & axis == ax]

@@ -5,10 +5,13 @@
 ## config = Aland excluded, 19 pops, fixed LD-pruned Omega), the annotations the
 ## genome-wide climate calibration is tested against:
 ##   * DI          -- per-eMLG (consensus) Diagnostic Index      [moduleA_cluster_sorting.rds]
-##   * directional -- Module A unidirectional-sorting status    [moduleA_cluster_sorting.rds]
+##   * directional_tau05/06/08 -- Module A unidirectional-sorting status at each
+##                    fixation-threshold tau in the sensitivity series; `directional`
+##                    is an alias for the PRIMARY (tau06). Only this column varies
+##                    across tau -- everything below is tau-independent.    [stamped files]
 ##   * prop_fixed  -- continuous sorting MAGNITUDE (degree of fixation) [moduleA_cluster_sorting.rds]
 ##   * uni_score   -- signed sorting ORIENTATION (supplementary)  [moduleA_cluster_sorting.rds]
-##   * sort_class, differentiated                                 [moduleA_cluster_sorting.rds]
+##   * sort_class (primary tau06), differentiated                 [moduleA_cluster_sorting.rds]
 ##   * n_loci      -- cluster size (cross-checked clustering vs cluster_sorting) [clustering]
 ##   * recomb      -- map-based recombination rate (cM/Mb) at the cluster's
 ##                    representative marker (moduleB_architecture convention)
@@ -21,7 +24,7 @@
 ## the sorting/DI object (its row order differs from the association object).
 ##
 ## Reads : moduleB_climate_GEA/data/moduleB_eMLG_association.rds
-##         moduleA_sorting/data/moduleA_cluster_sorting.rds
+##         moduleA_sorting/data/moduleA_cluster_sorting_tau{05,06,08}.rds  (tau series)
 ##         module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds  (groups: representative, n_loci)
 ##         data/Frufa_DTOL_PR.ref_genome.recmap
 ##         aland_excluded_eMLG/eMLG_group_order.txt
@@ -29,16 +32,42 @@
 ## Run from the formica_hybrid repo root.
 
 suppressMessages(library(data.table))
+source("moduleC_climate_vs_sorting/R/moduleC_stat_functions.R")   # MODULEC_TAU_SERIES, tauC_stamp
 
 OUT <- "moduleC_climate_vs_sorting/data/moduleC_annotations.rds"
 dir.create(dirname(OUT), showWarnings = FALSE, recursive = TRUE)
 
+TAUS   <- MODULEC_TAU_SERIES          # c(0.5, 0.6, 0.8)
+TSTAMP <- tauC_stamp(TAUS)            # "tau05" "tau06" "tau08"
+PRIMARY_STAMP <- tauC_stamp(MODULEC_TAU_PRIMARY)   # "tau06"
+
 ## ---- inputs -------------------------------------------------------------
 assoc <- readRDS("moduleB_climate_GEA/data/moduleB_eMLG_association.rds")   # group_id, eBF1, eBF2, ...
-cl    <- readRDS("moduleA_sorting/data/moduleA_cluster_sorting.rds")   # group_id, DI, directional, ... (Module A)
 grp   <- readLines("aland_excluded_eMLG/eMLG_group_order.txt")         # BayPass row order
 groups <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$groups
 he     <- groups[has_eMLG == TRUE, .(group_id, representative, n_loci)]
+
+## ---- Module A sorting, tau series ---------------------------------------
+## Read the stamped cluster-sorting objects; the DIRECTIONAL classification is the
+## only tau-dependent column (verified). Build `cl` = tau-independent columns from
+## the primary object + one directional_<tau> column per threshold, asserting the
+## shared columns are byte-identical across the series (guards against a stale or
+## mismatched stamped file silently entering the join).
+cl_tau <- lapply(TSTAMP, function(ts)
+  readRDS(sprintf("moduleA_sorting/data/moduleA_cluster_sorting_%s.rds", ts)))
+names(cl_tau) <- TSTAMP
+SHARED <- c("group_id", "DI", "prop_fixed", "uni_score", "differentiated", "n_loci")
+for (ts in TSTAMP[-1]) for (col in SHARED)
+  if (!identical(cl_tau[[ts]][[col]], cl_tau[[PRIMARY_STAMP]][[col]]))
+    stop(sprintf("tau-independent column '%s' differs between %s and primary %s", col, ts, PRIMARY_STAMP))
+cl <- copy(cl_tau[[PRIMARY_STAMP]][, c(SHARED, "sort_class"), with = FALSE])
+for (i in seq_along(TSTAMP)) {
+  d <- cl_tau[[TSTAMP[i]]]
+  stopifnot("directional not 0/1 in stamped file" = all(d$directional %in% c(0L, 1L)),
+            "stamped file group_id order differs from primary" = identical(d$group_id, cl$group_id))
+  set(cl, j = paste0("directional_", TSTAMP[i]), value = d$directional)
+}
+set(cl, j = "directional", value = cl[[paste0("directional_", PRIMARY_STAMP)]])   # alias == primary tau
 
 ## cross-check cluster size between the clustering object and cluster_sorting (must agree)
 nl_chk <- he[cl[, .(group_id, n_loci_cl = n_loci)], on = "group_id"]
@@ -78,10 +107,11 @@ for (ch in unique(he$rep_chr)) {
 stopifnot("recomb has NAs" = all(is.finite(he$recomb)))
 
 ## ---- assemble by explicit group_id joins, then order to BayPass rows -----
+DIR_COLS <- paste0("directional_", TSTAMP)                          # directional_tau05/06/08
 ann <- data.table(group_id = grp)                                   # canonical order
 ann <- assoc[, .(group_id, eBF1, eBF2, Chr, Pos, size)][ann, on = "group_id"]
-ann <- cl[, .(group_id, DI, directional, prop_fixed, uni_score, sort_class,
-              differentiated, n_loci)][ann, on = "group_id"]
+ann <- cl[, c("group_id", "DI", "directional", DIR_COLS, "prop_fixed", "uni_score",
+              "sort_class", "differentiated", "n_loci"), with = FALSE][ann, on = "group_id"]
 ann <- he[, .(group_id, recomb)][ann, on = "group_id"]
 setcolorder(ann, "group_id")
 ann <- ann[match(grp, group_id)]                                    # enforce BayPass order
@@ -98,6 +128,9 @@ stopifnot(
   "NA in recomb"                       = all(is.finite(ann$recomb)),
   "NA in directional"                  = all(!is.na(ann$directional)),
   "directional not 0/1"                = all(ann$directional %in% c(0L, 1L)),
+  "NA in a directional_tau column"     = all(vapply(DIR_COLS, function(c) all(!is.na(ann[[c]])), logical(1))),
+  "directional_tau not 0/1"            = all(vapply(DIR_COLS, function(c) all(ann[[c]] %in% c(0L, 1L)), logical(1))),
+  "directional alias != primary tau"   = identical(ann$directional, ann[[paste0("directional_", PRIMARY_STAMP)]]),
   "NA in differentiated"               = all(!is.na(ann$differentiated)),
   "NA in eBF1/eBF2"                    = all(is.finite(ann$eBF1) & is.finite(ann$eBF2)),
   "prop_fixed/uni_score NA sets differ"= identical(pf_na, us_na),
@@ -106,10 +139,13 @@ stopifnot(
 message(sprintf("[ann] prop_fixed (magnitude): %d NA (established), finite range %.2f..%.2f",
                 sum(pf_na), min(ann$prop_fixed, na.rm = TRUE), max(ann$prop_fixed, na.rm = TRUE)))
 
+n_dir_by_tau <- setNames(vapply(DIR_COLS, function(c) sum(ann[[c]] == 1L), integer(1)), TSTAMP)
 attr(ann, "meta") <- list(
   config = "aland_excluded / withOmega / 19 pops / fixed LD-pruned Omega",
   N_eMLG = N,
-  n_directional = sum(ann$directional == 1L),
+  tau_series = TAUS, tau_primary = MODULEC_TAU_PRIMARY, tau_stamp = TSTAMP,
+  n_directional = sum(ann$directional == 1L),           # primary (tau06)
+  n_directional_by_tau = n_dir_by_tau,
   recomb_source = "map-interpolated cM/Mb at representative marker (moduleB_architecture convention)",
   DI_source = "per-eMLG consensus DI (moduleA_cluster_sorting.rds)",
   magnitude_source = "prop_fixed = degree of fixation (moduleA_cluster_sorting.rds); NOT uni_score",
@@ -119,6 +155,8 @@ attr(ann, "meta") <- list(
 )
 saveRDS(ann, OUT)
 
-cat(sprintf("\n[ann] wrote %s\n  N=%d  directional=%d (%.1f%%)  DI %.1f..%.1f  recomb %.2f..%.2f cM/Mb\n",
-            OUT, N, sum(ann$directional == 1L), 100 * mean(ann$directional == 1L),
-            min(ann$DI), max(ann$DI), min(ann$recomb), max(ann$recomb)))
+cat(sprintf("\n[ann] wrote %s\n  N=%d  DI %.1f..%.1f  recomb %.2f..%.2f cM/Mb\n",
+            OUT, N, min(ann$DI), max(ann$DI), min(ann$recomb), max(ann$recomb)))
+cat("  directional by tau: ",
+    paste(sprintf("%s=%d (%.1f%%)", TSTAMP, n_dir_by_tau, 100 * n_dir_by_tau / N), collapse = "  "),
+    sprintf("  [primary %s]\n", PRIMARY_STAMP))
