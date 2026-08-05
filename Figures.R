@@ -249,13 +249,19 @@ fig_architecture <- function() {
     geom_line(linewidth = 0.6) + geom_point(size = 1.6) + scale_x_log10() +
     scale_colour_manual(values = c("LD-reduced unit" = "#315B7D", "SNP" = "#C7CDD2")) +
     labs(x = lab_recomb, y = "fraction sorted") + tt
-  ## (c) direction vs recombination at unit level
-  su <- a$unit_by_recomb[level == "LD-reduced unit"]
-  p_c <- ggplot(su, aes(med_r, frac_aqu_of_unidir)) +
+  ## (c) direction vs recombination: LD-reduced unit vs SNP (both levels, as in panel b).
+  ## The SNP series spikes toward F. aquilonia in the lowest-recombination decile
+  ## (pseudoreplication in a few large blocks); independent units are flat. Legend is
+  ## suppressed here -- panel b's SNP/unit legend applies.
+  cmp_c <- rbind(a$unit_by_recomb, a$snp_by_recomb)
+  cmp_c[, level := factor(level, levels = c("SNP", "LD-reduced unit"))]
+  p_c <- ggplot(cmp_c, aes(med_r, frac_aqu_of_unidir, colour = level)) +
     geom_hline(yintercept = 0.5, linetype = 2, colour = "grey60") +
-    geom_line(linewidth = 0.6, colour = "grey45") + geom_point(size = 1.8, colour = "grey20") +
+    geom_line(linewidth = 0.6) + geom_point(size = 1.6) +
     scale_x_log10() + scale_y_continuous(limits = c(0, 1)) +
-    labs(x = lab_recomb, y = expression("fraction fixing toward " * italic("F. aquilonia"))) + tt
+    scale_colour_manual(values = c("LD-reduced unit" = "#315B7D", "SNP" = "#C7CDD2")) +
+    labs(x = lab_recomb, y = expression("fraction fixing toward " * italic("F. aquilonia"))) +
+    tt + theme(legend.position = "none")
   fig <- p_a + p_b + p_c + plot_annotation(tag_levels = "a")
   save_fig(fig, "moduleA_architecture_fig", width = 180, height = 78, pdf = TRUE)
 }
@@ -368,10 +374,12 @@ make_arch_table <- function() {
     "\\centering",
     "\\caption{\\textbf{Genomic architecture across recombination-rate deciles.}",
     "Per decile of map recombination rate (decile~1 = lowest): median recombination",
-    "rate, mean consensus diagnostic index (DI), parental relative differentiation",
+    "rate, mean marker-level diagnostic index (DI), parental relative differentiation",
     "$F_{\\mathrm{ST}}$, between-parent allelic difference $d_{xy}$, within-parent",
-    "expected heterozygosity $H_E$, and mean LD-cluster size.}",
+    "expected heterozygosity $H_E$, and mean LD-cluster size. Allele-frequency",
+    "summaries are conditional on the retained SNPs.}",
     "\\label{tabS:architecture_deciles}",
+    "\\small",
     "\\begin{tabular}{ccccccc}",
     "\\toprule",
     "Decile & Median recomb. & DI & $F_{\\mathrm{ST}}$ & $d_{xy}$ & Within-parent $H_E$ & Mean cluster \\\\",
