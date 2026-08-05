@@ -231,12 +231,15 @@ fig_architecture <- function() {
   tt <- theme_plain(9) + theme(plot.tag = element_text(face = "bold", size = 11),
                                legend.position = "bottom", legend.title = element_blank(),
                                legend.key.size = unit(3, "mm"))
-  ## (a) standardised Fst / dxy / pi across recombination deciles
-  cha <- melt(a$arch_tab[, .(med_recomb, "F[ST]" = zsc(Fst), "d[xy]" = zsc(dxy), "pi" = zsc(pi_within))],
+  ## (a) standardised Fst / dxy / within-parent H_E across recombination deciles
+  cha <- melt(a$arch_tab[, .(med_recomb, Fst = zsc(Fst), dxy = zsc(dxy), pi_within = zsc(pi_within))],
               id.vars = "med_recomb", variable.name = "metric", value.name = "z")
+  cha[, metric := factor(metric, levels = c("Fst", "dxy", "pi_within"),
+                         labels = c("F[ST]", "d[xy]", "'within-parent'~H[E]"))]
   p_a <- ggplot(cha, aes(med_recomb, z, colour = metric)) +
     geom_line(linewidth = 0.6) + geom_point(size = 1.6) + scale_x_log10() +
-    scale_colour_manual(values = c("F[ST]" = "#D55E00", "d[xy]" = "#009E73", "pi" = "#0072B2"),
+    scale_colour_manual(values = c("F[ST]" = "#D55E00", "d[xy]" = "#009E73",
+                                   "'within-parent'~H[E]" = "#0072B2"),
                         labels = function(l) parse(text = l)) +
     labs(x = lab_recomb, y = "standardised value (z)") + tt
   ## (b) fraction sorted vs recombination: LD-reduced unit vs SNP (stored separately)
@@ -347,6 +350,42 @@ fig_manhattan_directional <- function() {
 }
 
 ## =====================================================================
+## SUPPLEMENTARY TABLES
+## =====================================================================
+
+## ---- [Table S] genomic architecture across recombination deciles --------
+## Compact decile table matching Fig 1a: median recombination, DI, Fst, dxy,
+## within-parent H_E, mean cluster size. Writes a booktabs LaTeX table (needs
+## \usepackage{booktabs}) to Tables/moduleA_architecture_deciles.tex.
+make_arch_table <- function() {
+  dir.create("Tables", showWarnings = FALSE, recursive = TRUE)
+  at <- as.data.table(readRDS("moduleA_sorting/data/moduleA_architecture.rds")$arch_tab)
+  setorder(at, rbin)
+  rows <- at[, sprintf("%d & %.2f & %.1f & %.3f & %.3f & %.3f & %.1f \\\\",
+                       rbin, med_recomb, DI, Fst, dxy, pi_within, cluster_size)]
+  tex <- c(
+    "\\begin{table}[h]",
+    "\\centering",
+    "\\caption{\\textbf{Genomic architecture across recombination-rate deciles.}",
+    "Per decile of map recombination rate (decile~1 = lowest): median recombination",
+    "rate, mean consensus diagnostic index (DI), parental relative differentiation",
+    "$F_{\\mathrm{ST}}$, between-parent allelic difference $d_{xy}$, within-parent",
+    "expected heterozygosity $H_E$, and mean LD-cluster size.}",
+    "\\label{tabS:architecture_deciles}",
+    "\\begin{tabular}{ccccccc}",
+    "\\toprule",
+    "Decile & Median recomb. & DI & $F_{\\mathrm{ST}}$ & $d_{xy}$ & Within-parent $H_E$ & Mean cluster \\\\",
+    "       & (cM/Mb)        &    &                   &          &                     & size \\\\",
+    "\\midrule",
+    rows,
+    "\\bottomrule",
+    "\\end{tabular}",
+    "\\end{table}")
+  writeLines(tex, "Tables/moduleA_architecture_deciles.tex")
+  cat("Saved: Tables/moduleA_architecture_deciles.tex\n")
+}
+
+## =====================================================================
 ## build all
 ## =====================================================================
 cat("== Module 0 ==\n")
@@ -354,4 +393,6 @@ fig_roc(); fig_ld_tracks(); fig_fidelity()
 cat("== Module A ==\n")
 fig_sorting_sweep(); fig_panelB_sweep(); fig_direction_sweep()
 fig_architecture(); fig_manhattan_directional()
-cat("\nAll _plain figures written.\n")
+cat("== Tables ==\n")
+make_arch_table()
+cat("\nAll figures and tables written.\n")
