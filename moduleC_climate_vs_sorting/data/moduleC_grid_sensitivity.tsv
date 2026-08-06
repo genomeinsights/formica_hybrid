@@ -1,0 +1,37 @@
+cell	min_n_loci	tau	test	axis	observed	null_median	null_lo	null_hi	p_emp
+min05_tau05	5	0.5	DI (Spearman rho)	PC1	0.0173	-0.0225	-0.0935	0.0473	0.302
+min05_tau05	5	0.5	DI (Spearman rho)	PC2	-0.1245	-0.0225	-0.0935	0.0473	0.001
+min05_tau05	5	0.5	recombination (Spearman rho)	PC1	0.0012	0.0026	-0.0189	0.0232	0.896
+min05_tau05	5	0.5	recombination (Spearman rho)	PC2	-0.006	0.0026	-0.0189	0.0232	0.449
+min05_tau05	5	0.5	sorting, differentiated only (BF percentile gap)	PC1	0.0556	0.0335	0.0064	0.0571	0.095
+min05_tau05	5	0.5	sorting, differentiated only (BF percentile gap)	PC2	0.0232	0.0335	0.0064	0.0571	0.457
+min10_tau05	10	0.5	DI (Spearman rho)	PC1	-0.0067	-0.0369	-0.1006	0.0238	0.371
+min10_tau05	10	0.5	DI (Spearman rho)	PC2	-0.138	-0.0369	-0.1006	0.0238	3e-04
+min10_tau05	10	0.5	recombination (Spearman rho)	PC1	-0.0057	-0.0029	-0.0277	0.0215	0.831
+min10_tau05	10	0.5	recombination (Spearman rho)	PC2	-0.004	-0.0029	-0.0277	0.0215	0.933
+min10_tau05	10	0.5	sorting, differentiated only (BF percentile gap)	PC1	0.0691	0.0415	0.0084	0.0693	0.084
+min10_tau05	10	0.5	sorting, differentiated only (BF percentile gap)	PC2	0.0359	0.0415	0.0084	0.0693	0.749
+min05_tau06	5	0.6	DI (Spearman rho)	PC1	0.0173	-0.0225	-0.0935	0.0473	0.302
+min05_tau06	5	0.6	DI (Spearman rho)	PC2	-0.1245	-0.0225	-0.0935	0.0473	0.001
+min05_tau06	5	0.6	recombination (Spearman rho)	PC1	0.0012	0.0026	-0.0189	0.0232	0.896
+min05_tau06	5	0.6	recombination (Spearman rho)	PC2	-0.006	0.0026	-0.0189	0.0232	0.449
+min05_tau06	5	0.6	sorting, differentiated only (BF percentile gap)	PC1	0.0598	0.04	0.0065	0.0703	0.241
+min05_tau06	5	0.6	sorting, differentiated only (BF percentile gap)	PC2	0.0231	0.04	0.0065	0.0703	0.329
+min10_tau06	10	0.6	DI (Spearman rho)	PC1	-0.0067	-0.0369	-0.1006	0.0238	0.371
+min10_tau06	10	0.6	DI (Spearman rho)	PC2	-0.138	-0.0369	-0.1006	0.0238	3e-04
+min10_tau06	10	0.6	recombination (Spearman rho)	PC1	-0.0057	-0.0029	-0.0277	0.0215	0.831
+min10_tau06	10	0.6	recombination (Spearman rho)	PC2	-0.004	-0.0029	-0.0277	0.0215	0.933
+min10_tau06	10	0.6	sorting, differentiated only (BF percentile gap)	PC1	0.0726	0.0497	0.0147	0.0789	0.172
+min10_tau06	10	0.6	sorting, differentiated only (BF percentile gap)	PC2	0.0427	0.0497	0.0147	0.0789	0.691
+min05_tau08	5	0.8	DI (Spearman rho)	PC1	0.0173	-0.0225	-0.0935	0.0473	0.302
+min05_tau08	5	0.8	DI (Spearman rho)	PC2	-0.1245	-0.0225	-0.0935	0.0473	0.001
+min05_tau08	5	0.8	recombination (Spearman rho)	PC1	0.0012	0.0026	-0.0189	0.0232	0.896
+min05_tau08	5	0.8	recombination (Spearman rho)	PC2	-0.006	0.0026	-0.0189	0.0232	0.449
+min05_tau08	5	0.8	sorting, differentiated only (BF percentile gap)	PC1	0.0524	0.0659	0.0361	0.0954	0.378
+min05_tau08	5	0.8	sorting, differentiated only (BF percentile gap)	PC2	0.0462	0.0659	0.0361	0.0954	0.198
+min10_tau08	10	0.8	DI (Spearman rho)	PC1	-0.0067	-0.0369	-0.1006	0.0238	0.371
+min10_tau08	10	0.8	DI (Spearman rho)	PC2	-0.138	-0.0369	-0.1006	0.0238	3e-04
+min10_tau08	10	0.8	recombination (Spearman rho)	PC1	-0.0057	-0.0029	-0.0277	0.0215	0.831
+min10_tau08	10	0.8	recombination (Spearman rho)	PC2	-0.004	-0.0029	-0.0277	0.0215	0.933
+min10_tau08	10	0.8	sorting, differentiated only (BF percentile gap)	PC1	0.0415	0.0733	0.0296	0.1194	0.168
+min10_tau08	10	0.8	sorting, differentiated only (BF percentile gap)	PC2	0.049	0.0733	0.0296	0.1194	0.293
