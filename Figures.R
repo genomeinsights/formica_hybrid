@@ -713,6 +713,77 @@ fig_moduleB_manhattans <- function() {
 }
 
 ## =====================================================================
+## MODULE C — climate-association strength vs the Omega-structured null
+## =====================================================================
+## Genome-wide test of whether the STRENGTH of climate association (BayPass BF
+## on PC1/PC2) is organised by ancestry sorting, DI, or recombination beyond
+## what population structure alone produces. Both figures read the single saved
+## results object; observed climate axes are drawn over the 10,000-covariate
+## Omega-structured null. Titles/subtitles are dropped (LaTeX caption supplies
+## the "shaded = null 95% interval; dashed = null median" note).
+MC_RES   <- "moduleC_climate_vs_sorting/data/moduleC_results.rds"
+mC_pcpal <- c(PC1 = "#0072B2", PC2 = "#D55E00")   # observed climate axes
+## primary genome-wide statistics, with underscore-free plain labels
+mC_LAB <- c(rho_DI                  = "DI (Spearman correlation)",
+            rho_rec                 = "recombination (Spearman correlation)",
+            sort_gap_differentiated = "directional sorting (BF percentile gap)",
+            rho_sort_magnitude      = "sorting magnitude (Spearman correlation)")
+
+## ---- [Fig] structured-null calibration of the primary genome-wide stats --
+fig_moduleC_calibration <- function() {
+  r <- readRDS(MC_RES); obs <- r$observed; null <- r$null_stats
+  fig_stats <- names(mC_LAB)
+  long <- rbindlist(lapply(fig_stats, function(s)
+    data.table(label = mC_LAB[[s]], value = null[, s])))
+  long[, label := factor(label, levels = mC_LAB[fig_stats])]
+  mk <- rbindlist(lapply(fig_stats, function(s) data.table(
+    label = mC_LAB[[s]], median = median(null[, s]),
+    lo = quantile(null[, s], 0.025), hi = quantile(null[, s], 0.975),
+    PC1 = obs["PC1", s], PC2 = obs["PC2", s])))
+  mk[, label := factor(label, levels = mC_LAB[fig_stats])]
+  p <- ggplot(long, aes(value)) +
+    geom_histogram(bins = 60, fill = "grey80", colour = NA) +
+    geom_rect(data = mk, inherit.aes = FALSE,
+              aes(xmin = lo, xmax = hi, ymin = -Inf, ymax = Inf), fill = "#999999", alpha = 0.18) +
+    geom_vline(data = mk, aes(xintercept = median), linetype = 2, colour = "grey40") +
+    geom_vline(data = mk, aes(xintercept = PC1, colour = "PC1"), linewidth = 0.7) +
+    geom_vline(data = mk, aes(xintercept = PC2, colour = "PC2"), linewidth = 0.7) +
+    facet_wrap(~ label, scales = "free", ncol = 2) +
+    scale_colour_manual(values = mC_pcpal, name = NULL) +
+    labs(x = "genome-wide statistic", y = "count (of 10,000 null covariates)") +
+    theme_plain(9) + theme(legend.position = "bottom")
+  save_fig(p, "moduleC_null_calibration", width = 175, height = 140, pdf = TRUE)
+}
+
+## ---- [Fig S] rank-threshold sensitivity (top 0.1% / 0.5% / 1%) -----------
+fig_moduleC_threshold_sensitivity <- function() {
+  r <- readRDS(MC_RES); null <- r$null_stats; th <- as.data.table(r$threshold)
+  lev  <- c("top 0.1%", "top 0.5%", "top 1%")
+  mlev <- c("median DI", "median recomb", "prop. differentiated", "prop. directional | diff.")
+  setfac <- function(d) { d[, frac := factor(frac, levels = lev)]
+                          d[, metric := factor(metric, levels = mlev)]; d }
+  th_meta <- unique(th[, .(stat, frac, metric)])
+  thl <- rbindlist(lapply(th_meta$stat, function(s) data.table(stat = s, value = null[, s])))
+  thl <- setfac(th_meta[thl, on = "stat"])
+  th_stat_meta <- unique(th[, .(stat, frac, metric, median = null_median, lo = null_lo, hi = null_hi)])
+  th_obs <- dcast(th, stat ~ axis, value.var = "observed")
+  thm <- setfac(th_obs[th_stat_meta, on = "stat"])
+  p <- ggplot(thl, aes(value)) +
+    geom_histogram(bins = 45, fill = "grey80", colour = NA) +
+    geom_rect(data = thm, inherit.aes = FALSE,
+              aes(xmin = lo, xmax = hi, ymin = -Inf, ymax = Inf), fill = "#999999", alpha = 0.18) +
+    geom_vline(data = thm, aes(xintercept = median), linetype = 2, colour = "grey40") +
+    geom_vline(data = thm, aes(xintercept = PC1, colour = "PC1"), linewidth = 0.6) +
+    geom_vline(data = thm, aes(xintercept = PC2, colour = "PC2"), linewidth = 0.6) +
+    facet_wrap(vars(metric, frac), scales = "free", ncol = 3,
+               labeller = label_wrap_gen(multi_line = FALSE)) +
+    scale_colour_manual(values = mC_pcpal, name = NULL) +
+    labs(x = "value within the top-ranked fraction of eMLGs", y = "count (null covariates)") +
+    theme_plain(8) + theme(legend.position = "bottom")
+  save_fig(p, "moduleC_threshold_sensitivity", width = 185, height = 165, pdf = TRUE)
+}
+
+## =====================================================================
 ## build all
 ## =====================================================================
 cat("== Module 0 ==\n")
@@ -724,6 +795,8 @@ cat("== Module B ==\n")
 fig_moduleB_ancestry(); fig_moduleB_manhattans()
 ## individual manhattans (fig_moduleB_eMLG_manhattan / _fdr_snp_manhattan /
 ## _snp_manhattan_clustered) remain defined above; call them if you want them split.
+cat("== Module C ==\n")
+fig_moduleC_calibration(); fig_moduleC_threshold_sensitivity()
 cat("== Tables ==\n")
 make_arch_table(); make_sorting_level_table(); make_models_table(); make_exposure_table()
 cat("\nAll figures and tables written.\n")
