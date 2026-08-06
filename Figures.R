@@ -510,6 +510,209 @@ make_exposure_table <- function() {
 }
 
 ## =====================================================================
+## MODULE B — climate-GEA Manhattans + ancestry confound
+## =====================================================================
+## Title-free reproductions of the Module B figures (counts that were in the titles
+## belong in the LaTeX caption). The SNP-level Manhattans read a slim per-SNP BF
+## cache built ONCE from the 141 MB BayPass .out files.
+MB_D       <- "moduleB_climate_GEA"
+MB_ASSOC   <- file.path(MB_D, "data/moduleB_eMLG_association.rds")
+MB_BFCACHE <- file.path(MB_D, "data/moduleB_snp_bf.rds")
+MB_CLUST   <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
+MB_SIG <- 15; MB_EMLG <- 15; MB_MIN5 <- 5L
+mB_clpal <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33",
+              "#A65628","#F781BF","#1B9E77","#D95F02","#7570B3","#66A61E")
+mB_theme <- theme_bw(base_size = 9) +
+  theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+
+## slim per-SNP BF cache (marker/Chr/Pos/BF1/BF2), built once from raw BayPass .out
+mB_snp_bf <- function() {
+  if (file.exists(MB_BFCACHE)) return(as.data.table(readRDS(MB_BFCACHE)))
+  cat("[build] slim SNP-BF cache from raw BayPass .out (one-time, ~300 MB read)...\n")
+  ## map from hybrids_and_parents (hybrids_only_maf005.Rdata is corrupt); same canonical map_hyb_005.
+  e <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e)
+  map <- as.data.table(e$map_hyb_005)[, .(marker, Chr, Pos)]; rm(e); invisible(gc())
+  rd <- function(pc) { r <- fread(sprintf("aland_excluded/%s_DIEM_withOmega_summary_betai_reg.out", pc))
+    stopifnot(nrow(r) == nrow(map), identical(r$MRK, seq_len(nrow(r)))); r$`BF(dB)` }
+  map[, `:=`(BF1 = rd("PC1"), BF2 = rd("PC2"))]
+  saveRDS(map, MB_BFCACHE); cat("[cache] wrote", MB_BFCACHE, "\n"); map[]
+}
+
+## shared genome x-coordinate transform (from all markers, so every B figure aligns)
+mB_coords <- function(snp) {
+  cl <- snp[, .(len = max(Pos)), by = Chr]
+  cl[, chr_num := suppressWarnings(as.integer(gsub("[^0-9]", "", Chr)))]; setorder(cl, chr_num)
+  sp <- 0.01 * sum(cl$len); cl[, start := c(0, head(cumsum(len + sp), -1))]
+  sx <- cl[, .(Chr, start)][snp, on = "Chr"][, x := Pos + start]
+  list(clen = cl, xkey = setNames(sx$x, sx$marker),
+       shade = cl[chr_num %% 2 == 0, .(xmin = start, xmax = start + len)],
+       cmid  = cl[, .(mid = start + len / 2, lab = gsub("^Chr", "", Chr))])
+}
+mB_xscale <- function(co) scale_x_continuous(breaks = co$cmid$mid, labels = co$cmid$lab, expand = c(0.01, 0.01))
+
+## ---- [Fig] eMLG-level climate Manhattan (categories + FDR floor-survivor triangles)
+fig_moduleB_eMLG_manhattan <- function() {
+  dt <- as.data.table(readRDS(MB_ASSOC)); co <- mB_coords(mB_snp_bf())
+  dt <- co$clen[, .(Chr, start)][dt, on = "Chr"][, x := Pos + start]
+  lev <- c("ns", "1-4 sig SNPs", "eMLG-only (0 sig SNPs)", ">=5 sig SNPs (candidate)")
+  pal <- c("ns"="grey78", "eMLG-only (0 sig SNPs)"="#D81B60", "1-4 sig SNPs"="#1E88E5", ">=5 sig SNPs (candidate)"="#000000")
+  panel <- function(bf, ct, fl, lab) {
+    d <- dt[, .(x, BF = get(bf), cat = factor(get(ct), levels = lev), fl = get(fl))]; setorder(d, cat)
+    ggplot() +
+      geom_rect(data = co$shade, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf), fill = "grey93") +
+      geom_point(data = d[cat == "ns"], aes(x, BF), colour = "grey78", size = 0.4) +
+      geom_point(data = d[cat != "ns" & !fl], aes(x, BF, colour = cat), size = 1.5) +
+      geom_point(data = d[fl == TRUE], aes(x, BF, colour = cat), shape = 17, size = 3.2, show.legend = FALSE) +
+      geom_point(data = d[fl == TRUE], aes(x, BF), shape = 2, size = 3.2, colour = "grey15", stroke = 0.5, show.legend = FALSE) +
+      geom_hline(yintercept = MB_EMLG, linetype = 2, colour = "red", linewidth = 0.4) +
+      scale_colour_manual(values = pal, name = NULL, drop = FALSE) + mB_xscale(co) +
+      labs(x = if (lab == "PC2") "chromosome" else NULL, y = sprintf("eMLG BF (dB) - %s", lab)) +
+      mB_theme + theme(legend.position = "top")
+  }
+  p <- panel("eBF1","cat1","floor1","PC1") / panel("eBF2","cat2","floor2","PC2") +
+    plot_layout(guides = "collect") & theme(legend.position = "top")
+  save_fig(p, "moduleB_eMLG_manhattan", width = 380, height = 175, dpi = 150)
+}
+
+## ---- [Fig] all-SNP Manhattan; member SNPs of FDR floor-survivor clusters coloured
+fig_moduleB_fdr_snp_manhattan <- function() {
+  snp <- mB_snp_bf(); co <- mB_coords(snp)
+  dt  <- as.data.table(readRDS(MB_ASSOC))
+  m2g <- readRDS(MB_CLUST)$groups[has_eMLG == TRUE, .(marker = unlist(members)), by = group_id]
+  fpal <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#A65628","#F781BF","#1B9E77","#D95F02","#7570B3")
+  panel <- function(bfcol, fdr_groups, lab) {
+    bfk <- setNames(snp[[bfcol]], snp$marker)
+    bg  <- data.table(x = co$xkey[snp$marker], BF = snp[[bfcol]])
+    fg  <- m2g[group_id %in% fdr_groups, .(marker, group_id)][
+             , `:=`(x = co$xkey[marker], BF = bfk[marker], grp = factor(group_id, levels = fdr_groups))]
+    ggplot() +
+      geom_rect(data = co$shade, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf), fill = "grey93") +
+      geom_point(data = bg, aes(x, BF), colour = "grey80", size = 0.25, alpha = 0.5) +
+      geom_point(data = fg, aes(x, BF, colour = grp), size = 1.1) +
+      geom_hline(yintercept = MB_SIG, linetype = 2, colour = "red", linewidth = 0.4) +
+      scale_colour_manual(values = setNames(fpal[seq_along(fdr_groups)], fdr_groups), name = "FDR eMLG", drop = FALSE) +
+      mB_xscale(co) +
+      labs(x = if (lab == "PC2") "chromosome" else NULL, y = sprintf("SNP BF (dB) - %s", lab)) +
+      mB_theme + theme(legend.position = "right")
+  }
+  p <- panel("BF1", dt[floor1 == TRUE, group_id], "PC1") /
+       panel("BF2", dt[floor2 == TRUE, group_id], "PC2")
+  save_fig(p, "moduleB_fdr_snp_manhattan", width = 380, height = 175, dpi = 150)
+}
+
+## ---- [Fig] eMLG-filtered SNP Manhattan; clusters with >=5 loci BF>=15 coloured (PC1 & PC2)
+fig_moduleB_snp_manhattan_clustered <- function() {
+  snp <- mB_snp_bf(); co <- mB_coords(snp)
+  he  <- readRDS(MB_CLUST)$groups[has_eMLG == TRUE]
+  m2g <- he[, .(marker = unlist(members)), by = group_id]
+  gp  <- snp[he[, .(group_id, marker = representative)], on = "marker"][, .(group_id, Chr, Pos)]
+  gp[, chr_num := suppressWarnings(as.integer(gsub("[^0-9]", "", Chr)))]; setorder(gp, chr_num, Pos)
+  gp[, col := mB_clpal[(seq_len(.N) - 1) %% length(mB_clpal) + 1]]           # global, position-ordered
+  m2g <- gp[, .(group_id, col)][m2g, on = "group_id"]
+  emlg <- snp[, .(marker, x = co$xkey[marker], BF1, BF2)][m2g, on = "marker"]  # members only
+  one <- function(bfcol, lab) {
+    d   <- emlg[, .(group_id, col, x, BF = get(bfcol))]
+    sig <- d[, .(n = sum(BF >= MB_SIG, na.rm = TRUE)), by = group_id][n >= MB_MIN5, group_id]
+    bg  <- d[!group_id %in% sig]; fg <- d[group_id %in% sig][order(x)]
+    p <- ggplot() +
+      geom_rect(data = co$shade, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf), fill = "grey85", alpha = 0.5) +
+      geom_point(data = bg, aes(x, BF), size = 0.4, colour = "grey60", alpha = 0.5) +
+      geom_point(data = fg, aes(x, BF, colour = col), size = 0.6, alpha = 0.9) + scale_colour_identity() +
+      geom_hline(yintercept = MB_SIG, linetype = 2, colour = "red", linewidth = 0.4) +
+      mB_xscale(co) + labs(x = "chromosome", y = "BF (dB)") + mB_theme
+    save_fig(p, sprintf("moduleB_snp_manhattan_%s", lab), width = 380, height = 110, dpi = 150)
+  }
+  one("BF1", "PC1"); one("BF2", "PC2")
+}
+
+## ---- [Fig] climate PC vs genome-wide aquilonia ancestry (ancestry confound)
+fig_moduleB_ancestry <- function() {
+  m <- as.data.table(readRDS(file.path(MB_D, "data/moduleB_ancestry_confound.rds")))
+  long <- melt(m, id.vars = c("Population", "ancestry"), measure.vars = c("PC1", "PC2"),
+               variable.name = "PC", value.name = "score")
+  long[, extreme := Population %in% c("Aland", "Sielva")]
+  p <- ggplot(long, aes(ancestry, score)) +
+    geom_smooth(method = "lm", se = FALSE, colour = "grey70", linewidth = 0.5) +
+    geom_point(aes(colour = extreme), size = 1.8) +
+    geom_text(data = long[extreme == TRUE], aes(label = Population), vjust = -0.8, size = 2.6) +
+    scale_colour_manual(values = c("FALSE" = "grey40", "TRUE" = "#D55E00"), guide = "none") +
+    facet_wrap(~ PC) +
+    labs(x = expression("genome-wide " * italic("F. aquilonia") * " ancestry (per population)"),
+         y = "climate PC score") + theme_plain(9)
+  save_fig(p, "moduleB_ancestry_confound", width = 180, height = 80)
+}
+
+## ---- [Fig] all six Manhattan panels stacked (patchwork) -----------------
+## a,b eMLG-filtered SNP, clusters of >=5 loci BF>=15 coloured; c,d all-SNP with
+## FDR floor-survivor cluster members coloured; e,f eMLG-level (categories + FDR
+## floor-survivor triangles). Shared x; eMLG colour + shape legend collected at bottom.
+fig_moduleB_manhattans <- function() {
+  snp <- mB_snp_bf(); co <- mB_coords(snp)
+  dt  <- as.data.table(readRDS(MB_ASSOC))
+  he  <- readRDS(MB_CLUST)$groups[has_eMLG == TRUE]
+  m2g <- he[, .(marker = unlist(members)), by = group_id]
+  dtx <- co$clen[, .(Chr, start)][dt, on = "Chr"][, x := Pos + start]
+  strip_x <- theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+  shade_l <- function(fill) geom_rect(data = co$shade, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf), fill = fill)
+  hthr    <- geom_hline(yintercept = MB_SIG, linetype = 2, colour = "red", linewidth = 0.35)
+
+  ## a,b -- eMLG-level
+  lev <- c("ns", "1-4 sig SNPs", "eMLG-only (0 sig SNPs)", ">=5 sig SNPs (candidate)")
+  epal <- c("ns"="grey60", "eMLG-only (0 sig SNPs)"="#D81B60", "1-4 sig SNPs"="#1E88E5", ">=5 sig SNPs (candidate)"="#000000")
+  emlg_p <- function(bf, ct, fl, lab, bottom = FALSE, showleg = TRUE) {
+    d <- dtx[, .(x, BF = get(bf), cat = factor(get(ct), levels = lev), fl = get(fl))]; setorder(d, cat)
+    p <- ggplot() + shade_l("grey85") +
+      geom_point(data = d[cat == "ns"], aes(x, BF), colour = "grey60", size = 0.3) +
+      geom_point(data = d[cat != "ns" & !fl], aes(x, BF, colour = cat), size = 1.1) +
+      geom_point(data = d[fl == TRUE], aes(x, BF, colour = cat, shape = "FDR floor-survivor"), size = 2.4) +
+      geom_point(data = d[fl == TRUE], aes(x, BF), shape = 2, size = 2.4, colour = "grey15", stroke = 0.4) +
+      hthr + scale_colour_manual(values = epal, name = NULL, drop = FALSE) +
+      scale_shape_manual(values = c("FDR floor-survivor" = 17), name = NULL) +
+      (if (showleg) guides(colour = guide_legend(override.aes = list(shape = 16)),
+                           shape  = guide_legend(override.aes = list(colour = "grey20")))
+       else guides(colour = "none", shape = "none")) +
+      mB_xscale(co) + labs(x = "chromosome", y = sprintf("eMLG BF (dB) - %s", lab)) + mB_theme
+    if (!bottom) p + strip_x else p
+  }
+  ## c,d -- all-SNP, FDR floor-survivor cluster members coloured
+  fpal <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#A65628","#F781BF","#1B9E77","#D95F02","#7570B3")
+  fdr_p <- function(bfcol, fg_groups, lab, bottom = FALSE) {
+    bfk <- setNames(snp[[bfcol]], snp$marker)
+    bg  <- data.table(x = co$xkey[snp$marker], BF = snp[[bfcol]])
+    fg  <- m2g[group_id %in% fg_groups, .(marker, group_id)][
+             , `:=`(x = co$xkey[marker], BF = bfk[marker], grp = factor(group_id, levels = fg_groups))]
+    p <- ggplot() + shade_l("grey85") +
+      geom_point(data = bg, aes(x, BF), colour = "grey60", size = 0.2, alpha = 0.5) +
+      geom_point(data = fg, aes(x, BF, colour = grp), size = 0.9) +
+      hthr + scale_colour_manual(values = setNames(fpal[seq_along(fg_groups)], fg_groups), guide = "none") +
+      mB_xscale(co) + labs(x = "chromosome", y = sprintf("SNP BF (dB) - %s", lab)) + mB_theme
+    if (!bottom) p + strip_x else p
+  }
+  ## e,f -- eMLG-filtered SNP, clusters of >=5 loci BF>=15 coloured
+  gp <- snp[he[, .(group_id, marker = representative)], on = "marker"][, .(group_id, Chr, Pos)]
+  gp[, chr_num := suppressWarnings(as.integer(gsub("[^0-9]", "", Chr)))]; setorder(gp, chr_num, Pos)
+  gp[, col := mB_clpal[(seq_len(.N) - 1) %% length(mB_clpal) + 1]]
+  emlg <- snp[, .(marker, x = co$xkey[marker], BF1, BF2)][gp[, .(group_id, col)][m2g, on = "group_id"], on = "marker"]
+  clu_p <- function(bfcol, lab, bottom = FALSE) {
+    d   <- emlg[, .(group_id, col, x, BF = get(bfcol))]
+    sig <- d[, .(n = sum(BF >= MB_SIG, na.rm = TRUE)), by = group_id][n >= MB_MIN5, group_id]
+    p <- ggplot() + shade_l("grey85") +
+      geom_point(data = d[!group_id %in% sig], aes(x, BF), size = 0.3, colour = "grey60", alpha = 0.5) +
+      geom_point(data = d[group_id %in% sig][order(x)], aes(x, BF, colour = col), size = 0.5, alpha = 0.9) +
+      scale_colour_identity() + hthr + mB_xscale(co) +
+      labs(x = "chromosome", y = sprintf("SNP BF (dB) - %s", lab)) + mB_theme
+    if (!bottom) p + strip_x else p
+  }
+  ## SNP-level analyses first (a-d), eMLG-level last (e,f); bottom panel keeps the x-axis
+  panels <- list(clu_p("BF1","PC1"), clu_p("BF2","PC2"),
+                 fdr_p("BF1", dt[floor1 == TRUE, group_id], "PC1"), fdr_p("BF2", dt[floor2 == TRUE, group_id], "PC2"),
+                 emlg_p("eBF1","cat1","floor1","PC1"), emlg_p("eBF2","cat2","floor2","PC2", bottom = TRUE, showleg = FALSE))
+  comb <- wrap_plots(panels, ncol = 1) + plot_layout(guides = "collect") +
+    plot_annotation(tag_levels = "a") & theme(legend.position = "bottom")
+  save_fig(comb, "moduleB_manhattans", width = 400, height = 330, dpi = 150)
+}
+
+## =====================================================================
 ## build all
 ## =====================================================================
 cat("== Module 0 ==\n")
@@ -517,6 +720,10 @@ fig_roc(); fig_ld_tracks(); fig_fidelity()
 cat("== Module A ==\n")
 fig_sorting_sweep(); fig_panelB_sweep(); fig_direction_sweep()
 fig_architecture(); fig_manhattan_directional()
+cat("== Module B ==\n")
+fig_moduleB_ancestry(); fig_moduleB_manhattans()
+## individual manhattans (fig_moduleB_eMLG_manhattan / _fdr_snp_manhattan /
+## _snp_manhattan_clustered) remain defined above; call them if you want them split.
 cat("== Tables ==\n")
 make_arch_table(); make_sorting_level_table(); make_models_table(); make_exposure_table()
 cat("\nAll figures and tables written.\n")
