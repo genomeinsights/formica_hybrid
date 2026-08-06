@@ -13,6 +13,34 @@ All paths are relative to the `formica_hybrid` repo root.
 
 ---
 
+## UPDATE 2026-08-05 — grid refactor + BF persistence (supersedes §2–3 going forward)
+
+This was the *pre-analysis* audit; the provenance/machinery below stays historically
+accurate, but Module C has since been completed and reworked. What changed:
+
+- **Folder renamed** `moduleC_climate_genomewide/` → **`moduleC_climate_vs_sorting/`**.
+- **Null BF matrices are now PERSISTED.** `moduleC_null_regen.R` writes each regenerated
+  32,840 × 1,000 batch to `aland_excluded_eMLG/null/bf_matrices/cRegen_bf_b##.rds`
+  (~2.4 GB total, git-ignored) instead of discarding it. §3's "recovery is impossible"
+  therefore no longer binds *going forward*: any future re-reduction (a new min or τ)
+  reads these matrices — **no BayPass rerun**. (The first full run still had to
+  regenerate them, since Module B's originals were gone.)
+- **Analysis is over a (min\_n\_loci × τ) GRID**, not a single cell: min ∈ {5, 10},
+  τ ∈ {0.5, 0.6, 0.8}, primary `min05_tau06`. min = 10 is a strict row-subset of the
+  *same* per-eMLG BF (14,349 clusters), valid because Ω is fixed (`-omegafile`).
+  `moduleC_null_stats.rds` carries all six cells in `by_cell`.
+- **Sorting/DI annotation source changed.** The §1 `data/moduleC_C3_cl.rds` entry is
+  superseded: `moduleC_annotations.R` now reads Module A's stamped
+  `moduleA_sorting/data/moduleA_cluster_sorting_tau{05,06,08}.rds` (binom rule,
+  sort_th = 0.6, fix_th = 0.15) and carries `directional_tau05/06/08` + `n_loci`.
+- **Run at `-nthreads 10`** (was 6); Monte-Carlo equivalence gate passed
+  (PC1 r = 0.99996, PC2 r = 0.99995).
+- **Result:** DI × PC2 significant (ρ = −0.124, FDR = 0.006), *stronger* at min = 10
+  (ρ = −0.138, p = 0.0003); directional sorting and recombination null across every
+  cell. See `doc/moduleC_report.md`.
+
+---
+
 ## 1. Objects located
 
 | Role | File | Status |
