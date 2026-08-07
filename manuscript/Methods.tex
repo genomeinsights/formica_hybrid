@@ -334,6 +334,23 @@ window-level indicator, whereas \ldw{} supplies the marker-resolution measure.}
   \caption{\textbf{Consensus fidelity.} Distribution of consensus round-trip fidelity across five \ldw{} flagging thresholds, separating single-marker clusters (no merge possible) from genuine multi-marker merges. The separation clarifies that mass near the upper limit at permissive thresholds reflects isolated markers rather than merges stopping early.}
 \label{figS:fidelity}
 \end{figure}
+
+\section*{Climate association across the genome}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/moduleC_null_calibration.png}
+  \caption{\textbf{Genome-wide climate-association strength is not organised by ancestry sorting, the diagnostic index, or recombination beyond population structure.} For each of four genome-wide statistics---the Spearman correlation between per-eMLG climate Bayes factor and the diagnostic index (DI), the correlation with recombination rate, the differentiated-only directional-sorting BF-percentile gap, and the correlation with sorting magnitude (proportion of near-fixed populations)---the grey histogram is the distribution across 10{,}000 \(\Omega\)-structured null covariates (a structure- and architecture-preserving null); the shaded band is the null 95\% interval and the dashed line the null median. Coloured lines mark the observed values for climate PC1 (blue) and PC2 (orange). Only DI\,\(\times\)\,PC2 (top-left, orange) falls outside the null (two-sided empirical \(P\), BH-FDR \(\approx 0.006\) across the six primary tests); directional sorting, sorting magnitude, and recombination are indistinguishable from the null on both axes. \'Aland-excluded (19 populations), fixed LD-pruned \(\Omega\), 32{,}840 eMLGs, primary cell \(\mathrm{min}=5\), \(\tau=0.6\).}
+\label{figS:moduleC_calibration}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{Figures/moduleC_threshold_sensitivity.png}
+  \caption{\textbf{The genome-wide calibration is robust to restricting attention to the most strongly climate-associated eMLGs.} Rather than correlating over all eMLGs, each panel summarises a single property within the top-ranked fraction of eMLGs by climate Bayes factor---median DI, median recombination, proportion differentiated, and (among differentiated eMLGs) proportion directional---at three cut-offs (top 0.1\%, 0.5\%, 1\%). Grey histograms, the shaded 95\% band, and the dashed median are the 10{,}000-covariate \(\Omega\)-structured null; blue and orange lines are the observed climate PC1 and PC2. Observed values remain within the null across metrics and thresholds, confirming that no climate axis concentrates high-DI, low-recombination, or directionally sorted eMLGs among its strongest associations beyond structure.}
+\label{figS:moduleC_threshold}
+\end{figure}
+
 \vspace{-1.5em}
 \clearpage
 \bibliographystyle{plainnat}   % or unsrtnat, abbrvnat, apalike, etc.
