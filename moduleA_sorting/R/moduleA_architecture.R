@@ -265,6 +265,42 @@ p_sw <- ggplot(dir_sweep, aes(sort_th, estimate)) +
   theme_bw() + theme(strip.background = element_blank())
 ggsave("moduleA_sorting/Figures/moduleA_direction_sweep.png", p_sw, width = 12, height = 3.2, dpi = 300)
 
+## ========================================================================
+## == [SUPP] within-cluster DI heterogeneity vs LD-cluster size
+##    Justifies di_agg = "max": large low-recombination clusters mix diagnostic
+##    and non-diagnostic markers, so a cluster's DI is not a single value. Uses
+##    per-marker DI and the cluster membership from the same clustering.
+## ========================================================================
+di_marker <- setNames(map$DiagnosticIndex, map$marker)
+clmem <- data.table(group_id = rep(g$group_id, lengths(g$members)),
+                    n_loci   = rep(g$n_loci,   lengths(g$members)),
+                    DI       = di_marker[unlist(g$members)])
+dic <- clmem[, .(n_loci = n_loci[1], di_sd = sd(DI, na.rm = TRUE),
+                 di_range = { d <- DI[!is.na(DI)]; if (length(d) >= 2) max(d) - min(d) else NA_real_ },
+                 di_mean = mean(DI, na.rm = TRUE), n_di = sum(!is.na(DI))), by = group_id
+               ][n_loci >= 2 & n_di >= 2]
+dic[, size_class := cut(n_loci, breaks = c(1, 2, 4, 9, 49, 199, Inf),
+                        labels = c("2", "3-4", "5-9", "10-49", "50-199", "200+"))]
+di_size_tab <- dic[, .(n_clusters = .N, median_di_sd = round(median(di_sd), 2),
+                       median_di_range = round(median(di_range), 1),
+                       median_di_mean = round(median(di_mean), 1)), by = size_class][order(size_class)]
+gw_di_sd <- sd(map$DiagnosticIndex, na.rm = TRUE)
+di_sd_size_spearman <- cor(dic$n_loci, dic$di_sd, method = "spearman", use = "complete.obs")
+cat("\n[SUPP] within-cluster DI sd by cluster size (di_agg = 'max' justification):\n"); print(di_size_tab)
+cat(sprintf("  Spearman cor(n_loci, within-cluster DI sd) = %.3f ; genome-wide marker DI sd = %.1f\n",
+            di_sd_size_spearman, gw_di_sd))
+
+p_div <- ggplot(dic, aes(size_class, di_sd)) +
+  geom_hline(yintercept = gw_di_sd, linetype = 2, colour = "#D08A45") +
+  geom_boxplot(outlier.size = 0.3, outlier.alpha = 0.15, fill = "#8EB4CE", linewidth = 0.3) +
+  labs(x = "LD-cluster size (n markers)", y = "within-cluster DI standard deviation",
+       title = "Within-cluster diagnostic-index spread vs LD-cluster size",
+       subtitle = sprintf("%d multi-marker clusters (%s); dashed = genome-wide marker DI sd (%.1f)",
+                          nrow(dic), basename(CLUSTERING), gw_di_sd)) +
+  theme_bw(base_size = 9) + theme(panel.grid.minor = element_blank())
+ggsave("moduleA_sorting/Figures/moduleA_di_variance.pdf", p_div, width = 165, height = 100, units = "mm")
+ggsave("moduleA_sorting/Figures/moduleA_di_variance.png", p_div, width = 165, height = 100, units = "mm", dpi = 300)
+
 ## ---- save the result objects -------------------------------------------
 saveRDS(list(correlations = list(DI_recomb = sp(d1$DiagnosticIndex, d1$recomb),
                                  DI_maf = sp(d1$DiagnosticIndex, d1$parent_maf),
@@ -273,10 +309,12 @@ saveRDS(list(correlations = list(DI_recomb = sp(d1$DiagnosticIndex, d1$recomb),
              arch_tab = arch_tab, unit_by_recomb = su, snp_by_recomb = ss,
              lm_magnitude = lm_mag, glm_direction = glm_dir,
              direction_coefs = co, direction_sweep = dir_sweep,
+             di_size_tab = di_size_tab, di_sd_size_spearman = di_sd_size_spearman,
              params = c(PS_PARAMS, list(clustering = CLUSTERING, snp_sample = SNP_SAMPLE))),
         "moduleA_sorting/data/moduleA_architecture.rds")
 
 cat("\nModule A architecture complete. Outputs:\n",
     "  moduleA_sorting/data/moduleA_architecture.rds\n",
     "  moduleA_sorting/Figures/moduleA_architecture_fig.{pdf,png}   (Fig 1 a/b/c)\n",
-    "  moduleA_sorting/Figures/moduleA_direction_sweep.png          (Supp S3)\n")
+    "  moduleA_sorting/Figures/moduleA_direction_sweep.png          (Supp S3)\n",
+    "  moduleA_sorting/Figures/moduleA_di_variance.{pdf,png}        (Supp: DI spread vs cluster size)\n")
