@@ -1,0 +1,243 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+\captionsetup{font=small,labelfont={bf,color=Accent}}
+
+\hypersetup{pdftitle={DI25 among-region association}, pdfauthor={Poikela et al.}}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}DI25 among-region association}
+\rhead{\small\color{Muted}Poikela et al.}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parindent}{0pt}\setlength{\parskip}{0.6em}
+\renewcommand{\arraystretch}{1.15}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\Rst}{\ensuremath{R_{\mathrm{st}}}}
+\newcommand{\Dst}{\ensuremath{D^{2}_{\mathrm{st}}}}
+\newcommand{\Dis}{\ensuremath{D^{2}_{\mathrm{is}}}}
+\newcommand{\Dpst}{\ensuremath{D'^{2}_{\mathrm{st}}}}
+\newcommand{\wpr}{\ensuremath{r_{\mathrm{w}}}}
+
+\title{\vspace{-3em}\textbf{\color{Accent}DI25 among-region association}\\[0.3em]
+  \Large A pairwise two-locus screen for incompatibilities among the high-DI markers}
+\author{Poikela et al.}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.8em}
+
+\noindent\textit{\small The intrinsic-side, pair-level test of the headline question, restricted to the
+high-DI species-diagnostic markers (DI $>-25$) and their from-scratch DI25 LD clustering. Between
+\emph{unlinked} LD-reduced units, is there association beyond what shared ancestry and relatedness
+predict --- the signature of a two-locus Dobzhansky--Muller incompatibility (DMI)? The answer,
+descriptive and pre-simulation, is largely negative for \emph{trans} (different-chromosome) DMIs; the
+only structure-corrected leads are long-range \emph{within}-chromosome associations. This mirrors the
+canonical Module~D result on the high-DI subset.}
+
+\section{Materials and Methods}
+
+\paragraph{Units and gate.}
+Units are the from-scratch DI25 LD clusters (\texttt{di25\_clustering\_cM5}; 5\,cM cap), folded into a
+single aqu-oriented dosage matrix of $165$ hybrids $\times$ $11{,}052$ units --- the eMLG consensus for
+clusters with $>2$ markers and the representative SNP for $1$--$2$-marker clusters. Orientation to \Faq{}
+was verified against the parent-based pooled aquilonia frequency ($r=0.99$). Each unit is annotated with
+the DI25 sorting gate (\texttt{di25\_sorting\_emlg}: \texttt{differentiated}, DI, \texttt{sort\_class},
+\texttt{prop\_fixed}, \texttt{uni\_score}, \texttt{bi\_score}) and a per-unit \emph{hybrid} metric table
+(within-hybrid MAF, mean within-population MAF, observed/expected heterozygosity, per-locus $F_{ST}$/$F_{IS}$,
+number of segregating populations). ``Differentiated'' is near-vacuous here ($11{,}042/11{,}052$), as every
+DI25 marker is diagnostic. \emph{Unlinked} means different chromosome, or the same chromosome $>\text{LINK\_CM}=10$\,cM
+apart on the genetic map.
+
+\paragraph{Ohta among-population arm (descriptive / null instrument).}
+For unlinked pairs we compute the Ohta (1982) two-locus decomposition (\Dis, \Dst, \Dpst, $D'^2_{\mathrm{is}}$)
+and $\Rst = \operatorname{cor}$ of the $20$ per-population mean dosages. This arm is retained as a descriptive
+distribution-generator and as Module~E's measurement instrument, not as a discovery screen.
+
+\paragraph{EMMAX pairwise-candidate network.}
+Rather than test a few foci against all $\sim$11k units, we define a marginal candidate set and test only
+the pairwise associations \emph{among} the candidates --- a symmetric, network-native scan. The candidate set
+is the \textbf{bidirectional} units, $\texttt{bi\_score}\ge0.2$ ($K=2{,}083$): loci that sort strongly but in
+\emph{inconsistent} directions across the replicate populations (the equal-fitness / DMI-plausible signature).
+Because a bidirectional locus must segregate to sort both ways, this criterion also enforces appreciable
+minor-allele frequency (minimum within-hybrid $\mathrm{MAF}=0.16$). All $\sim$$2.17\times10^{6}$ unlinked pairs
+among the candidates are tested. Each candidate dosage is treated as a quantitative trait and regressed on each
+partner in an EMMAX linear mixed model whose random effect $K$ is a \emph{double}-LOCO VanRaden genomic-relationship
+matrix (excluding both the focal and partner chromosome), built --- like the top $N_{\mathrm{PC}}=10$ genome
+principal components used as fixed covariates --- from \emph{all} differentiated units, so each test carries the
+full ancestry-axis and relatedness correction; only the tested traits/partners shrink to the candidate set. The
+$cis/trans$ sign is the sign of the GLS coefficient. Alongside the structure-corrected EMMAX $r^2$ we record three
+cheap uncorrected estimates per pair: the plain pairwise $r^2$ ($r^2_{\mathrm{raw}}$), the among-population
+correlation \Rst, and the median within-population correlation \wpr.
+
+\paragraph{Significance and read-out.}
+Significance is a pooled (whole-experiment) Benjamini--Hochberg FDR over all unlinked pairs, mapped to a single
+$r^2$ threshold through the EMMAX statistic $F=r^2/(1-r^2)\cdot(n-2)$. We report the genomic-inflation factor
+$\lambda$ but do \emph{not} genomic-control the FDR: it is a pre-filter, and the discriminant is Module~E's
+recombination-matched neutral null. The honest read-out then applies, in order: a within-chromosome
+average-linkage merge; a \textbf{within-population} leave-one-population-out leverage filter (keep an edge only if
+$\min_k |\mathrm{median}_{\text{pops}\neq k}\,\wpr| \ge 0.3$); a low-recombination annotation (carried to Module~E,
+never a filter); and cross-chromosome modules. \emph{The leverage is within-population, not among-population}
+(\Rst): the decomposition (below) shows the EMMAX signal is the within-population one, so an among-population
+leverage would select \emph{for} structure and discard the DMI candidates.
+
+\paragraph{Software.}
+Run from the repository root. Ohta functions and \texttt{consensus\_dosage} are provided by \texttt{LDscnR}
+(\texttt{devtools::load\_all}); the EMMAX engine (Li, Kemppainen, Rastas \& Meril\"a) is a local copy. Figures use
+\texttt{circlize}, \texttt{GGally}, and base graphics.
+
+\section{Results}
+
+\paragraph{The among-population arm is drift/structure, not systematic epistasis.}
+On the high-DI data the Ohta decomposition reproduces the canonical Module~D signature: the among-population variance
+component dominates the within-population one ($\Dst\gg\Dis$, fraction $1.00$) while the \emph{systematic}
+among-population LD is essentially zero ($\Dpst\approx0$). This is Ohta's classic drift signature (large variance,
+no systematic covariance). Importantly, $\Rst$ is the exact counterpart of $\Dpst$, not of $\Dst$: measured directly,
+$\operatorname{cor}(\Rst^2,\Dpst)=0.74$ versus $\operatorname{cor}(\Rst^2,\Dst)=0.02$. The epistasis-relevant
+(systematic) axis is therefore near-empty before any null.
+
+\paragraph{The two LD axes are a Wahlund decomposition (Fig.~\ref{fig:pairs}).}
+Total (raw) pairwise LD splits into a within-population term and an among-population covariance-of-frequencies term.
+In these data the among-population term dominates raw LD, and the EMMAX correction isolates the within-population
+term --- an almost perfect double-dissociation: on $|r|$, raw LD tracks $|\Rst|$ ($0.70$) but not within-population
+$|\wpr|$ ($0.05$), whereas EMMAX tracks $|\wpr|$ ($0.41$) but not $|\Rst|$ ($0.07$). This is precisely why EMMAX is the
+right instrument for the intrinsic (within-deme) DMI question, and why the leverage must be within-population.
+
+\paragraph{Candidate selection and a low-MAF lesson.}
+An earlier candidate gate ($\texttt{prop\_fixed}\in[0.5,0.8)$) produced $\sim$4 leads that were all low-MAF
+($0.05$--$0.13$), near-fixed in one direction, with within-population LD carried by a thin heterozygote layer ---
+a low-MAF inflation artifact ($\operatorname{cor}(\text{min-MAF},|\wpr|)=-0.33$; $74\%$ of edges had min-MAF $<0.15$)
+that the within-population leverage does not catch. MAF is not a selective filter on DI25 (median within-hybrid MAF
+$0.38$, so a MAF-only floor keeps $\sim$10k units and yields an all-vs-all of $\sim$$5\times10^7$ pairs). Bidirectionality
+resolves this: it is DMI-motivated and simultaneously enforces $\mathrm{MAF}\ge0.16$.
+
+\paragraph{The network is near-empty (Fig.~\ref{fig:circos},~\ref{fig:snp}).}
+On the bidirectional set the genomic inflation is $\lambda=1.28$. This is not a broken correction (the full focal-vs-all
+set gives $\lambda\approx1.02$) but the candidate \emph{selection}: strongly-sorted loci share diffuse residual
+co-ancestry that lifts the whole null, with no fat tail. At $q<0.01$ ($r^2_{\mathrm{crit}}=0.245$) exactly \textbf{one}
+pair clears the pooled FDR and survives the within-population leverage: \textbf{F9614--F9879} (both Chr\,7, $>10$\,cM
+apart), coupling, with within-population $\wpr=0.68$ robust across $11$ informative populations (LOO $0.59$), appreciable
+MAF $0.27/0.45$, and $\Rst=0.50$; its $r^2=0.245$ sits at the stringent threshold, so it is the single most-significant,
+borderline pair. At the looser $q<0.05$ ($r^2_{\mathrm{crit}}=0.159$) seven edges are significant and five survive
+leverage, all appreciable-MAF ($0.27$--$0.48$) and robust across $11$--$13$ populations.
+
+\paragraph{Every lead is same-chromosome; no robust \emph{trans}-DMI (Fig.~\ref{fig:detect}b).}
+Six of the seven $q<0.05$ FDR edges are same-chromosome ($11$--$92$\,cM apart); the single different-chromosome (true
+\emph{trans}) edge fails the leverage filter. The reason is a difference in linkage scale between the two axes:
+among-population LD ($\Rst^2$) decays to the inter-chromosomal baseline by $\sim$10\,cM (the admixture-LD scale that
+justifies the unlinked rule, validated by the Ohta arm), but within-population LD keeps declining well past $10$\,cM,
+and the leads sit far above the average as long-range within-chromosome outliers. The $10$\,cM ``unlinked'' rule is thus
+valid for the among-population axis but does \emph{not} make a same-chromosome pair \emph{trans} on the within-population
+axis. The surviving leads are therefore long-range within-chromosome LD (structural / intra-chromosomal coadaptation),
+not trans-DMIs, and the genuine trans signal is empty.
+
+\paragraph{The among-population candidates (Fig.~\ref{fig:rst}).}
+Complementary to the within-population leads are the pairs with the strongest \emph{among}-population correlation.
+The top $|\Rst|$ different-chromosome pairs ($|\Rst|=0.86$--$0.91$) show strong parallel (coupling) or anti-parallel
+(repulsion) co-sorting of the two loci across the $20$ replicate populations --- the population blocks track or
+anti-track --- yet these same pairs have within-population $\wpr\approx0$ and EMMAX $r^2\approx0$: within demes the two
+loci are independent, and the structure correction strips them entirely. They are the systematic among-population axis
+(\Dpst), i.e.\ the equal-fitness-DMI candidates that the detectability argument places in the confounded blind spot: the
+population-level co-sorting is genuine but indistinguishable from shared-founding co-differentiation (drift) without a
+recombination-matched neutral null. We report them as candidates only.
+
+\begin{figure}[t]\centering
+  \includegraphics[width=0.86\linewidth]{../Figures/di25D_estimate_pairs.png}
+  \caption{\textbf{The two LD axes (Wahlund decomposition).} Pairwise estimates on $|r|$ (subset: random $+$ all tails
+  $+$ FDR edges in orange). Raw LD tracks the among-population correlation ($|\Rst|$) but not within-population $|\wpr|$;
+  the structure-corrected EMMAX $|r|$ tracks $|\wpr|$ but is orthogonal to $|\Rst|$.}
+  \label{fig:pairs}
+\end{figure}
+
+\begin{figure}[t]\centering
+  \includegraphics[width=0.66\linewidth]{../Figures/di25D_emmax_candidate_circos.png}
+  \caption{\textbf{Candidate pairwise-LD network.} $2{,}083$ bidirectional candidates on the genome (nodes coloured by
+  sorting direction); faint chords are all pairs with $r^2>0.1$ (the diffuse residual co-ancestry, $\lambda=1.28$); bright
+  chords are the five leverage-surviving leads ($q<0.05$; grey dashed = FDR edges dropped by leverage).}
+  \label{fig:circos}
+\end{figure}
+
+\begin{figure}[t]\centering
+  \includegraphics[width=0.82\linewidth]{../Figures/di25D_lead_snp_heatmaps.png}
+  \caption{\textbf{The within-population leads ($q<0.05$), all member SNPs.} The five leverage-surviving leads (raw
+  genotypes, not consensus; aqu-oriented; individuals grouped by population), ordered by within-population $\wpr$;
+  \textbf{F9614--F9879} (Chr\,7, top-left) is the single pair that also clears the stringent $q<0.01$. All loci genuinely
+  segregate (appreciable MAF) and co-vary within populations ($\wpr=0.53$--$0.68$ across $11$--$13$ populations) ---
+  unlike the earlier low-MAF artifacts.}
+  \label{fig:snp}
+\end{figure}
+
+\begin{figure}[t]\centering
+  \includegraphics[width=0.82\linewidth]{../Figures/di25D_rst_heatmaps.png}
+  \caption{\textbf{The among-population (\Rst) candidates.} Top different-chromosome pairs by $|\Rst|$
+  ($0.86$--$0.91$; coupling and repulsion), individuals grouped by population. The population blocks track
+  (coupling) or anti-track (repulsion) between the two loci --- strong among-population co-sorting --- but
+  within-population $\wpr\approx0$ and EMMAX $r^2\approx0$: the loci are independent within demes. These are the
+  systematic among-population (\Dpst) candidates, structure-confounded (drift vs.\ parallel DMI). Contrast the
+  within-population leads (Fig.~\ref{fig:snp}).}
+  \label{fig:rst}
+\end{figure}
+
+\begin{figure}[t]\centering
+  \includegraphics[width=0.99\linewidth]{../Figures/di25D_detectability_data.png}
+  \caption{\textbf{Detectability, empirically.} (a) Within-population segregation collapses as loci sort, but the
+  ``blind spot'' (near-fixed loci) is only $\sim$1\% here: sorting is mostly incomplete, so nearly all loci (and every
+  candidate/lead, orange) sit in the detectable window. (b) Same-chromosome LD decay: among-population LD ($\Rst^2$)
+  flattens to baseline by $10$\,cM, within-population LD keeps declining, and the EMMAX leads (stars, $r^2\approx0.4$) are
+  long-range within-chromosome outliers.}
+  \label{fig:detect}
+\end{figure}
+
+\section{Discussion}
+
+\paragraph{Largely negative for trans-DMIs on the high-DI data.}
+After a structure-corrected pairwise scan, a stringent pooled FDR, and a within-population robustness filter, the
+DI25 among-region signal reduces to a handful of appreciable-MAF, multi-population associations that are \emph{all
+same-chromosome}, plus an empty different-chromosome (trans) axis. This is the high-DI analogue of Module~D's
+``largely negative, small residue'' conclusion, and it is consistent with the Ohta arm's $\Dpst\approx0$: neither the
+within-population axis (EMMAX) nor the systematic among-population axis (Ohta) carries a widespread pairwise
+incompatibility signal.
+
+\paragraph{Method lessons.}
+Three points generalise. (i) Raw two-locus LD in a structured, admixed sample is dominated by among-population
+co-differentiation (a Wahlund term); only the structure-corrected (EMMAX/within-population) axis speaks to intrinsic
+incompatibilities, and the robustness (leverage) filter must be applied on \emph{that} axis. (ii) On a diagnostic-marker
+panel, MAF is not a selective filter, and gates that select strongly-sorted loci (e.g.\ \texttt{prop\_fixed}) preferentially
+pick near-fixed, low-MAF loci whose pairwise LD is inflated; a bidirectionality gate is both DMI-motivated and MAF-enforcing.
+(iii) The admixture-LD ``unlinked'' distance ($\sim$10\,cM), validated for the \emph{among}-population axis, is too short for
+the \emph{within}-population axis; a clean trans-DMI screen should restrict to different-chromosome pairs.
+
+\paragraph{Detectability window and the strength of the negative (Fig.~\ref{fig:detect}a, and the schematic).}
+An equal-fitness DMI builds within-population LD while both loci still segregate --- which EMMAX detects --- but once both
+loci fix within every deme the within-population variation (and thus the detectable LD) vanishes, leaving only the
+among-population co-sorting direction, which is confounded by the shared founding LD common to all $20$ replicates. We are
+therefore powered for \emph{in-progress} DMIs and blind to \emph{completed} ones. Crucially, the blind spot is currently
+small: only $\sim$1\% of loci are near-fixed, sorting is mostly incomplete, and every candidate and lead sits in the
+detectable window. The near-empty result therefore reads as ``no detectable \emph{in-progress} pairwise DMIs'' and is not
+primarily a blind-spot artifact --- although completed DMIs remain the principled blind spot.
+
+\paragraph{Outlook.}
+The one Module-E-bound lead, F9614--F9879, is a within-Chr\,7 pair; its LD, and that of the same-chromosome leads at
+$q<0.05$, must be judged against a recombination-matched neutral null (Module~E) that models the shared founding history
+--- especially for the low-recombination, structurally-plausible pairs. A different-chromosome-only re-run would state the
+\emph{trans}-DMI negative cleanly.
+
+\end{document}

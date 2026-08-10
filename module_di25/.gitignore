@@ -1,0 +1,13 @@
+# module_di25: commit code (*.R) and LaTeX/markdown sources (*.tex, *.md) only.
+# Everything below is regenerable output or build junk -- kept out of git.
+data/
+Figures/
+*.gds
+*.pdf
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz

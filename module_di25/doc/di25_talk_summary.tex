@@ -1,0 +1,162 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=24mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+
+\captionsetup{font=small,labelfont={bf,color=Accent}}
+\setlist[itemize]{leftmargin=1.3em,itemsep=2pt,topsep=3pt}
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\pt}[1]{\medskip\noindent\textbf{\color{Accent}#1}\par\nobreak\smallskip}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}Ancestry sorting at diagnostic loci}
+\rhead{\small\color{Muted}talk notes}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.4em}\setlength{\parindent}{0pt}
+
+\title{\vspace{-3.2em}\textbf{\color{Accent}Ancestry sorting at the diagnostic loci}\\[0.2em]
+\large What the hybrids keep, and where --- a walk through the figures}
+\author{\normalsize Poikela et al. \; -- \; talk-preparation summary}
+\date{\normalsize\today}
+
+\begin{document}
+\maketitle
+\vspace{-1.8em}
+
+\noindent\textit{These are notes to talk from, not a methods section. The thread:
+we take the ancestry-diagnostic markers of the \Faq{}\,$\times$\,\Fpo{} hybrids,
+reduce them to (nearly) independent units, and ask how much ancestry has sorted,
+which way, and where in the genome.}
+
+%% ------------------------------------------------------------------
+\pt{The setup in one breath}
+\begin{itemize}
+  \item Twenty wild hybrid \textit{Formica} populations between \Faq{} and \Fpo{},
+        spanning $\sim$2{,}000\,km.
+  \item We focus on the \textbf{diagnostic markers} --- the $\sim$51{,}600 sites that
+        tell the two parental species apart (diagnostic index $>-25$). These are the
+        loci where ``which ancestry won'' is even a meaningful question.
+  \item Colour code throughout: \textbf{purple = \Faq{}}, \textbf{yellow = \Fpo{}},
+        teal = heterozygous / mixed.
+\end{itemize}
+
+%% ------------------------------------------------------------------
+\pt{1.\; From 51{,}600 SNPs to 11{,}000 units --- why we don't count SNPs}
+Linked markers tell the same story many times over. In the low-recombination
+blocks a single ancestry pattern can be echoed by thousands of SNPs, so counting
+SNPs counts the same thing repeatedly. We therefore rebuilt the linkage-disequilibrium
+clustering \emph{from scratch, on the diagnostic markers only}, collapsing the
+51{,}612 SNPs into \textbf{11{,}052 LD-reduced units} (a 5\,cM merge; $\sim$78\% reduction).
+A caveat we keep coming back to: these units are \emph{much} more independent than
+SNPs, but not perfectly independent.
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{../Figures/diem_circos_compare_snp_vs_ldreduced.png}
+\caption{The same diagnostic data, same 195 individuals, same ordering (inner rings
+= most \Faq{}). \textbf{Left:} every SNP --- speckly, with fat vertical blocks where
+linked markers repeat. \textbf{Right:} the LD-reduced units --- the blocks collapse,
+the picture thins by $\sim$5$\times$, the ancestry structure survives. This is the
+whole reason we work with units, not SNPs.}
+\end{figure}
+
+%% ------------------------------------------------------------------
+\pt{2.\; How much has sorted, and which way?}
+A locus is ``sorted'' when the same ancestry has repeatedly become near-fixed across
+independent hybrid populations. Two headlines, and they are exactly the kind of thing
+that only shows up once you stop counting SNPs:
+
+\begin{itemize}
+  \item \textbf{LD reduction deflates the amount of sorting.} At our primary threshold,
+        $\sim$13\% of diagnostic SNPs look ``sorted'' but only $\sim$7\% of independent
+        units are --- the SNP number was inflated by linked repeats.
+  \item \textbf{LD reduction can even flip the apparent \emph{direction}.} Among the most
+        strongly sorted loci, the raw SNPs lean toward \Fpo{}; the independent units lean
+        strongly toward \Faq{} ($\sim$80\%). The \Fpo{} ``signal'' was a handful of big
+        low-recombination blocks, counted thousands of times. Collapse them and \Faq{}
+        prevails.
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\textwidth]{../Figures/diem_circos_sorting_sweep_snp.png}
+\caption{Where the sorting is, and how it thins as we demand a stricter, more repeatable
+signal (rings inner\,$\rightarrow$\,outer = increasingly strict). Purple = sorted toward
+\Faq{}, yellow = toward \Fpo{}, grey = not sorted. The persistent \textbf{yellow blocks}
+(e.g.\ chromosomes 5, 25, 26) are the large linkage blocks that make the per-SNP counts
+lean \Fpo{} --- they are single units, not many.}
+\end{figure}
+
+%% ------------------------------------------------------------------
+\pt{3.\; The same story, population by population}
+Collapsing the 195 individuals into the 20 populations shows the diagnostic landscape
+as a per-population map. The strongly sorted regions read as broad bands that are the
+\emph{same colour across all populations} --- that is what ``repeatable sorting'' looks
+like. Most of the genome is teal: these are balanced-ancestry hybrids, with sorting
+concentrated at particular loci.
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.72\textwidth]{../Figures/diem_circos_population_snp.png}
+\caption{Twenty population rings, ordered by overall ancestry (\r{A}land most \Faq{},
+Hein\"am\"aki most \Fpo{}). Each cell is the population's mean \Faq{}-allele frequency.
+Broad purple/yellow bands = regions where the same ancestry has near-fixed across many
+populations.}
+\end{figure}
+
+%% ------------------------------------------------------------------
+\pt{4.\; Is sorting stronger where recombination is low?}
+This is where we have to be careful --- and honest --- about effect sizes.
+
+\begin{itemize}
+  \item \textbf{Direction of the effect:} yes, among diagnostic loci sorting is weakly
+        \emph{stronger} in low-recombination regions. Interestingly this is the
+        \emph{opposite} of the genome-wide picture, because genome-wide the low-recombination
+        regions are dominated by non-diagnostic markers that never sort. Condition on the
+        diagnostic loci and the sign flips.
+  \item \textbf{But the effect is small.} Recombination explains under $\sim$1.5\% of whether
+        a unit sorts. The probability of sorting drifts from roughly 15\% down to 5\% across
+        the well-sampled recombination range --- real and repeatable, but a gentle slope on
+        a low baseline. The tiny $p$-values come from having thousands of units, not from a
+        big effect.
+  \item \textbf{Robust to how we test it.} The slope is negative at every sorting threshold,
+        and it survives a genomic block bootstrap (resampling whole chromosomes) that respects
+        the fact that units aren't perfectly independent.
+  \item \textbf{The honest asterisk:} the very lowest-recombination regions can't really be
+        judged at all --- their $\sim$10{,}000 diagnostic SNPs collapse to only $\sim$57
+        independent units, so those points carry huge uncertainty (big error bars, small bars).
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{../Figures/di25_recomb_tau_sweep.png}
+\caption{\textbf{Left:} fraction of units sorted vs recombination, at each sorting threshold
+$\tau$; grey background bars = number of \emph{independent} units per decile (near zero on
+the left --- that is the honest caveat). \textbf{Right:} the recombination effect at each
+$\tau$ with block-bootstrap 95\% intervals --- all negative, all excluding zero, all small.}
+\end{figure}
+
+%% ------------------------------------------------------------------
+\pt{Take-homes for the slide}
+\begin{itemize}
+  \item Ancestry sorting at diagnostic loci is \textbf{real and repeatable}, but you only
+        measure it correctly once you \textbf{collapse linked markers into units} --- SNP
+        counts both inflate the amount and can misstate the direction.
+  \item Once cleaned up, the diagnostic loci sort \textbf{predominantly toward \Faq{}}.
+  \item Sorting is \textbf{modestly concentrated in low-recombination regions} among diagnostic
+        loci --- statistically solid, but a \textbf{small} effect, and the most extreme
+        low-recombination regions are essentially single blocks we can't resolve.
+  \item Throughout, the discipline is the same: \textbf{count independent units, report effect
+        sizes, and let the significance follow} --- not the other way round.
+\end{itemize}
+
+\end{document}

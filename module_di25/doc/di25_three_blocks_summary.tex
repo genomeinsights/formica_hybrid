@@ -1,0 +1,155 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=24mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+
+\captionsetup{font=small,labelfont={bf,color=Accent}}
+\setlist[itemize]{leftmargin=1.3em,itemsep=2pt,topsep=3pt}
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+\newcommand{\pt}[1]{\medskip\noindent\textbf{\color{Accent}#1}\par\nobreak\smallskip}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}The three polyctena blocks}
+\rhead{\small\color{Muted}talk notes}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.4em}\setlength{\parindent}{0pt}
+
+\title{\vspace{-3.2em}\textbf{\color{Accent}The three ``unusual'' polyctena blocks}\\[0.2em]
+\large What we can --- and cannot --- say about them, and the Sielva story}
+\author{\normalsize Poikela et al. \; -- \; talk-preparation summary}
+\date{\normalsize\today}
+
+\begin{document}
+\maketitle
+\vspace{-1.8em}
+
+\noindent\textit{A short, honest walk through one thread: three large genomic
+blocks that behave unlike anything else in the hybrids, why they are tempting to
+read as co-adapted (epistasis / clustered incompatibilities), and exactly how far
+the data let us take that idea. Colour code: purple = \Faq{}, yellow = \Fpo{}.}
+
+%% ------------------------------------------------------------------
+\pt{The observation}
+Across the diagnostic loci, sorting toward \Fpo{} is dominated by \textbf{three
+large, low-recombination blocks} --- on chromosomes 5, 25 and 26. They are
+unusual on three counts at once: they are big, they sit in low recombination,
+and they are the \emph{only} strongly \emph{repeatable} \Fpo{} signal --- every
+one of the 20 hybrid populations has near-fixed \Fpo{} there. That combination
+is exactly what a set of co-adapted / epistatically-required variants would look
+like, so it is worth asking how well the data support that reading.
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.72\textwidth]{../Figures/di25_popfix_snp.png}
+\caption{Per-population near-fixation: 20 population rings, each cell coloured by
+that population's own near-fixation direction. The three blocks (Chr 5, 25, 26)
+are \textbf{solid yellow across every ring} --- fixed \Fpo{} in all populations ---
+whereas \Faq{} fixation is patchier and more distributed.}
+\end{figure}
+
+%% ------------------------------------------------------------------
+\pt{Can we test co-adaptation directly? (LD between the blocks)}
+The clean test would be linkage disequilibrium \emph{between} the blocks: if the
+correct alleles are required together, their rare \Faq{} variants should co-occur,
+and mismatched combinations should be missing. On the surface that is exactly what
+we see --- the all-\Faq{} combination is hugely over-represented and every mixed
+class is absent. \textbf{But it is population structure, not individual-level
+co-selection.} Only three populations carry any \Faq{} here, each with its own
+fixed pattern (\r{A}land at Chr26, Nyrh\"ispera75 at Chr5, Sielva at all three),
+so the between-block correlation (Chr5--Chr25 $r=0.83$) collapses to $-0.03$ once
+those two populations are removed. The ``missing'' mixed genotypes carry no weight
+either: under independence their expected counts are below one anyway.
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{../Figures/di25_region_dmi.png}
+\caption{\textbf{(a)} Every hybrid carrying \Faq{} at these blocks belongs to one
+of three populations, each with a fixed regional pattern. \textbf{(b)} The three-block
+genotype combinations: the all-\Faq{} class is the five Sielva samples; mixed classes
+are absent but expected at $<1$ under independence. The apparent signal is which
+population an individual is from.}
+\end{figure}
+
+\noindent This is the crux, and it matches the intuition we started with: the blocks
+are near-fixed, and LD needs variation --- there simply is not enough segregating
+\Faq{} here, and what little there is tracks populations. So co-adaptation cannot be
+\emph{tested} in this panel, only motivated.
+
+%% ------------------------------------------------------------------
+\pt{Do the blocks segregate within populations?}
+A softer prediction of the same idea: if mismatched recombinants are less viable,
+each population should be \emph{uniform} at these blocks rather than a segregating
+mix. That holds --- within-population variation is essentially zero everywhere
+(only two single-block exceptions), so no recombinant genotypes are present. The
+interesting outlier is \textbf{Sielva}: the most F1-like population (81\% heterozygous
+genome-wide, roughly twice any other), it uniquely retains the ancestral
+\emph{heterozygous} state at all three blocks, where every more-sorted population has
+fixed \Fpo{}. (Caveat: the five Sielva samples are one colony --- effectively a single
+genotype.)
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{../Figures/di25_region_segregation.png}
+\caption{Block ancestry vs each population's genome-wide heterozygosity (F1-ness).
+Error bars $\approx 0$: populations are uniform at the blocks (no segregation).
+Sielva sits alone at far right --- F1-like and heterozygous at all three blocks.}
+\end{figure}
+
+%% ------------------------------------------------------------------
+\pt{Is Sielva special --- and has it begun to prune?}
+Two things about Sielva turned out to matter. First, it is \emph{not} unusually
+``opposite'' anywhere: it is heterozygous at $\sim$84\% of the genome (it is an F1),
+and it is \textbf{never} homozygous for the opposite allele against a consensus. So
+its state at the three blocks is simply its default --- the blocks are special because
+of the \emph{other} 19 populations, not because of Sielva.
+
+Second, and more interesting: even this young, F1-like colony has \textbf{already begun
+to prune heterozygosity at sorted loci, directionally}. As loci become more sorted in
+the other populations, Sielva's heterozygosity falls from $\sim$83\% to $\sim$52\%, and
+the homozygous fraction is almost entirely \emph{toward} the same allele the others fix
+(121:1). This survives a recombination control (the effect of sorting is $\sim$10$\times$
+stronger than recombination and highly significant). The lone exception is the three
+huge blocks themselves --- held as intact F1 heterozygous blocks, because pruning needs
+recombination to expose the disfavoured allele, and those blocks resist it longest.
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{../Figures/di25_sielva_pruning.png}
+\caption{Sielva's genotype composition vs how sorted a locus is in the other 19
+populations. Heterozygosity (grey) shrinks as loci sort; the homozygous fraction is
+almost entirely \emph{toward} the fixed allele (blue), not against (red). Directional
+early pruning, beyond what recombination explains.}
+\end{figure}
+
+%% ------------------------------------------------------------------
+\pt{Take-homes}
+\begin{itemize}
+  \item Three large low-recombination blocks (Chr 5, 25, 26) are the only
+        \textbf{repeatably \Fpo{}} signal --- fixed in all 20 populations. A natural
+        candidate for co-adapted / clustered incompatibilities.
+  \item That hypothesis \textbf{cannot be tested} here: the blocks are near-fixed, the
+        residual \Faq{} variation is confined to three populations, so between-block LD
+        is inseparable from population structure and the ``missing'' genotypes carry no
+        statistical weight.
+  \item The blocks \textbf{do not segregate within populations}, and the one F1-like
+        population (Sielva) still holds them as intact heterozygous blocks --- consistent
+        with the picture, though Sielva is a single colony.
+  \item Even young Sielva shows \textbf{directional early pruning} at ordinary sorted loci
+        (losing heterozygosity toward the fixed allele), while shielding the three big
+        blocks --- exactly where recombination-sheltered co-adapted variants would persist
+        longest.
+  \item Net: a coherent and suggestive story, but one the current admixture panel can
+        \textbf{motivate, not prove}. Testing it would need populations still segregating
+        \Faq{}/\Fpo{} at these blocks, or a functional / mapping approach.
+\end{itemize}
+
+\end{document}

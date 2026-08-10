@@ -1,0 +1,105 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=18mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{315B7D}
+\definecolor{Muted}{HTML}{5B6570}
+\setlength{\parindent}{0pt}
+
+\newcommand{\figpage}[3]{%
+  % #1 = image file (relative to doc/), #2 = caption text, #3 = source
+  \begin{figure}[H]\centering
+  \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{#1}\\[0.6em]
+  \begin{minipage}{0.92\textwidth}\small
+    #2\par\smallskip
+    {\color{Muted}\textit{Source: #3}}
+  \end{minipage}
+  \end{figure}\clearpage}
+
+\begin{document}
+
+\thispagestyle{empty}
+\vspace*{2cm}
+{\color{Accent}\Huge\bfseries Ancestry sorting at the diagnostic loci}\\[0.6em]
+{\Large Figure collection --- all figures, with sources}\\[0.4em]
+{\large Poikela et al. \; -- \; \textit{module_di25 (high-DI analyses)}}\\[1.2em]
+\normalsize
+Every figure produced during the analysis, in reading order. Each caption is
+short; the italic line names the R script (in \texttt{module\_di25/R/})
+that generates it. Colour code throughout: purple = \textit{F.~aquilonia},
+yellow = \textit{F.~polyctena}, teal = heterozygous / mixed / unresolved.
+The original figure files live in \texttt{module\_di25/Figures/}.
+\clearpage
+
+\figpage{../Figures/diem_circos.png}
+  {\textbf{Per-SNP DIEM circos.} All 51{,}612 diagnostic SNPs (DI $>-25$); 195
+   individuals as concentric rings (inner = most \textit{F.~aquilonia}), one
+   sector per chromosome. The R recreation of the original Python DIEM plot.}
+  {diem\_circos.R}
+
+\figpage{../Figures/diem_circos_eMLG.png}
+  {\textbf{LD-reduced circos, canonical eMLGs (superseded).} First attempt, using
+   the module0 all-marker clusters --- these average in linked lower-DI variation,
+   which is why we later rebuilt the clustering on the diagnostic markers only.}
+  {diem\_circos\_eMLG.R}
+
+\figpage{../Figures/diem_circos_di25_eMLG_cM5.png}
+  {\textbf{LD-reduced DIEM circos (high-DI-only clustering, 5\,cM).} 11{,}052 units
+   built from scratch on the diagnostic markers; eMLG consensus for clusters $>2$
+   markers, representative SNP otherwise.}
+  {diem\_circos\_di25\_eMLG.R}
+
+\figpage{../Figures/diem_circos_compare_snp_vs_ldreduced.png}
+  {\textbf{Per-SNP vs LD-reduced, side by side.} Same markers, same individuals,
+   same ordering. The linkage blocks (left) collapse into units (right) --- the
+   core reason for working with units.}
+  {diem\_circos\_compare.R}
+
+\figpage{../Figures/diem_circos_sorting_sweep_snp.png}
+  {\textbf{Ancestry-sorting $\tau$ sweep, per SNP.} Rings inner$\to$outer =
+   stricter sorting threshold; each unit coloured by sort class. Persistent yellow
+   blocks are large linkage blocks counted many times.}
+  {diem\_circos\_sorting\_sweep.R \; (\texttt{SWEEP\_LEVEL=SNP})}
+
+\figpage{../Figures/diem_circos_sorting_sweep_emlg.png}
+  {\textbf{Ancestry-sorting $\tau$ sweep, per eMLG.} Same as previous but on
+   independent units --- the big yellow (\textit{F.~polyctena}) blocks are gone and
+   the residual signal is predominantly purple (\textit{F.~aquilonia}).}
+  {diem\_circos\_sorting\_sweep.R \; (\texttt{SWEEP\_LEVEL=eMLG})}
+
+\figpage{../Figures/diem_circos_di25_eMLG_sortclass_cM5.png}
+  {\textbf{LD-reduced DIEM circos + sort-class outer track.} Genotype rings inside;
+   the thin outer ring gives each unit's sort class at $\tau=0.6$, aligned
+   unit-for-unit.}
+  {diem\_circos\_di25\_sortclass.R}
+
+\figpage{../Figures/diem_circos_population_snp.png}
+  {\textbf{Per-population ancestry, per SNP.} The 195 individuals collapsed to 20
+   population rings (inner = most \textit{F.~aquilonia}); each cell = population-mean
+   \textit{F.~aquilonia}-allele frequency. Broad bands = repeatable sorting.}
+  {diem\_circos\_population.R}
+
+\figpage{../Figures/diem_circos_population_emlg.png}
+  {\textbf{Per-population ancestry, per eMLG.} The LD-reduced counterpart of the
+   previous figure; the wide linkage blocks collapse to single units.}
+  {diem\_circos\_population.R}
+
+\figpage{../Figures/di25_sorting_vs_recomb.png}
+  {\textbf{Sorting vs recombination ($\tau=0.6$).} eMLG fraction sorted by
+   recombination decile, with Wilson CIs; grey bars = number of independent units
+   per decile (near zero at low recombination). Effect is real but small.}
+  {di25\_architecture.R}
+
+\figpage{../Figures/di25_recomb_tau_sweep.png}
+  {\textbf{Sorting vs recombination, swept over $\tau$.} (Left) fraction sorted per
+   decile at each $\tau$; grey bars = independent-unit counts. (Right) the
+   recombination coefficient per $\tau$ with genomic block-bootstrap 95\% CIs ---
+   all negative, all excluding zero, all small.}
+  {di25\_recomb\_tau\_sweep.R}
+
+\end{document}
