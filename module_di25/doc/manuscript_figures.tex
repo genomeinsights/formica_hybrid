@@ -202,14 +202,25 @@ applied to the DI25 set (the DI\,$>-25$ selection is itself the gate). Because t
 low-recombination contrast rests on so few large units it is sensitive to their handful: it is
 significant at $\tau=0.5$--$0.7$ but only marginal at $\tau=0.8$ ($p=0.06$). All of this will be
 revisited when the analyses are rerun on the corrected 195-individual sample with reseeded
-diagnostic indices.}
+diagnostic indices.
+
+\emph{This does not contradict the all-marker (Module~A) result.} Module~A finds sorting
+\emph{depleted} at low recombination (low recombination holds few independent units, most washing
+out); the enrichment here is specific to \emph{diagnostic} (DI\,$>-25$) units. The difference is
+the DI restriction alone, not the clustering: gating Module~A's own units to their
+\emph{representative} DI\,$>-25$ flips its recombination slope from $+0.6$ to $-1.1$, reproducing
+this figure, whereas changing the merge cap (0.5 vs 5\,cM) or the MAF gate leaves it unchanged.
+And because DI is estimated from the same hybrid data, restricting to high-DI loci partly selects
+the ancestry-informative units that sort, so this low-recombination enrichment is a statement
+about diagnostic loci --- not a reversal of the all-marker depletion.}
 
 %% ==========================================================================
 \figblock{fig_size_directional.pdf}
-{Figure 3 --- Ancestry sorting direction tracks LD-cluster size, not recombination}
+{Figure 3 --- Among diagnostic units, sorting direction covaries with LD-cluster size}
 {% caption
-\textbf{Among sorted units, direction is governed by LD-cluster size --- and this survives
-controlling for recombination.} Unit level ($\tau=0.8$ in a--b; SNPs are all single-marker).
+\textbf{Among sorted units, direction is predicted by LD-cluster size more strongly than by
+recombination; recombination instead predicts whether a unit sorts at all.} Unit level
+($\tau=0.8$ in a--b; SNPs are all single-marker).
 \textbf{(a)} Fraction of units sorted toward \Faq{} (teal) or \Fpo{} (yellow) by cluster-size
 class: \Faq{}-directed predominates among small clusters, \Fpo{}-directed among large ones. The
 top classes are sparse (32 and 17 units) --- essentially the $\sim$12 large blocks named in
@@ -224,16 +235,20 @@ sparsity. \textbf{(c)} A single model, conditional on sorting:
 $P(\Fpo\mid\text{sorted}) \sim \log_{10}(\text{recombination}) + \log_{10}(\text{cluster size})$,
 fitted across all sorted units per $\tau$ (chromosome block bootstrap, 1000 replicates), on both
 the eMLG-consensus sorting (filled) and the representative-marker sorting (open; no averaging
-over cluster members). \emph{Cluster size survives and recombination drops out}: the size
+over cluster members). \emph{Cluster size is the stronger predictor of direction}: its
 coefficient is positive with a 95\,\% CI excluding zero (consensus $+1.1$ at $\tau=0.6$, $+1.6$
-at $\tau=0.8$), while the recombination coefficient spans zero at every $\tau$. The size effect
-holds on representative markers ($+0.6$ at $\tau=0.6$, $+1.4$ at $\tau=0.8$), so it is not merely
-a consensus artefact --- although the consensus does inflate it (roughly halved at $\tau=0.6$).}
+at $\tau=0.8$; it holds on representative markers, $+0.6$/$+1.4$, so it is not a consensus
+artefact, though the consensus inflates it). Recombination has a direction effect of the
+\emph{same} sign, significant on its own ($-1.15$ at $\tau=0.6$), that is attenuated to
+non-significance once size is included --- not because the two are independent but because they
+are collinear among the sorted units ($r=-0.36$) and size carries more of the shared signal.
+Recombination is thus not eliminated as a direction predictor; size is simply the stronger one.}
 {% methods
 \emph{Data and units.} The same DI\,$>-25$ units as Figure~2 (no MAF gate), unit level. Cluster
 size is the number of diagnostic markers per unit; recombination is the map-interpolated rate
-(cM/Mb) at the unit's representative marker. The two are only weakly correlated across units
-(Pearson $-0.19$ on the logs).
+(cM/Mb) at the unit's representative marker. The two correlate weakly across all units
+(Pearson $-0.19$ on the logs) but appreciably among the sorted units the direction model is
+fitted on ($-0.36$).
 
 \emph{Two sorting bases.} \emph{Consensus} scores each unit from its eMLG consensus dosage
 (representative SNP for 1--2-marker units), as in Fig.~2; \emph{representative} scores every unit
@@ -249,16 +264,31 @@ $\tau\in\{0.5,0.6,0.7,0.8\}$ and per basis, a logistic regression of the binary 
 outcome on $\log_{10}(\text{recombination}+0.1)$ and $\log_{10}(\text{cluster size})$ jointly;
 95\,\% CIs are from a genomic block bootstrap resampling whole chromosomes (1000 replicates).}
 {% note
-\emph{Larger clusters sort less often overall --- a measurement effect --- but when they do they
-sort \Fpo{}.} The propensity to sort at all declines with cluster size ($P(\text{sorted})$ on
-$\log_{10}$ size: $-1.2$, $-1.1$, $-0.8$, $-0.3$ for $\tau=0.5$--$0.8$; CI excludes zero at
-$\tau=0.5$--$0.7$): a large eMLG consensus averages over many markers and near-fixes in fewer
-populations. Because that averaging could also skew \emph{which} direction survives, panel c
-repeats the direction model on representative-marker sorting, which does no averaging; the size
-effect persists (smaller), so the size--direction link is not a consensus artefact. This reframes
-Figure~2: recombination carried directional signal only because the few large blocks sit in
-low-recombination regions --- in the joint model recombination does not survive, and cluster size
-does. All preliminary pending the 195-individual, reseeded rerun (see Fig.~2).}
+\emph{Recombination predicts \emph{whether} a unit sorts; cluster size predicts \emph{which}
+parent --- and Fig.~2b is the two confounded.} Fitted unconditionally across all units (not just
+sorted ones), the propensity to sort is strongly and independently predicted by recombination
+($P(\text{sorted}) \sim \log_{10}$ recombination $= -1.3$ at $\tau=0.6$, $-1.9$ at $\tau=0.8$; CI
+excludes zero, and it \emph{strengthens} when size is added): more sorting at low recombination.
+Cluster size instead predicts the direction (panel c). Because Figure~2b is unconditional and
+single-predictor, it mixes the two: its recombination--direction signal is largely this
+propensity effect showing through, which is why Fig.~2b's paired difference and panel c's
+conditional size effect agree in sign. Figure~2b therefore \emph{motivates} this figure rather
+than being refuted by it.
+
+Larger clusters also sort less often overall (a measurement effect: a large eMLG consensus
+averages over many markers and near-fixes in fewer populations); the representative-marker refit
+in panel c controls for that averaging and the size--direction effect persists. All preliminary
+pending the 195-individual, reseeded rerun (see Fig.~2).
+
+\emph{Caveat --- this size$\to$direction pattern is specific to the diagnostic set and does not
+generalise.} Refitting the direction model on Module~A's all-marker units (same clustering
+machinery; sorting on either the representative or the eMLG consensus) \emph{reverses} the size
+coefficient (larger clusters then lean \Faq{}, $\approx-0.3$ to $-0.5$); the positive DI25 effect
+appears only once clustering is restricted to diagnostic markers, where the large clusters
+\emph{are} the polyctena centromeric blocks. Panel c is therefore best read as a property of the
+diagnostic-block structure --- in this set sorting is carried by a few large low-recombination
+blocks (chr26/5/6 toward \Fpo{}, chr13/15 toward \Faq{}) --- not as a general size$\to$direction
+mechanism.}
 
 %% ==========================================================================
 %% Add the next figure with \figblock{file.pdf}{Title}{caption}{methods}{note-or-empty}
