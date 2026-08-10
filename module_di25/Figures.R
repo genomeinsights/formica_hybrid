@@ -102,7 +102,7 @@ fig_recomb_directional <- function() {
       p + scale_y_continuous(name = NULL, sec.axis = sec_axis(~ . / bs, name = "n independent eMLG units")) +
           theme(axis.text.y.left = element_blank(), axis.ticks.y.left = element_blank())
     else
-      p + scale_y_continuous(name = "fraction of differentiated loci\nsorted toward the species")
+      p + scale_y_continuous(name = "fraction of units sorted\ntoward the species")
   }
 
   ## panel b: directional recombination coefficient per tau, with a genomic

@@ -8,7 +8,16 @@
 ## sorting threshold tau is swept {0.5, 0.6, 0.7, 0.8} as in Module A (Fig S1).
 ##
 ## Method (Module A conventions, sort_rule = "binom", alpha = 0.05):
-##   * pooled-parental MAF gate >= 0.15 (min_parent_maf); DI left ungated.
+##   * NO in-function differentiation gate. The DI >= -25 diagnostic cut is
+##     already applied to the INPUT marker set (the same data that feeds LD-decay
+##     and clustering), so every input unit is diagnostic by construction and is
+##     treated as differentiated. We deliberately do NOT re-gate on
+##     map_hyb_005$DiagnosticIndex: DIEM was run without a fixed seed, so its DI
+##     values for this subset do not match the full-data map, and gating on them
+##     would wrongly drop ~7k markers. The pooled-parental MAF >= 0.15 gate
+##     Module A needs on the FULL set is likewise unnecessary here. pmaf/DI are
+##     still computed and passed as (ungated) covariates; min_DI = min_parent_maf
+##     = NULL, so the function's "no gate active" warning is expected.
 ##   * parallelism_stats() run ONCE per level -> tau-independent per-unit counts
 ##     (n_aqu, n_pol, n_obs); classify_sort() re-classifies at each tau.
 ##   * A unit is `sorted` when prop_fixed >= tau; among sorted, direction is
@@ -34,7 +43,7 @@ INPUTS    <- "module_di25/data/di25_inputs.rds"
 OUTDIR    <- "module_di25/data"
 TAU_GRID  <- c(0.5, 0.6, 0.7, 0.8)
 FIX_TH    <- 0.15      # phi = 0.85 near-fixation floor
-MIN_PMAF  <- 0.15      # pooled-parental MAF gate
+## (no MIN_DI / MIN_PMAF: the DI >= -25 differentiation gate is already on the input set -- see header)
 SORT_RULE <- "binom"
 ALPHA     <- 0.05
 
@@ -67,7 +76,7 @@ prep_snp <- ohta_fast_prepare(GTs_all, pops = pops)
 ps_snp <- parallelism_stats(prep_snp, hybrid_pops = hybrid_pops,
                             aqu_pops = aqu_pops, pol_pops = pol_pops,
                             fix_th = FIX_TH, DI = DI_vec, min_DI = NULL,
-                            parent_maf = pmaf_snp, min_parent_maf = MIN_PMAF,
+                            parent_maf = pmaf_snp, min_parent_maf = NULL,
                             sort_rule = SORT_RULE, alpha = ALPHA)
 saveRDS(ps_snp, file.path(OUTDIR, "di25_sorting_snp.rds"))
 
@@ -94,7 +103,7 @@ prep_emlg <- ohta_fast_prepare(E, pops = pops)
 ps_emlg <- parallelism_stats(prep_emlg, hybrid_pops = hybrid_pops,
                              aqu_pops = aqu_pops, pol_pops = pol_pops,
                              fix_th = FIX_TH, DI = DI_u, min_DI = NULL,
-                             parent_maf = pmaf_u, min_parent_maf = MIN_PMAF,
+                             parent_maf = pmaf_u, min_parent_maf = NULL,
                              sort_rule = SORT_RULE, alpha = ALPHA)
 ps_emlg <- g[, .(group_id, n_loci, is_emlg)][ps_emlg, on = c(group_id = "marker")]
 saveRDS(ps_emlg, file.path(OUTDIR, "di25_sorting_emlg.rds"))

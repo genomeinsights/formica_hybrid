@@ -108,23 +108,32 @@ sorting (\Faq{}/\Fpo{}). The consistent anchor across figures is yellow\,=\,\Fpo
 {% caption
 \textbf{Ancestry sorting toward each parental species as a function of recombination, and
 its dependence on the sorting threshold.}
-\textbf{(a)} Fraction of differentiated diagnostic loci sorted toward \Faq{} (teal) or
+\textbf{(a)} Fraction of units sorted toward \Faq{} (teal) or
 \Fpo{} (yellow) across recombination deciles (\emph{x}: median cM/Mb per decile), at two
-sorting thresholds --- a locus is ``sorted'' when at least 60\,\% (left) or 80\,\% (right)
+sorting thresholds --- a unit is ``sorted'' when at least 60\,\% (left) or 80\,\% (right)
 of populations are near-fixed. Solid lines, LD-reduced units (eMLG); dashed lines,
 individual SNPs. Grey bars give the number of independent eMLG units per decile (right
-axis); the three lowest-recombination deciles (shaded) contain too few independent units
-to estimate reliably. Error bars are Wilson 95\,\% confidence intervals, shown for the
+axis). The three lowest-recombination deciles (shaded) contain only 8, 9 and 38 independent
+units, so their per-decile \emph{fractions} are individually imprecise --- a couple of units
+shift them substantially; they are shaded for that reason, not because the underlying signal is
+doubtful. The directional contrast at low recombination is therefore quantified in panel b,
+which enters each unit as one observation along the continuous gradient rather than reading a
+fraction off these sparse bins. Error bars are Wilson 95\,\% confidence intervals, shown for the
 eMLG estimates only (SNPs are not independent). \textbf{(b)} Recombination coefficient of
 each direction's sorting at each threshold: the slope of a logistic regression of
 $P(\text{sorted toward the species})$ on $\log_{10}$ recombination, fitted across all
 LD-reduced units; points and 95\,\% intervals are from a genomic block bootstrap that
 resamples whole chromosomes. Negative values indicate sorting concentrated at low
 recombination. Both directions concentrate at low recombination, but \Fpo{}-directed sorting
-does so significantly more strongly at every threshold: the paired block-bootstrap difference
-in coefficient (\Faq{}\,$-$\,\Fpo{}) is positive with a 95\,\% CI excluding zero at all four
-thresholds ($\tau=0.6$: $+1.2$, 95\,\% CI $[0.1,\,2.3]$, two-sided $p=0.03$; $p\le0.05$
-throughout, shown above each threshold in panel b).}
+does so more strongly: the paired block-bootstrap difference
+in coefficient (\Faq{}\,$-$\,\Fpo{}) is positive at all four thresholds and its 95\,\% CI
+excludes zero at three of them ($\tau=0.6$: $+1.1$, 95\,\% CI $[0.05,\,2.2]$, two-sided
+$p=0.04$; significant at $\tau=0.5$--$0.7$, marginal at $\tau=0.8$ where $p=0.06$, shown above
+each threshold in panel b). Fitting the gradient this way is what makes
+the low-recombination contrast estimable: the sparse bins of panel a cannot support a stable
+per-decile fraction, whereas the regression enters every unit --- including the few large
+\Fpo{}-sorted low-recombination blocks --- as one independent observation, with the
+chromosome-level block bootstrap accounting for their non-independence.}
 {% methods
 \emph{Scope.} The entire pipeline underlying this figure --- LD-decay estimation, LD-based
 complexity reduction, and the ancestry-sorting analysis --- is based exclusively on the
@@ -152,9 +161,11 @@ when its oriented allele frequency reached $\varphi=0.85$ (\Faq{}) or fell to $\
 (\Fpo{}). A unit was called sorted when the proportion of populations near-fixed reached the
 threshold $\tau$; among sorted units the direction was assigned to the majority species when
 a two-sided binomial test of $n_{\text{aqu}}$ among $n_{\text{fixed}}$ ($\alpha=0.05$)
-rejected parity, and left unresolved otherwise. Units were required to have pooled-parental
-minor-allele frequency $\ge 0.15$; the diagnostic index was not gated. The same statistics
-were computed at the SNP level for comparison.
+rejected parity, and left unresolved otherwise. The only diagnosticity gate is the
+DI\,$>-25$ marker selection itself; unlike the genome-wide Module-A sorting, no additional
+pooled-parental MAF\,$\ge 0.15$ filter is applied, since restricting to DI\,$>-25$ already
+removes the near-monomorphic loci that filter guards against (it dropped only $\sim$398 of
+51{,}612 SNPs). The same statistics were computed at the SNP level for comparison.
 
 \emph{Recombination.} Recombination rate (cM/Mb) was assigned to each marker (and each
 unit's representative position) by per-chromosome linear interpolation of the linkage map.
@@ -177,22 +188,21 @@ two-sided $p$ (twice the fraction of replicates in which the difference reversed
 equality of the two directions' recombination dependence; these $p$-values are printed above
 each threshold in panel b.}
 {% note
-\emph{Why the SNP and unit levels diverge in the shaded low-recombination deciles of panel a
-(most visibly at $\tau=0.8$).} There, the fraction of \emph{units} sorted toward \Faq{} looks
-elevated while the SNP fraction stays near zero. This is not a failure of the SNP level to
-register the large sorted clusters. The large low-recombination clusters are sorted toward
-\Fpo{} --- 350-, 258- and 190-marker blocks on chromosomes 26 and 5 --- and their member SNPs
-individually reach near-fixation (342/350, 252/258 and 189/190 markers sorted at $\tau=0.8$),
-so the SNP fraction toward \Fpo{} is correspondingly high. The apparent \Faq{} discrepancy is a
-direction-specific cluster-size asymmetry acting on very few independent units: in these deciles
-the only sizeable \Faq{}-sorted unit is a single 89-marker cluster, and the remaining
-\Faq{}-sorted units contain 1--2 markers each. Because the unit-level fraction weights every
-cluster equally, two or three such tiny clusters out of only $\sim$8 independent units yield a
-sizeable \Faq{} fraction; at the SNP level the same events contribute a handful of markers
-against $\sim$5{,}000 SNPs (dominated by the large \Fpo{} blocks), leaving the SNP \Faq{}
-fraction near zero. The two levels thus weight direction differently --- by cluster and by
-marker --- and in low recombination the large clusters are \Fpo{} while the \Faq{} signal is
-confined to tiny clusters.}
+\emph{What the shaded low-recombination deciles actually contain --- counts, not a fraction ---
+and why this figure is preliminary.} The three lowest deciles hold 55 units in all; most are
+directionally unresolved, and the sorted signal is a handful of large blocks that each collapse
+to a single LD-reduced unit. Toward \Fpo{} these are a 350-marker block on chromosome~26, a
+190-marker block on chromosome~5 and a 72-marker block on chromosome~6, whose member SNPs
+individually reach near-fixation. Toward \Faq{} there is an 89-marker block on chromosome~15
+and --- at the more permissive $\tau=0.6$ --- a 384-marker block on chromosome~13, so the
+low-recombination \Faq{} signal is \emph{not} confined to tiny clusters. That 384-marker block
+is provisional: its pooled-parental MAF ($0.137$) sits just below the $0.15$ floor used by the
+genome-wide Module-A sorting, and it enters here only because that gate is deliberately not
+applied to the DI25 set (the DI\,$>-25$ selection is itself the gate). Because the
+low-recombination contrast rests on so few large units it is sensitive to their handful: it is
+significant at $\tau=0.5$--$0.7$ but only marginal at $\tau=0.8$ ($p=0.06$). All of this will be
+revisited when the analyses are rerun on the corrected 195-individual sample with reseeded
+diagnostic indices.}
 
 %% ==========================================================================
 %% Add the next figure with \figblock{file.pdf}{Title}{caption}{methods}{note-or-empty}
