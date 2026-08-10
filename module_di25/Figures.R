@@ -34,6 +34,24 @@ save_fig <- function(fig, name, width, height) {
   cat("[Figures.R] wrote", name, ".pdf/.png\n")
 }
 
+## ---- bootstrap cache -----------------------------------------------------
+## The chromosome block-bootstrap steps below (fig_recomb panel b; fig_size
+## panels b/c) are the only slow parts. Each is cached to
+## module_di25/data/_fig_cache_*.rds, keyed by a per-step version tag + the
+## mtimes of the sorting/clustering inputs, so a re-run that only touches layout
+## or labels reuses the bootstrap. Set RECOMPUTE <- TRUE (or bump a step's
+## version tag when its computation changes) to force a fresh bootstrap.
+RECOMPUTE <- FALSE
+.cache_inputs <- c(file.path(OUTDIR, "di25_sorting_emlg.rds"), file.path(OUTDIR, "di25_sorting_snp.rds"),
+                   file.path(OUTDIR, "di25_clustering_cM5.rds"), "data/Frufa_DTOL_PR.ref_genome.recmap")
+cache_boot <- function(name, ver, expr) {          # expr is lazy: only forced on a cache miss
+  f <- file.path(OUTDIR, sprintf("_fig_cache_%s.rds", name))
+  stamp <- list(ver = ver, mtime = file.mtime(.cache_inputs))
+  if (!RECOMPUTE && file.exists(f)) { cc <- readRDS(f)
+    if (identical(cc$stamp, stamp)) { cat("[cache] hit    ", name, "\n"); return(cc$value) } }
+  cat("[cache] compute", name, "\n"); v <- expr; saveRDS(list(stamp = stamp, value = v), f); v
+}
+
 ## =========================================================================
 ## FIG: directional ancestry sorting vs recombination, tau = 0.6 | 0.8
 ## =========================================================================
@@ -125,8 +143,8 @@ fig_recomb_directional <- function() {
     suppressWarnings(tryCatch(glm.fit(cbind(1, lr[idx]), y[idx], family = binomial())$coefficients[2],
                               error = function(e) NA_real_))
   }
-  set.seed(1); NB <- 1000L
-  boot <- rbindlist(lapply(c(0.5, 0.6, 0.7, 0.8), function(tau) {
+  NB <- 1000L
+  boot <- cache_boot("recomb_boot", "v1", { set.seed(1); rbindlist(lapply(c(0.5, 0.6, 0.7, 0.8), function(tau) {
     cl <- classify_sort(e$n_aqu, e$n_pol, e$n_obs, sort_th = tau, sort_rule = "binom", alpha = 0.05)
     yA <- as.integer(cl == "aquilonia"); yP <- as.integer(cl == "polyctena")
     bs <- vapply(seq_len(NB), function(b) {                       # ONE resample -> BOTH slopes
@@ -141,7 +159,7 @@ fig_recomb_directional <- function() {
                est_pol = est_P, lo_pol = quantile(pol_b, .025, na.rm = TRUE), hi_pol = quantile(pol_b, .975, na.rm = TRUE),
                est_diff = est_A - est_P, lo_diff = quantile(d, .025), hi_diff = quantile(d, .975),
                p_diff = p_diff, n_boot = length(d))
-  }))
+  })) })
   coefd <- rbind(boot[, .(tau, species = "aquilonia", est = est_aqu, lo = lo_aqu, hi = hi_aqu)],
                  boot[, .(tau, species = "polyctena", est = est_pol, lo = lo_pol, hi = hi_pol)])
   boot[, plab := fifelse(p_diff < 1 / NB, sprintf("italic(p) < %.3f", 2 / NB),
@@ -174,3 +192,141 @@ fig_recomb_directional <- function() {
 }
 
 fig_recomb_directional()
+
+## =========================================================================
+## FIG: directional ancestry sorting vs LD-cluster SIZE (units only; tau = 0.8 for a/b)
+## Panel a: fraction sorted toward each species by cluster-size class (binned, descriptive).
+## Panel b: the same at tau = 0.8 without binning -- each sorted unit as a 0/1 point on a
+##   log-size axis, with the logistic fit P(polyctena | sorted) ~ log10(size) and its
+##   chromosome block-bootstrap ribbon; shows how sparse the large-cluster tail really is.
+## Panel c: the JOINT model  P(polyctena | sorted) ~ log10(recomb) + log10(size), conditional
+##   on sorting (one three-way outcome, not two separate fits), fitted per tau with a
+##   chromosome block bootstrap on BOTH the eMLG-consensus sorting and the representative-
+##   marker sorting (no consensus averaging). Cluster size survives and recombination drops
+##   out; the size effect holds -- though smaller -- on representative markers, so it is not
+##   merely the consensus-averaging (dilution) artefact. SNPs are all size 1, so unit level.
+## =========================================================================
+fig_size_directional <- function() {
+  rec <- fread("data/Frufa_DTOL_PR.ref_genome.recmap"); setnames(rec, 1:4, c("chr","p","cM","cMMb"))
+  rec[, Chr := sub("chromosome_", "Chr", chr)]
+  rc <- function(ch, pos) { o <- rep(NA_real_, length(pos))
+    for (cc in unique(ch)) { r <- rec[Chr == paste0("Chr", cc)]; if (nrow(r) < 2) next
+      i <- which(ch == cc); o[i] <- approx(r$p, r$cMMb, xout = pos[i], rule = 2)$y }; o }
+  g <- as.data.table(readRDS(file.path(OUTDIR, "di25_clustering_cM5.rds"))$groups)
+  e <- as.data.table(readRDS(file.path(OUTDIR, "di25_sorting_emlg.rds")))   # consensus sorting
+  s <- as.data.table(readRDS(file.path(OUTDIR, "di25_sorting_snp.rds")))    # per-SNP sorting
+
+  ## per-unit table: consensus AND representative-marker sorting, recomb, size
+  u <- e[, .(group_id, n_loci, n_aqu_c = n_aqu, n_pol_c = n_pol, n_obs_c = n_obs, differentiated)]
+  u[, rep := g$representative[match(group_id, g$group_id)]]
+  u[, `:=`(chr = as.integer(sub("Chr","",sub(":.*","",rep))), pos = as.integer(sub(".*:","",rep)))]
+  u[, recomb := rc(chr, pos)]
+  u[, `:=`(n_aqu_r = s$n_aqu[match(rep, s$marker)], n_pol_r = s$n_pol[match(rep, s$marker)],
+           n_obs_r = s$n_obs[match(rep, s$marker)])]
+  u <- u[differentiated == TRUE & is.finite(recomb) & n_obs_c > 0 & !is.na(n_obs_r) & n_obs_r > 0]
+  u[, `:=`(lr = log10(recomb + 0.1), lsz = log10(n_loci))]
+
+  ## shared block-bootstrap fitter (glm.fit on a resampled index)
+  jfit <- function(y, X, idx) { yy <- y[idx]; if (sum(yy) < 3L || sum(yy) > length(yy) - 3L) return(rep(NA_real_, ncol(X)))
+    suppressWarnings(tryCatch(glm.fit(X[idx, , drop = FALSE], yy, family = binomial())$coefficients,
+                              error = function(e) rep(NA_real_, ncol(X)))) }
+  NB <- 1000L
+
+  ## ---- panel a: fraction of units sorted toward each species by size class (tau = 0.8) ----
+  wilson <- function(k, n) { z <- 1.959964; p <- k/n; d <- 1 + z^2/n
+    ctr <- (p + z^2/(2*n))/d; hw <- z*sqrt(p*(1-p)/n + z^2/(4*n^2))/d; list(lo = pmax(0, ctr-hw), hi = pmin(1, ctr+hw)) }
+  SLV <- c("1", "2", "3-4", "5-9", "10-49", "50-199", "200+")
+  u[, sclass := cut(n_loci, c(0, 1, 2, 4, 9, 49, 199, Inf), labels = SLV)]
+  cl8 <- classify_sort(u$n_aqu_c, u$n_pol_c, u$n_obs_c, sort_th = 0.8, sort_rule = "binom", alpha = 0.05)
+  d8 <- data.table(sclass = as.character(u$sclass),
+                   dir = fifelse(cl8 == "aquilonia", "aquilonia", fifelse(cl8 == "polyctena", "polyctena", "uns")))
+  tot <- d8[, .(n = .N), by = sclass]; ag <- d8[dir != "uns", .N, by = .(sclass, dir)]
+  full <- CJ(sclass = SLV, dir = c("aquilonia", "polyctena")); ag <- ag[full, on = .(sclass, dir)][is.na(N), N := 0L]
+  fa <- tot[ag, on = "sclass"][, `:=`(frac = N/n, lo = wilson(N, n)$lo, hi = wilson(N, n)$hi)]
+  fa[, `:=`(sclass = factor(sclass, levels = SLV), dir = factor(dir, levels = c("aquilonia", "polyctena")), tau = "tau == 0.8")]
+  pa_bin <- ggplot(fa, aes(sclass, frac, colour = dir, group = dir)) +
+    geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.14, show.legend = FALSE) +
+    geom_line(linewidth = 0.9) + geom_point(size = 1.8) +
+    scale_colour_manual(values = c(aquilonia = COL_AQU, polyctena = COL_POL), breaks = c("aquilonia", "polyctena"),
+                        labels = c(expression(italic("F. aquilonia")), expression(italic("F. polyctena"))), name = "sorted toward") +
+    scale_y_continuous(name = "fraction of units\nsorted toward the species", labels = scales::percent) +
+    guides(colour = "none") +   ## panel b carries the shared 'sorted toward' legend (as points)
+    labs(x = "LD-cluster size (n markers)") + theme_ms + theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+  ## ---- panel b: continuous -- each sorted unit vs cluster size (consensus, tau = 0.8); logistic
+  ##      P(polyctena | sorted) ~ log10(size) with a chromosome block-bootstrap ribbon ----
+  A8 <- cache_boot("size_ribbon_t08", "v1", (function(tau) {
+    cl <- classify_sort(u$n_aqu_c, u$n_pol_c, u$n_obs_c, sort_th = tau, sort_rule = "binom", alpha = 0.05)
+    srt <- cl %in% c("aquilonia", "polyctena"); sub <- u[srt]; y <- as.integer(cl[srt] == "polyctena")
+    X <- cbind(int = 1, lsz = sub$lsz)
+    grid <- seq(0, max(sub$lsz), length.out = 60); G <- cbind(1, grid)
+    predf <- function(idx) { b <- jfit(y, X, idx); if (any(is.na(b))) return(rep(NA_real_, nrow(G))); as.numeric(plogis(G %*% b)) }
+    ci <- split(seq_along(y), sub$chr); cn <- names(ci); set.seed(1)
+    bs <- vapply(seq_len(NB), function(b) predf(unlist(ci[sample(cn, length(cn), TRUE)], use.names = FALSE)), numeric(nrow(G)))
+    tl <- sprintf("tau == %.1f", tau)
+    list(pts = data.table(n_loci = sub$n_loci, pol = y, dir = factor(cl[srt], levels = c("aquilonia", "polyctena")), tau = tl),
+         rib = data.table(size = 10^grid, fit = predf(seq_along(y)),
+                          lo = apply(bs, 1, quantile, .025, na.rm = TRUE), hi = apply(bs, 1, quantile, .975, na.rm = TRUE), tau = tl))
+  })(0.8))
+  cat(sprintf("[Figures.R] panel b sorted units (tau0.8): n=%d\n", nrow(A8$pts)))
+  pa_cont <- ggplot() +
+    geom_ribbon(data = A8$rib, aes(size, ymin = lo, ymax = hi), fill = "#2C6E8F", alpha = 0.16) +
+    geom_line(data = A8$rib, aes(size, fit), colour = "#2C6E8F", linewidth = 0.9) +
+    geom_jitter(data = A8$pts, aes(n_loci, pol, colour = dir), width = 0, height = 0.06, size = 0.9, alpha = 0.35) +
+    scale_x_log10(breaks = c(1, 2, 5, 10, 50, 200, 1000)) +
+    scale_colour_manual(values = c(aquilonia = COL_AQU, polyctena = COL_POL), breaks = c("aquilonia", "polyctena"),
+                        labels = c(expression(italic("F. aquilonia")), expression(italic("F. polyctena"))), name = "sorted toward") +
+    scale_y_continuous(breaks = c(0, 1), labels = c("toward\naquilonia", "toward\npolyctena"), limits = c(-0.16, 1.16)) +
+    guides(colour = guide_legend(override.aes = list(size = 2.4, alpha = 1))) +
+    labs(x = "LD-cluster size (n markers, log scale)", y = "P(polyctena | sorted)") + theme_ms
+
+  ## ---- panel c: joint model P(polyctena | sorted) ~ log10(recomb) + log10(size) ----
+  jointd <- cache_boot("size_jointd", "v1", rbindlist(lapply(c(0.5, 0.6, 0.7, 0.8), function(tau)
+    rbindlist(lapply(c("consensus", "representative"), function(basis) {
+      na <- if (basis == "consensus") u$n_aqu_c else u$n_aqu_r
+      np <- if (basis == "consensus") u$n_pol_c else u$n_pol_r
+      no <- if (basis == "consensus") u$n_obs_c else u$n_obs_r
+      cl <- classify_sort(na, np, no, sort_th = tau, sort_rule = "binom", alpha = 0.05)
+      srt <- cl %in% c("aquilonia", "polyctena"); y <- as.integer(cl[srt] == "polyctena"); sub <- u[srt]
+      X <- cbind(int = 1, recombination = sub$lr, size = sub$lsz)
+      ci <- split(seq_along(y), sub$chr); cn <- names(ci); set.seed(1)
+      bs <- vapply(seq_len(NB), function(b)
+        jfit(y, X, unlist(ci[sample(cn, length(cn), TRUE)], use.names = FALSE)), numeric(ncol(X)))
+      est <- jfit(y, X, seq_along(y))
+      data.table(tau = tau, basis = basis, term = colnames(X), est = est,
+                 lo = apply(bs, 1, quantile, .025, na.rm = TRUE), hi = apply(bs, 1, quantile, .975, na.rm = TRUE))[term != "int"]
+    })))))
+  ## propensity (sorted at all) ~ size, consensus -- reported for the note
+  prop <- cache_boot("size_prop", "v1", rbindlist(lapply(c(0.5, 0.6, 0.7, 0.8), function(tau) {
+    cl <- classify_sort(u$n_aqu_c, u$n_pol_c, u$n_obs_c, sort_th = tau, sort_rule = "binom", alpha = 0.05)
+    y <- as.integer(cl %in% c("aquilonia", "polyctena")); X <- cbind(int = 1, size = u$lsz)
+    ci <- split(seq_along(y), u$chr); cn <- names(ci); set.seed(1)
+    bs <- vapply(seq_len(NB), function(b) jfit(y, X, unlist(ci[sample(cn, length(cn), TRUE)], use.names = FALSE))[2], numeric(1))
+    data.table(tau = tau, est = jfit(y, X, seq_along(y))[2], lo = quantile(bs, .025, na.rm = TRUE), hi = quantile(bs, .975, na.rm = TRUE))
+  })))
+  cat("[Figures.R] joint P(polyctena|sorted) ~ recomb + size:\n")
+  print(jointd[, .(tau, basis, term, est = round(est, 2), lo = round(lo, 2), hi = round(hi, 2))])
+  cat("[Figures.R] propensity P(sorted) ~ size (consensus):\n")
+  print(prop[, .(tau, est = round(est, 2), lo = round(lo, 2), hi = round(hi, 2))])
+
+  jointd[, term := factor(term, levels = c("size", "recombination"),
+                          labels = c("cluster size (per log10 markers)", "recombination (per log10 cM/Mb)"))]
+  jointd[, basis := factor(basis, levels = c("consensus", "representative"))]
+  pdg <- position_dodge(0.5)
+  pc <- ggplot(jointd, aes(factor(tau), est, fill = basis, group = basis)) +
+    geom_hline(yintercept = 0, linetype = 2, colour = "grey70") +
+    geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2, position = pdg, colour = "#2C6E8F", show.legend = FALSE) +
+    geom_point(size = 2.6, shape = 21, colour = "#2C6E8F", position = pdg) +
+    facet_wrap(~ term) +
+    scale_fill_manual(values = c(consensus = "#2C6E8F", representative = "white"),
+                      name = "sorting basis", labels = c("eMLG consensus", "representative SNP")) +
+    labs(x = "sorting threshold (fraction of populations near-fixed)",
+         y = "joint-model coefficient\n(logit; P(polyctena | sorted))") + theme_ms +
+    theme(strip.background = element_blank())
+
+  fig <- ((pa_bin + labs(tag = "a")) | (pa_cont + labs(tag = "b"))) / (pc + labs(tag = "c")) +
+    plot_layout(guides = "collect", heights = c(1.2, 1)) & theme(legend.position = "bottom")
+  save_fig(fig, "fig_size_directional", width = 11, height = 8)
+}
+
+fig_size_directional()
