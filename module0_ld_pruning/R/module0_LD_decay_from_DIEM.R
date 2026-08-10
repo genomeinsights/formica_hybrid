@@ -3,8 +3,22 @@ library(data.table)
 library(patchwork)
 library(SNPRelate)
 devtools::load_all("~/gitlab/LDscnR/")
+
+## --- warm-run safeguard (COLD-RUN GENERATOR) --------------------------------
+## This script re-saves the shared genotype files data/hybrids_*.Rdata. On a warm
+## re-run the DIEM-parse branch below is skipped (diem_parsed.rds present), so
+## GTs_hybrids_005 is never created and the unguarded save() TRUNCATES the shared
+## input before erroring. Refuse to run when the parse cache already exists.
+FORCE_COLD <- FALSE   # set TRUE only for a deliberate from-scratch regeneration
+if (!FORCE_COLD && file.exists("module0_ld_pruning/data/diem_parsed.rds")) {
+  stop("module0_LD_decay_from_DIEM.R is a COLD-RUN generator and its caches already exist.\n",
+       "  A warm re-run would TRUNCATE the shared data/hybrids_*.Rdata genotype files.\n",
+       "  To regenerate from scratch, remove the module0_ld_pruning/data/ caches and set FORCE_COLD <- TRUE.",
+       call. = FALSE)
+}
+
 # ------------------------------------------------------------
-# Parse diem data to GTs/map 
+# Parse diem data to GTs/map
 # ------------------------------------------------------------
 if(!file.exists("module0_ld_pruning/data/diem_parsed.rds")){
   sample_data <- fread("data/Sample_covariate_info_outlier_analysis_20.txt")
@@ -205,6 +219,7 @@ saveRDS(
   "module0_ld_pruning/data/ld_tracks_a_windows.rds"
 )
 
+#load("data/hybrids_only_maf005.Rdata")
 map <- copy(map_hyb_005)
 
 rec_map <- fread("./data/Frufa_DTOL_PR.ref_genome.recmap")
@@ -232,9 +247,7 @@ plot_ld_decay_tracks <- function(
     ncol = 5
 ) {
   
-  library(data.table)
-  library(ggplot2)
-  
+
   ## Build LD-decay window table
   plot_dt <- rbindlist(lapply(names(ld_decay$by_chr), function(ch) {
     
@@ -428,11 +441,11 @@ plot_ld_decay_tracks <- function(
       )
   }
   
-  p
+  return(list(p,plot_dt))
 }
 
 
-p
+
 p <- plot_ld_decay_tracks(
   ld_decay = ld_decay,
   ld_w_095 = ld_w_095,
@@ -444,17 +457,16 @@ p <- plot_ld_decay_tracks(
   highlight_outliers = TRUE
 )
 
-ggsave("module0_ld_pruning/Figures/ld_tracks.png",p, width = 20, height = 20)
+ggsave("module0_ld_pruning/Figures/ld_tracks.png",p[[1]], width = 20, height = 20)
 
 # ------------------------------------------------------------
 # comparing ld_w, a and rec_rate
 # ------------------------------------------------------------
 library(pROC)
-library(patchwork)
 
 ## --- attach recombination-map estimates to each LD-decay window --- ##
 ## (same start/end window resolution as plot_dt / plot_ld_decay_tracks())
-win_dt <- copy(plot_dt)
+win_dt <- copy(p[[2]])
 win_dt[, win_id := .I]
 
 rec_win <- rec_map[

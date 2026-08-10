@@ -5,6 +5,18 @@ library(SNPRelate)
 library(parallel)
 devtools::load_all("~/gitlab/LDscnR/")
 
+## --- warm-run safeguard (COLD-RUN GENERATOR) --------------------------------
+## Heavy from-scratch clustering: no internal caching, recomputes
+## ld_prune_and_eMLG() ~8x over ~1.1M markers. Refuse to re-run when the
+## canonical clustering already exists.
+FORCE_COLD <- FALSE   # set TRUE only for a deliberate from-scratch regeneration
+if (!FORCE_COLD && file.exists("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")) {
+  stop("module0_ld_pruning_DIEM.R is a COLD-RUN generator and its clustering output\n",
+       "  (module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds) already exists; a re-run would\n",
+       "  recompute the two-stage clustering from scratch (~hours). Remove that file and\n",
+       "  set FORCE_COLD <- TRUE to regenerate.", call. = FALSE)
+}
+
 # ------------------------------------------------------------
 # Read in data (generated in LD_decay_from_DIEM.R)
 # ------------------------------------------------------------
