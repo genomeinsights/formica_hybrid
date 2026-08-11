@@ -291,6 +291,213 @@ blocks (chr26/5/6 toward \Fpo{}, chr13/15 toward \Faq{}) --- not as a general si
 mechanism.}
 
 %% ==========================================================================
+\figblock{bdmi_sorting_circos_cutoff5.png}
+{Figure 4 --- BDMI candidate regions coincide with ancestry-sorted regions}
+{% caption
+\textbf{Genomic regions carrying candidate hybrid incompatibilities (BDMIs) sit on the
+ancestry-sorted parts of the genome, not the unsorted background.} An ancestry-sorting
+$\tau$ sweep (four concentric rings, $\tau=0.5$--$0.8$ inner$\to$outer; each
+diagnostic SNP coloured by its sort class --- \Faq{} teal, \Fpo{} yellow, direction
+unresolved purple, unsorted near-white), with an added outer ring (orange) marking the
+diagnostic SNPs that fall inside a set of BDMI candidate regions. The regions shown are the
+$\chi^2\ge 0.05$ set (58 merged regions); orange ticks concentrate on the coloured (sorted)
+sectors --- most visibly the large \Fpo{}-sorted block spanning chromosomes~25--26 and the
+\Faq{}-sorted stripes on chromosomes~11, 15 and 16--17 --- rather than being spread evenly
+around the circle. Chromosomes~1--27 are arranged by diagnostic-SNP rank (arc
+$\propto$ number of diagnostic SNPs), so the BDMI ring aligns unit-for-unit with the sorting
+rings.}
+{% methods
+\emph{BDMI candidate regions.} An independent between-population DMI screen (collaborator
+data) tested pairs of loci in male hybrids of one \Faq{}\,$\times$\,\Fpo{} hybrid population
+for distorted two-locus genotype frequencies; loci belonging to at least one significant
+pair at a given $\chi^2$ statistic cutoff were exported as genomic intervals and lifted onto
+the \emph{Frufa\_DTOL\_PR} reference used here (23 nested cutoffs, $\chi^2 = 0.005$--$0.06$).
+Each file is the union of participating loci as merged intervals (the pairing that would draw
+edges between them is not retained), so this analysis treats them as candidate \emph{regions},
+not as an incompatibility network. Overlapping intervals were merged per chromosome.
+
+\emph{Overlay.} Using the same marker order and chromosome geometry as Figure~1 and the same
+sort classification as Figure~2 (four thresholds $\tau=0.5$--$0.8$, $\varphi=0.85$, binomial
+direction test at $\alpha=0.05$; DI\,$>-25$ SNP set, $n=51{,}612$), each diagnostic SNP was
+oriented and flagged as inside/outside the BDMI regions at
+the chosen cutoff and drawn as the outer ring. Rendered by
+\texttt{module\_di25/R/bdmi\_sorting\_circos.R} (\texttt{CUTOFF} selects the cutoff) as a
+polar raster over \texttt{render\_circos\_raster()}.}
+{% note
+\emph{Coordinates are shared.} The colleague's regions and this study's diagnostic markers are
+both on the \emph{Frufa\_DTOL\_PR} assembly, so base-pair positions are directly comparable; no
+further liftover was applied on our side. Chromosome~23 carries no diagnostic markers and is
+absent in both. The visual overlap is quantified in Figure~5.}
+
+%% ==========================================================================
+\figblock{bdmi_sorting_overlap.png}
+{Figure 5 --- BDMI regions are enriched for sorted loci, most strongly toward \Fpo{}}
+{% caption
+\textbf{Diagnostic SNPs inside BDMI candidate regions are several-fold more likely to be
+ancestry-sorted than expected under a position-randomised null, and the enrichment is
+carried disproportionately by \Fpo{}-directed sorting.} For each of the 23 $\chi^2$ cutoffs
+(\emph{x}, log scale; more stringent cutoffs to the right retain fewer, stronger regions),
+\textbf{(a)} the fold-enrichment of sorted diagnostic SNPs inside the BDMI regions relative
+to the rotation null --- for any-direction sorting (blue), \Fpo{}-directed (yellow) and
+\Faq{}-directed (teal) --- and \textbf{(b)} the corresponding rotation-null $p$
+($-\log_{10}$; dashed line $p=0.05$). At stringent cutoffs the overlap is strong and highly
+significant (any-sorted up to $5.7\times$, $p\approx5\times10^{-4}$ --- the 2000-permutation
+floor; \Fpo{}-directed up to $8.7\times$), and it decays to $\sim\!1\times$ (no signal) as the
+cutoff relaxes and the regions blanket $\sim$2/3 of the genome. Across all cutoffs the
+\Fpo{}-directed enrichment exceeds the \Faq{}-directed one.}
+{% methods
+\emph{Test.} Each diagnostic SNP (DI\,$>-25$; $n=51{,}612$) was classified sorted/unsorted and
+by direction at $\tau=0.6$, $\varphi=0.85$ (as in Fig.~2), and flagged inside/outside the merged
+BDMI regions at each cutoff. Enrichment is the observed count of sorted in-region SNPs divided by
+its null mean.
+
+\emph{Rotation null.} Significance is from a per-chromosome circular-rotation null (2000
+permutations): within each chromosome the diagnostic-SNP coordinates were shifted by a random
+offset and wrapped, holding fixed both that chromosome's sorted-direction pattern and its total
+BDMI coverage, and randomising only the \emph{phase} of the regions relative to the SNPs. A
+positive result therefore indicates that the \emph{actual} region positions coincide with sorted
+loci beyond chance placement, not merely that both favour the same chromosomes. Empirical
+one-sided $p=(1+\#\{\text{null}\ge\text{obs}\})/(1+2000)$. Generated by
+\texttt{module\_di25/R/bdmi\_sorting\_overlap.R}.}
+{% note
+\emph{Not driven by the three large \Fpo{} blocks.} Repeating the test with chromosomes~5, 25
+and 26 --- the big low-recombination \Fpo{} blocks (Figs.~2--3) --- removed entirely (9{,}086
+SNPs dropped; the \Fpo{}-sorted pool falls from 2{,}102 to 787 loci) \emph{strengthens} the
+result: the stringent-cutoff \Fpo{} enrichment rises to $10.4\times$ and becomes significant
+across almost the whole cutoff range rather than only the stringent end
+(\texttt{bdmi\_sorting\_overlap\_no5\_25\_26.png}). Those blocks are so large and near-fixed that
+they add variance to the null without contributing resolvable phase information; the
+BDMI\,$\leftrightarrow$\,sorting coupling is genome-wide and block-independent.
+
+\emph{Shared-power caveat.} A DMI screen based on allele-frequency / LD contrasts has more power
+where ancestry is differentiated, which is also where sorting is detected; the rotation null
+controls for genomic \emph{position} but not for this shared dependence on differentiation, so
+part of the overlap may be a power coincidence rather than a causal link. Because the input
+regions are the union of participating loci (edges not retained), this figure speaks to
+\emph{co-location} of BDMI candidates and sorting, not to specific incompatible pairs. Preliminary
+pending the 195-individual, reseeded rerun (see Fig.~2).}
+
+%% ==========================================================================
+\figblock{bdmi_sorting_null_hist_cutoff5.png}
+{Figure 5---figure supplement 1 --- The rotation null behind the overlap test}
+{% caption
+\textbf{The permutation test underlying Figure~5, shown as null distributions for one
+representative cutoff.} For the $\chi^2\ge 0.05$ region set (58 regions; 2{,}509 diagnostic
+SNPs inside), each panel is the per-chromosome circular-rotation null distribution
+(5{,}000 permutations) of the number of sorted diagnostic SNPs falling inside the BDMI
+regions --- \textbf{(left)} any-direction sorted, \textbf{(centre)} toward \Fpo{},
+\textbf{(right)} toward \Faq{}. The coloured vertical line is the \emph{observed} count; in
+every panel it lies far in the right tail of the null (any-sorted $878$ vs null mean $207$,
+fold $4.2\times$, $p<2\times10^{-4}$; \Fpo{} $379$ vs $62$, fold $6.1\times$, $p=0.006$;
+\Faq{} $456$ vs $143$, fold $3.2\times$, $p=0.0004$). The \Fpo{} null is strongly
+right-skewed --- rotations that happen to place regions on the large clustered \Fpo{} blocks
+generate the long tail --- yet the observed value still exceeds it.}
+{% methods
+\emph{Test.} Identical to Figure~5 but for the single cutoff $\chi^2=0.05$ and with $5{,}000$
+permutations (a single cutoff, so more permutations for a smooth null). Each permutation
+circularly shifts the diagnostic-SNP coordinates within each chromosome by a random offset,
+holding each chromosome's sorted-direction pattern and BDMI coverage fixed and randomising only
+the phase; the statistic is the count of sorted (respectively \Fpo{}-/\Faq{}-directed) SNPs
+inside the regions. Empirical one-sided $p=(1+\#\{\text{null}\ge\text{obs}\})/(1+5000)$.
+Generated by \texttt{module\_di25/R/bdmi\_sorting\_null\_hist.R} (\texttt{CUTOFF},
+\texttt{EXCLUDE\_CHR}, \texttt{N\_PERM} selectable).}
+{% note
+\emph{Block-excluded and other cutoffs.} The same panel with chromosomes~5/25/26 removed
+(the \texttt{\_no5\_25\_26} variant of this figure) tells the same story on the lower
+baseline of Figure~5's Note; any other cutoff can be rendered via \texttt{CUTOFF=k}. This
+supplement visualises a single cutoff; Figure~5 traces the same test across all 23.}
+
+%% ==========================================================================
+\figblock{bdmi_sorting_direction_no5_25_26.png}
+{Figure 6 --- Sorted loci inside BDMI regions lean toward \Fpo{}}
+{% caption
+\textbf{Conditional on being sorted, diagnostic SNPs inside BDMI regions are biased toward
+\Fpo{}-directed sorting relative to the genome-wide \Faq{}:\Fpo{} ratio.} With the three large
+\Fpo{}-block chromosomes (5, 25, 26) removed, \textbf{(top)} the \Fpo{} fraction among
+directionally-sorted SNPs \emph{inside} the BDMI regions (orange) sits above the genome-wide
+baseline ($f_0=0.17$, dashed) at every $\chi^2$ cutoff, and \textbf{(bottom)} the rotation-null
+$p$ for that excess ($-\log_{10}$; dashed $p=0.05$) clears significance across a broad band of
+mid cutoffs (minimum $p=0.0015$; polyctena:aquilonia odds ratio, in- vs out-of-region, $2.8$--$5.7$).
+The bias is present but does not reach significance at the most stringent cutoffs, where few
+regions and few in-region sorted loci leave little power.}
+{% methods
+\emph{Statistic.} Among directionally-sorted diagnostic SNPs ($\tau=0.6$), we compared the \Fpo{}
+fraction $f_\text{in}=\text{pol}_\text{in}/(\text{pol}_\text{in}+\text{aqu}_\text{in})$ inside the
+BDMI regions to the genome-wide fraction $f_0$, and the pol:aqu odds ratio in- vs out-of-region,
+at each cutoff. Significance is the same per-chromosome rotation null as Figure~5 (2000
+permutations), one-sided for $f_\text{in}$ exceeding the null. Generated by
+\texttt{module\_di25/R/bdmi\_sorting\_direction.R}; the panel shown excludes chromosomes~5/25/26
+(\texttt{EXCLUDE\_CHR=5,25,26}).}
+{% note
+\emph{Why the block-excluded panel is shown.} With all chromosomes included the same
+\Fpo{}-directional lean is present as a raw odds ratio ($2.0$--$2.8\times$; in-region \Fpo{}
+fraction up to $0.54$ vs $f_0=0.32$) but does \emph{not} clear the rotation null at any cutoff
+(best $p\approx0.13$): the three near-fixed \Fpo{} blocks dominate the direction counts and inflate
+the null's variance, exactly as in Figure~5. Removing them lowers the baseline to $0.17$ and
+reveals the block-independent directional bias. The effect is real but moderate --- an odds ratio
+of a few-fold, significant only across mid cutoffs --- so it is weaker evidence than the
+sorted-\emph{enrichment} of Figure~5. Read together: BDMI candidate regions robustly co-locate with
+sorted loci, and those loci lean \Fpo{}, consistent with (but not proof of) incompatibilities being
+associated preferentially with \Fpo{}-directed fixation. Same shared-power and edges-not-retained
+caveats as Figure~5; preliminary pending the reseeded rerun.}
+
+%% ==========================================================================
+\figblock{di25_sorting_emp_vs_sim.pdf}
+{Figure 7 --- Ancestry sorting exceeds a demographic null that reproduces the LD landscape}
+{% caption
+\textbf{Observed ancestry sorting far exceeds a neutral demographic null, even though the
+same simulation reproduces the empirical local-LD landscape.} Per-SNP sorting was estimated on
+each of 1000 coalescent-scale DIEM replicates exactly as in Figure~2 and compared to the
+empirical observation (orange diamonds). \textbf{(a)} Percentage of diagnostic SNPs called
+sorted at each threshold $\tau=0.5$--$0.8$: the simulated null (green) sits at essentially zero
+across every replicate, whereas the observed values are $21.1/13.3/8.8/4.5\,\%$.
+\textbf{(b)} The same contrast as raw sorted-SNP counts ($+1$, log scale): at $\tau=0.5$ the
+observed count is $\sim$10{,}900 sorted SNPs while the \emph{maximum} over all 1000 null
+replicates is 3 (only 194/1000 replicates produce even one sorted SNP), and at $\tau=0.8$ no
+replicate produces a single sorted SNP. The separation is complete at every threshold
+(empirical $p=0.001$, the 1000-replicate floor; $z\!\ge\!2\times10^{4}$). Observed sorting is
+also directionally biased ($71\,\%$ toward \Faq{} at $\tau=0.5$); the null has essentially no
+sorted loci and therefore no testable direction.}
+{% methods
+\emph{Simulated null.} 1000 replicate data sets simulated under the study's neutral
+demographic model for the hybrid zone, run through the identical DIEM pipeline and read from
+\texttt{data/diem\_outs\_demo/diem\_boot$\langle$N$\rangle$\_output.bed}. Each replicate is a
+\emph{matched} design --- the same 20 hybrid populations at near-identical sizes and 15\,+\,15
+parental references --- so sorting is estimated per population exactly as in the observed data.
+
+\emph{Sorting estimator.} For every replicate we ran the Figure~2 estimator unchanged
+(\texttt{ohta\_fast\_prepare}\,$\rightarrow$\,\texttt{parallelism\_stats}, near-fixation floor
+$\varphi=0.85$, \texttt{binom} direction rule, $\alpha=0.05$), orienting each replicate to the
+\Faq{} allele by \emph{its own} parental allele-frequency difference. DIEM's three states enter
+directly as $0/1/2$ dosage; because orientation is by parents the DIEM polarity is irrelevant.
+We verified the simulated parents are differentiated (median parental allele-frequency
+difference $0.77$), so the null's absence of sorting is genuine, not an orientation artefact.
+At each $\tau\in\{0.5,0.6,0.7,0.8\}$ we tallied the percentage and count of sorted SNPs and the
+\Faq{}-directional fraction, and compared the observation to the 1000-replicate null
+($z$-score and empirical one-sided $p=(1+\#\{\text{null}\ge\text{obs}\})/1001$). Estimated at
+the SNP level only. Generated by \texttt{module\_di25/R/di25\_sorting\_emp\_vs\_sim.R}
+(resumable, per-replicate cache).}
+{% note
+\emph{The same null reproduces LD but not sorting --- so sorting, not LD, is the non-neutral
+signal.} This demographic simulation matches the empirical per-window local-LD landscape closely
+(windowed-median $\mathrm{ld_w}$, per-window Pearson $0.91$; empirical and simulated
+$\mathrm{ld_w}$ are statistically indistinguishable window-by-window, generated by
+\texttt{module\_di25/R/di25\_ldw\_manhattan\_envelope.R}). Yet it produces essentially no parallel
+ancestry sorting. Local LD is therefore largely a product of the shared recombination landscape
+and neutral demography, whereas parallel near-fixation toward the \emph{same} parental ancestry
+across many independent populations is not generated by drift/admixture at all --- it is the
+signature the observed data carry in excess of this null, and it is \Faq{}-biased. This
+strengthens the earlier neutral-null contrast (\emph{F}\textsubscript{ST}/sorting far exceeds
+drift while LD does not) using a null that now \emph{matches} empirical LD, removing LD-level as an
+alternative explanation.
+
+\emph{Scope and caveats.} Per-SNP only here; the per-LD-cluster (eMLG) null is not yet run
+(it requires re-clustering each replicate, or applying the empirical cluster definitions as a
+same-units shortcut). The null is a single demographic model, so it bounds what neutral
+demography of this design can produce rather than exhausting all neutral scenarios. Preliminary
+pending the 195-individual, reseeded rerun (see Fig.~2).}
+
+%% ==========================================================================
 %% Add the next figure with \figblock{file.pdf}{Title}{caption}{methods}{note-or-empty}
 
 \end{document}
