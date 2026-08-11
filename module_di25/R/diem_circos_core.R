@@ -33,8 +33,9 @@ render_circos_raster <- function(code, chr_num, palette, outpng = NULL, title = 
                                  open_deg = 24, chr_gap_deg = 0.5,
                                  chr_label_prefix = "Chr ", cex_main = 0.9,
                                  ring_labels = NULL, ring_sep = TRUE, ring_label_cex = 0.62,
+                                 chr_label_cex = 0.5, legend_cex = 0.75, main_line = 0.2,
                                  legend_labels = NULL, legend_cols = NULL,
-                                 bg_col = "#FFFFFF", new_device = TRUE,
+                                 bg_col = "#FFFFFF", new_device = TRUE, res = 300,
                                  add = FALSE, draw_chr_labels = TRUE) {
   storage.mode(code) <- "integer"
   nrings <- ncol(code)
@@ -76,7 +77,7 @@ render_circos_raster <- function(code, chr_num, palette, outpng = NULL, title = 
   ras <- as.raster(matrix(cols, npx, npx, byrow = FALSE))
 
   if (!add) {
-    if (new_device) png(outpng, width = npx, height = npx, res = 300)
+    if (new_device) png(outpng, width = npx, height = npx, res = res, type = "cairo")
     op <- par(mar = c(0, 0, 2, 0), xpd = NA)
     on.exit({ par(op); if (new_device) dev.off() }, add = TRUE)
     plot.new(); plot.window(xlim = c(-1, 1), ylim = c(-1, 1), asp = 1)
@@ -92,7 +93,7 @@ render_circos_raster <- function(code, chr_num, palette, outpng = NULL, title = 
     a <- (start_deg - mid) * pi / 180
     x <- lab_r * cos(a); y <- lab_r * sin(a)
     deg <- atan2(y, x) * 180 / pi; flip <- deg > 90 || deg < -90
-    text(x, y, paste0(chr_label_prefix, chr_levels[i]), cex = 0.5, col = "grey20",
+    text(x, y, paste0(chr_label_prefix, chr_levels[i]), cex = chr_label_cex, col = "grey20",
          srt = if (flip) deg + 180 else deg, adj = if (flip) c(1, 0.5) else c(0, 0.5))
   }
   ## ring labels in the opening gap, one at each ring's mid-radius
@@ -106,8 +107,8 @@ render_circos_raster <- function(code, chr_num, palette, outpng = NULL, title = 
   }
   if (!is.null(legend_labels))
     legend("bottomleft", legend = legend_labels, fill = legend_cols, bty = "n",
-           cex = 0.75, border = NA, inset = c(0.02, 0.02))
-  if (nzchar(title)) title(main = title, cex.main = cex_main, line = 0.2)
+           cex = legend_cex, border = NA, inset = c(0.02, 0.02))
+  if (nzchar(title)) title(main = title, cex.main = cex_main, line = main_line)
   invisible(list(n_units = nrow(code), n_rings = nrings))
 }
 
