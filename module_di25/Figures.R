@@ -335,3 +335,108 @@ fig_size_directional <- function() {
 }
 
 fig_size_directional()
+
+## =========================================================================
+## FIG: BDMI candidacy vs recombination (the Fig-2 analysis, for BDMIs)
+## Do the colleague's BDMI candidate regions, like ancestry sorting, concentrate
+## at low recombination? If so, the BDMI<->sorting overlap (Figs 4-6) is partly a
+## shared low-recombination architecture rather than a specific coupling.
+## Panel a: fraction of diagnostic SNPs that are BDMI candidates across
+##   recombination deciles, at a stringent and a permissive X^2 cutoff (Wilson CI).
+## Panel b: logistic recombination coefficient of BDMI candidacy,
+##   P(SNP in BDMI region) ~ log10(recomb), per cutoff, with a chromosome block
+##   bootstrap (1000). Negative = concentrated at low recombination. The grey band
+##   is the same coefficient for ancestry sorting itself, P(sorted at tau=0.6),
+##   fitted on the identical SNP set -- the reference the BDMI curve is read against.
+## NOTE: the block bootstrap here also depends on the BDMI .bed files, which are
+##   NOT in cache_boot's input-mtime stamp; set RECOMPUTE <- TRUE if the beds change.
+## =========================================================================
+fig_bdmi_recomb <- function() {
+  BEDDIR <- "data/liftoff_Frufa_DTOL_PR"
+  rec <- fread("data/Frufa_DTOL_PR.ref_genome.recmap"); setnames(rec, 1:4, c("chr","p","cM","cMMb"))
+  rec[, Chr := sub("chromosome_", "Chr", chr)]
+  rc <- function(ch, pos) { o <- rep(NA_real_, length(pos))
+    for (cc in unique(ch)) { r <- rec[Chr == paste0("Chr", cc)]; if (nrow(r) < 2) next
+      i <- which(ch == cc); o[i] <- approx(r$p, r$cMMb, xout = pos[i], rule = 2)$y }; o }
+  wilson <- function(k, n) { z <- 1.959964; p <- k/n; d <- 1 + z^2/n
+    ctr <- (p + z^2/(2*n))/d; hw <- z*sqrt(p*(1-p)/n + z^2/(4*n^2))/d; list(lo = pmax(0, ctr-hw), hi = pmin(1, ctr+hw)) }
+  merge_iv <- function(s, e) { o <- order(s); s <- s[o]; e <- e[o]
+    cs <- s[1L]; ce <- e[1L]; oS <- numeric(0); oE <- numeric(0)
+    for (i in seq_along(s)[-1L]) { if (s[i] <= ce) ce <- max(ce, e[i])
+      else { oS <- c(oS, cs); oE <- c(oE, ce); cs <- s[i]; ce <- e[i] } }
+    list(s = c(oS, cs), e = c(oE, ce)) }
+  in_iv <- function(q, iv) { if (!length(iv$s)) return(logical(length(q)))
+    (findInterval(q, as.vector(rbind(iv$s, iv$e))) %% 2L) == 1L }
+
+  ps <- as.data.table(readRDS(file.path(OUTDIR, "di25_sorting_snp.rds")))
+  ps[, `:=`(chr = as.integer(sub("Chr","",sub(":.*","",marker))), pos = as.integer(sub(".*:","",marker)))]
+  ps[, recomb := rc(chr, pos)]
+  ps <- ps[differentiated == TRUE & n_obs > 0 & is.finite(recomb) & is.finite(uni_score)]
+  ps[, lr := log10(recomb + 0.1)]
+
+  beds <- sort(list.files(BEDDIR, pattern = "^bdmi_candidates\\.cutoff_.*\\.bed$"))
+  cut_k <- as.integer(sub(".*cutoff_(\\d+)_.*", "\\1", beds))
+  x2v   <- as.numeric(sub("^(0)(\\d+)$", "0.\\2", sub(".*cutoff_\\d+_(\\d+)\\..*", "\\1", beds)))
+  o <- order(cut_k); beds <- beds[o]; cut_k <- cut_k[o]; x2v <- x2v[o]
+  member <- function(i) { bed <- fread(file.path(BEDDIR, beds[i]), header = FALSE, col.names = c("chr","start","end"))
+    bed[, cn := as.integer(sub("chromosome_","",chr))]; inb <- logical(nrow(ps))
+    for (cc in unique(bed$cn)) { iv <- merge_iv(bed[cn==cc]$start, bed[cn==cc]$end); idx <- ps$chr == cc
+      inb[idx] <- in_iv(ps$pos[idx], iv) }; inb }
+
+  ## ---- panel a: BDMI-candidate fraction across recombination deciles --------
+  rbrk <- quantile(ps$recomb, 0:10/10, na.rm = TRUE)
+  ps[, rdec := cut(recomb, rbrk, include.lowest = TRUE, labels = FALSE)]
+  xlab <- ps[!is.na(rdec), round(median(recomb), 1), by = rdec][order(rdec)]$V1
+  aK   <- c(which(cut_k == 5L), which(cut_k == 21L))                 # X2 0.05 (stringent), 0.01 (permissive)
+  adat <- rbindlist(lapply(aK, function(i) { inb <- member(i)
+    ag <- data.table(rdec = ps$rdec, inb = inb)[!is.na(rdec), .(n = .N, k = sum(inb)), by = rdec][order(rdec)]
+    ag[, `:=`(frac = k/n, lo = wilson(k, n)$lo, hi = wilson(k, n)$hi,
+              cut = factor(sprintf("chi^2 == %.3f", x2v[i]), levels = sprintf("chi^2 == %.3f", x2v[aK])))][] }))
+  ocol <- c("#8A3A0E", "#E0A96D")                                   # stringent dark / permissive light orange
+  names(ocol) <- levels(adat$cut)
+  pa <- ggplot(adat, aes(rdec, frac, colour = cut)) +
+    geom_line(linewidth = 0.9) + geom_point(size = 1.8) +
+    geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.15, show.legend = FALSE) +
+    scale_colour_manual(values = ocol, name = expression("X"^2*" cutoff"),
+                        labels = parse(text = levels(adat$cut))) +
+    scale_x_continuous(breaks = 1:10, labels = xlab) +
+    scale_y_continuous(labels = scales::percent) +
+    labs(x = "recombination decile (median cM/Mb)",
+         y = "fraction of diagnostic SNPs\ninside BDMI regions") + theme_ms
+
+  ## ---- panel b: recombination coefficient of BDMI candidacy, per cutoff -----
+  chr_idx <- split(seq_len(nrow(ps)), ps$chr); chrs <- names(chr_idx); NB <- 1000L
+  fit_slope <- function(y, idx) { s <- sum(y[idx])
+    if (s < 3L || s > length(idx) - 3L) return(NA_real_)
+    suppressWarnings(tryCatch(glm.fit(cbind(1, ps$lr[idx]), y[idx], family = binomial())$coefficients[2],
+                              error = function(e) NA_real_)) }
+  bootl <- cache_boot("bdmi_recomb_boot", "v1", { set.seed(1)
+    cutd <- rbindlist(lapply(seq_along(cut_k), function(i) { y <- as.integer(member(i))
+      bs <- vapply(seq_len(NB), function(b) fit_slope(y, unlist(chr_idx[sample(chrs, length(chrs), TRUE)], use.names = FALSE)), numeric(1))
+      data.table(x2 = x2v[i], est = fit_slope(y, seq_len(nrow(ps))),
+                 lo = quantile(bs, .025, na.rm = TRUE), hi = quantile(bs, .975, na.rm = TRUE)) }))
+    ys <- as.integer(classify_sort(ps$n_aqu, ps$n_pol, ps$n_obs, sort_th = 0.6, sort_rule = "binom", alpha = 0.05) != "unsorted")
+    bss <- vapply(seq_len(NB), function(b) fit_slope(ys, unlist(chr_idx[sample(chrs, length(chrs), TRUE)], use.names = FALSE)), numeric(1))
+    list(cut = cutd, sref = data.table(est = fit_slope(ys, seq_len(nrow(ps))),
+                                       lo = quantile(bss, .025, na.rm = TRUE), hi = quantile(bss, .975, na.rm = TRUE))) })
+  cutd <- bootl$cut; sref <- bootl$sref
+  cat("[Figures.R] BDMI recomb coefficient per cutoff (logit per log10 cM/Mb):\n")
+  print(cutd[, .(x2, est = round(est, 2), lo = round(lo, 2), hi = round(hi, 2))])
+  cat(sprintf("[Figures.R] ancestry-sorting reference coefficient (tau=0.6): %.2f [%.2f, %.2f]\n",
+              sref$est, sref$lo, sref$hi))
+  pb <- ggplot(cutd, aes(x2, est)) +
+    annotate("rect", xmin = min(x2v) * 0.9, xmax = max(x2v) * 1.1, ymin = sref$lo, ymax = sref$hi, fill = "grey85") +
+    geom_hline(yintercept = sref$est, linetype = 3, colour = "grey40") +
+    geom_hline(yintercept = 0, linetype = 2, colour = "grey70") +
+    annotate("text", x = min(x2v), y = sref$est, label = "ancestry sorting", hjust = 0, vjust = -0.6, size = 3, colour = "grey35") +
+    geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.03, colour = "#8A3A0E") +
+    geom_point(size = 2.2, colour = "#8A3A0E") +
+    scale_x_log10() +
+    labs(x = expression("X"^2*" cutoff  ("%<-%" more permissive; more stringent "%->%")"),
+         y = "recombination coefficient\n(logit per log10 cM/Mb)") + theme_ms
+
+  fig <- (pa + labs(tag = "a")) / (pb + labs(tag = "b")) + plot_layout(heights = c(1, 1))
+  save_fig(fig, "fig_bdmi_recomb", width = 8, height = 8)
+}
+
+fig_bdmi_recomb()
