@@ -60,17 +60,17 @@ emlg_code <- emlg_code[, match(ord_names, colnames(emlg_code))]
 
 ## ---- draw both panels into one wide canvas ------------------------------
 message("[compare] rendering -> ", OUTPNG)
-png(OUTPNG, width = 5200, height = 2750, res = 300)
+png(OUTPNG, width = 5400, height = 3000, res = 300)
 par(mfrow = c(1, 2), oma = c(0, 0, 2, 0))
 render_diem_circos(snp_gt, snp_chr, new_device = FALSE,
                    title = sprintf("a   Per-SNP: %s diagnostic SNPs", format(nrow(snp_gt), big.mark = ",")),
-                   cex_main = 1.0)
+                   cex_main = 1.0, chr_label_cex = 0.85)
 render_diem_circos(emlg_code, emlg_chr, new_device = FALSE,
                    title = sprintf("b   LD-reduced: %s units (5 cM) = %s eMLG + %s rep-SNP",
                                    format(nrow(emlg_code), big.mark = ","),
                                    format(sum(is_emlg), big.mark = ","),
                                    format(sum(!is_emlg), big.mark = ",")),
-                   cex_main = 1.0)
+                   cex_main = 1.0, chr_label_cex = 0.85)
 mtext("DIEM ancestry (purple = F. aquilonia, teal = het, yellow = F. polyctena)  |  rings inner to outer: most aquilonia to most polyctena",
       outer = TRUE, cex = 0.8, line = 0.3)
 dev.off()

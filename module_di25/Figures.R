@@ -244,12 +244,17 @@ fig_size_directional <- function() {
   full <- CJ(sclass = SLV, dir = c("aquilonia", "polyctena")); ag <- ag[full, on = .(sclass, dir)][is.na(N), N := 0L]
   fa <- tot[ag, on = "sclass"][, `:=`(frac = N/n, lo = wilson(N, n)$lo, hi = wilson(N, n)$hi)]
   fa[, `:=`(sclass = factor(sclass, levels = SLV), dir = factor(dir, levels = c("aquilonia", "polyctena")), tau = "tau == 0.8")]
+  bar <- tot[, .(sclass = factor(sclass, levels = SLV), n)]          # eMLG count per size class
+  ymax <- max(fa$hi, fa$frac, na.rm = TRUE); bs <- ymax * 0.98 / max(bar$n)
   pa_bin <- ggplot(fa, aes(sclass, frac, colour = dir, group = dir)) +
+    geom_col(data = bar, aes(sclass, n * bs), fill = "grey86", width = 0.85, inherit.aes = FALSE) +
     geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.14, show.legend = FALSE) +
     geom_line(linewidth = 0.9) + geom_point(size = 1.8) +
     scale_colour_manual(values = c(aquilonia = COL_AQU, polyctena = COL_POL), breaks = c("aquilonia", "polyctena"),
                         labels = c(expression(italic("F. aquilonia")), expression(italic("F. polyctena"))), name = "sorted toward") +
-    scale_y_continuous(name = "fraction of units\nsorted toward the species", labels = scales::percent) +
+    scale_y_continuous(name = "fraction of units\nsorted toward the species", labels = scales::percent,
+                       sec.axis = sec_axis(~ . / bs, name = "n eMLG units")) +
+    coord_cartesian(ylim = c(0, ymax)) +
     guides(colour = "none") +   ## panel b carries the shared 'sorted toward' legend (as points)
     labs(x = "LD-cluster size (n markers)") + theme_ms + theme(axis.text.x = element_text(angle = 30, hjust = 1))
 

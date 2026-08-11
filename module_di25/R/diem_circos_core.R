@@ -118,8 +118,8 @@ render_diem_circos <- function(gt, chr_num, outpng = NULL, title = "",
                                npx = 2600, r_in = 0.30, r_out = 0.92,
                                start_deg = 90, clockwise = TRUE,
                                open_deg = 12, chr_gap_deg = 0.5,
-                               seed = 1, chr_label_prefix = "Chr ",
-                               cex_main = 0.85, new_device = TRUE,
+                               seed = 1, chr_label_prefix = "Chr ", chr_label_cex = 0.5,
+                               cex_main = 0.85, new_device = TRUE, res = 300,
                                draw_chr_labels = TRUE) {
   set.seed(seed)
   storage.mode(gt) <- "integer"
@@ -170,7 +170,7 @@ render_diem_circos <- function(gt, chr_num, outpng = NULL, title = "",
   ras  <- as.raster(matrix(pal[idx + 1L], npx, npx, byrow = FALSE))
 
   ## render (own PNG device, or draw into the caller's current device/panel)
-  if (new_device) png(outpng, width = npx, height = npx, res = 300)
+  if (new_device) png(outpng, width = npx, height = npx, res = res, type = "cairo")
   op <- par(mar = c(0, 0, 2, 0), xpd = NA)
   on.exit({ par(op); if (new_device) dev.off() }, add = TRUE)
   plot.new(); plot.window(xlim = c(-1, 1), ylim = c(-1, 1), asp = 1)
@@ -183,7 +183,7 @@ render_diem_circos <- function(gt, chr_num, outpng = NULL, title = "",
     x <- lab_r * cos(a); y <- lab_r * sin(a)
     deg <- atan2(y, x) * 180 / pi
     flip <- deg > 90 || deg < -90
-    text(x, y, paste0(chr_label_prefix, chr_levels[i]), cex = 0.5, col = "grey20",
+    text(x, y, paste0(chr_label_prefix, chr_levels[i]), cex = chr_label_cex, col = "grey20",
          srt = if (flip) deg + 180 else deg, adj = if (flip) c(1, 0.5) else c(0, 0.5))
   }
   if (nzchar(title)) title(main = title, cex.main = cex_main, line = 0.2)

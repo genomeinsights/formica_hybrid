@@ -59,7 +59,9 @@ render_level <- function(a_units, chr_num, level, n_lab) {
     pf$code, chr_num, palette = PAL, outpng = outpng, ring_sep = FALSE,
     title = sprintf("Per-population near-fixation (phi = %.2f, %s)  |  %s %s x 20 populations",
                     PHI, level, format(nrow(pf$code), big.mark = ","), n_lab),
-    ring_labels = pf$pop_order, ring_label_cex = 0.34, open_deg = 30,
+    ring_labels = pf$pop_order, ring_label_cex = 0.55, open_deg = 30,
+    npx = 3800, res = 200, chr_label_cex = 1.5,   # match the sweep-slide canvas/label size
+    cex_main = 1.8, main_line = 1.0, legend_cex = 1.4,
     legend_labels = c("near-fixed F. aquilonia", "near-fixed F. polyctena", "not near-fixed"),
     legend_cols = PAL[c(2, 3, 1)])
 }
