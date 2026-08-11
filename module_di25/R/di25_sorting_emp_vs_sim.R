@@ -128,19 +128,19 @@ print(cmp[metric == "pct_aqu_of_resolved", .(tau, observed = round(observed, 1),
 ## count (log1p), to make the degenerate null legible.
 emp_ns <- as.data.table(readRDS(SWEEP_EMP))[level == "SNP", .(tau, n_sorted)]
 pA <- ggplot(sim, aes(factor(tau), pct_sorted)) +
-  geom_jitter(width = 0.18, height = 0, colour = "#1b9e77", alpha = 0.25, size = 0.5) +
-  geom_boxplot(width = 0.25, outlier.shape = NA, fill = NA, colour = "#0b3d2e") +
-  geom_point(data = emp, aes(factor(tau), pct_sorted), colour = "#d95f02", size = 3, shape = 18) +
+  geom_jitter(width = 0.18, height = 0, colour = "#1b9e77", alpha = 0.25, size = 0.8) +
+  geom_boxplot(width = 0.25, outlier.shape = NA, fill = NA, colour = "#0b3d2e", linewidth = 0.8) +
+  geom_point(data = emp, aes(factor(tau), pct_sorted), colour = "#d95f02", size = 5, shape = 18) +  # bigger observed diamonds for slides
   labs(x = expression("sorting threshold  " * tau), y = "% diagnostic SNPs sorted") +
-  theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank())
+  theme_bw(base_size = 17) + theme(panel.grid.minor = element_blank())
 pB <- ggplot(sim, aes(factor(tau), n_sorted + 1)) +
-  geom_jitter(width = 0.18, height = 0, colour = "#1b9e77", alpha = 0.25, size = 0.5) +
-  geom_boxplot(width = 0.25, outlier.shape = NA, fill = NA, colour = "#0b3d2e") +
-  geom_point(data = emp_ns, aes(factor(tau), n_sorted + 1), colour = "#d95f02", size = 3, shape = 18) +
+  geom_jitter(width = 0.18, height = 0, colour = "#1b9e77", alpha = 0.25, size = 0.8) +
+  geom_boxplot(width = 0.25, outlier.shape = NA, fill = NA, colour = "#0b3d2e", linewidth = 0.8) +
+  geom_point(data = emp_ns, aes(factor(tau), n_sorted + 1), colour = "#d95f02", size = 5, shape = 18) +  # bigger observed diamonds for slides
   scale_y_log10() +
   labs(x = expression("sorting threshold  " * tau), y = "sorted SNP count + 1 (log scale)") +
-  theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank())
+  theme_bw(base_size = 17) + theme(panel.grid.minor = element_blank())
 p <- pA + pB + patchwork::plot_annotation(tag_levels = "a") &
-  theme(plot.tag = element_text(face = "bold", size = 12))
-ggsave(OUTPDF, p, width = 11, height = 4.8); ggsave(OUTPNG, p, width = 11, height = 4.8, dpi = 150)
+  theme(plot.tag = element_text(face = "bold", size = 19))
+ggsave(OUTPDF, p, width = 11, height = 5.2); ggsave(OUTPNG, p, width = 11, height = 5.2, dpi = 200)
 cat("saved:", OUTPNG, "\n")

@@ -81,41 +81,47 @@ fit_two <- function(y, inb, idx) {
   a <- suppressWarnings(tryCatch(glm.fit(cbind(1, b1, ps$lr[idx]), yy, family = binomial())$coefficients[2], error = function(e) NA_real_))
   c(u, a)
 }
-res <- vector("list", length(cut_k))
-for (i in seq_along(cut_k)) {
-  inb <- member(i); y <- ps$sorted
-  est <- fit_two(y, inb, seq_len(nrow(ps)))
-  bs  <- vapply(seq_len(NB), function(b) fit_two(y, inb, unlist(chr_idx[sample(chrs, length(chrs), TRUE)], use.names = FALSE)), numeric(2))
-  res[[i]] <- data.table(x2 = x2v[i], n_in = sum(inb),
-    unadj = est[1], unadj_lo = quantile(bs[1,], .025, na.rm = TRUE), unadj_hi = quantile(bs[1,], .975, na.rm = TRUE),
-    adj   = est[2], adj_lo   = quantile(bs[2,], .025, na.rm = TRUE), adj_hi   = quantile(bs[2,], .975, na.rm = TRUE))
-  cat(sprintf("[cutoff X2=%.4f] BDMI log-odds on sorting: unadjusted %.2f [%.2f,%.2f]  recomb-adjusted %.2f [%.2f,%.2f]\n",
-              x2v[i], res[[i]]$unadj, res[[i]]$unadj_lo, res[[i]]$unadj_hi, res[[i]]$adj, res[[i]]$adj_lo, res[[i]]$adj_hi))
+## the block bootstrap is the only slow part; reuse it if already computed
+## (delete module_di25/data/bdmi_sorting_recomb_controlled.rds to force a re-run)
+if (file.exists(OUTRDS)) {
+  res <- readRDS(OUTRDS); cat("[cache] reusing", OUTRDS, "-- only re-plotting\n")
+} else {
+  res <- vector("list", length(cut_k))
+  for (i in seq_along(cut_k)) {
+    inb <- member(i); y <- ps$sorted
+    est <- fit_two(y, inb, seq_len(nrow(ps)))
+    bs  <- vapply(seq_len(NB), function(b) fit_two(y, inb, unlist(chr_idx[sample(chrs, length(chrs), TRUE)], use.names = FALSE)), numeric(2))
+    res[[i]] <- data.table(x2 = x2v[i], n_in = sum(inb),
+      unadj = est[1], unadj_lo = quantile(bs[1,], .025, na.rm = TRUE), unadj_hi = quantile(bs[1,], .975, na.rm = TRUE),
+      adj   = est[2], adj_lo   = quantile(bs[2,], .025, na.rm = TRUE), adj_hi   = quantile(bs[2,], .975, na.rm = TRUE))
+    cat(sprintf("[cutoff X2=%.4f] BDMI log-odds on sorting: unadjusted %.2f [%.2f,%.2f]  recomb-adjusted %.2f [%.2f,%.2f]\n",
+                x2v[i], res[[i]]$unadj, res[[i]]$unadj_lo, res[[i]]$unadj_hi, res[[i]]$adj, res[[i]]$adj_lo, res[[i]]$adj_hi))
+  }
+  res <- rbindlist(res); saveRDS(res, OUTRDS)
 }
-res <- rbindlist(res); saveRDS(res, OUTRDS)
 
-## ---- figure ----------------------------------------------------------------
+## ---- figure (no panel titles; wording lives in the manuscript caption) -----
 png(OUTPNG, width = 2100, height = 2000, res = 300, type = "cairo")
-op <- par(mfrow = c(2, 1), mar = c(4.4, 4.6, 2.4, 1.2), mgp = c(2.6, 0.7, 0))
+op <- par(mfrow = c(2, 1), mar = c(4.4, 4.6, 1.6, 1.2), mgp = c(2.6, 0.7, 0))
 
 ## panel a
 ci <- c("in" = "#8A3A0E", "out" = "grey55")
 with(adat[grp == TRUE], { plot(rdec, frac, type = "n", xaxt = "n", ylim = c(0, max(adat$hi, na.rm = TRUE)),
-  xlab = "recombination decile (median cM/Mb)", ylab = "P(ancestry-sorted)",
-  main = sprintf("a  P(sorted) by recombination, inside vs outside BDMI regions (X^2=%.2f)", x2v[which(cut_k==A_CUT)])) })
+  xlab = "recombination decile (median cM/Mb)", ylab = "P(ancestry-sorted)") })
+mtext("a", side = 3, line = 0.2, adj = 0, font = 2, cex = 1.1)
 axis(1, at = 1:10, labels = xlab)
 for (side in c(TRUE, FALSE)) { d <- adat[grp == side]; col <- if (side) ci["in"] else ci["out"]
   segments(d$rdec, d$lo, d$rdec, d$hi, col = col); lines(d$rdec, d$frac, col = col, lwd = 2)
   points(d$rdec, d$frac, col = col, pch = 19) }
-legend("topleft", bty = "n", lwd = 2, pch = 19, col = ci[c("in","out")],
+legend("topright", bty = "n", lwd = 2, pch = 19, col = ci[c("in","out")],
        legend = c("inside a BDMI region", "outside"))
 
 ## panel b
 xr <- range(x2v)
 with(res, { plot(x2, adj, type = "n", log = "x", ylim = range(0, unadj_lo, unadj_hi, adj_lo, adj_hi, na.rm = TRUE),
   xlab = expression("X"^2*" cutoff  ("%<-%" more permissive; more stringent "%->%")"),
-  ylab = "BDMI effect on P(sorted)\n(logit; log-odds)",
-  main = "b  BDMI->sorting log-odds: unadjusted vs recombination-adjusted") })
+  ylab = "BDMI effect on P(sorted)\n(logit; log-odds)") })
+mtext("b", side = 3, line = 0.2, adj = 0, font = 2, cex = 1.1)
 abline(h = 0, lty = 2, col = "grey70")
 dx <- 1.02
 with(res, segments(x2/dx, unadj_lo, x2/dx, unadj_hi, col = "grey55"))
