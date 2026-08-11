@@ -121,23 +121,22 @@ saveRDS(list(pl = pl, sim = sim, n_rep = length(done),
 
 ## ---- plot: empirical line over simulated median + 95% envelope -------------
 p <- ggplot(pl, aes(mid / 1e6)) +
-  geom_ribbon(aes(ymin = sim_lo, ymax = sim_hi, fill = "simulated 95% envelope"), alpha = 0.35) +
-  geom_line(aes(y = sim_med, colour = "simulated median"), linewidth = 0.3) +
-  geom_line(aes(y = emp, colour = "empirical"), linewidth = 0.4) +
+  geom_ribbon(aes(ymin = sim_lo, ymax = sim_hi, fill = "simulated 95% envelope"), alpha = 0.4) +
+  geom_line(aes(y = sim_med, colour = "simulated median"), linewidth = 0.6) +
+  geom_line(aes(y = emp, colour = "empirical"), linewidth = 0.8) +
   facet_grid(. ~ Chr, scales = "free_x", space = "free_x") +
   scale_colour_manual(values = c("empirical" = "#d95f02", "simulated median" = "#1b9e77"), name = NULL) +
   scale_fill_manual(values = c("simulated 95% envelope" = "#66c2a5"), name = NULL) +
-  labs(x = "position (Mbp)", y = expression("windowed median local LD  " * ld[w][0.95]),
-       title = sprintf("DI25 local-LD (ld_w_0.95) landscape: empirical vs %d-replicate simulated envelope", length(done)),
-       subtitle = sprintf("median composite r^2 (rho=%.2f), hybrids only, %dkb windows (>=%d markers); ribbon = 2.5-97.5%% across replicates",
-                          RHO_LDW, WIN_BP %/% 1000L, MIN_N)) +
-  theme_bw(base_size = 8) +
+  labs(x = "position (Mbp)", y = expression("windowed median local LD  " * ld[w][0.95])) +
+  theme_bw(base_size = 15) +
   theme(panel.grid.minor = element_blank(), panel.spacing = unit(1, "pt"),
-        strip.text.x = element_text(size = 5, angle = 90),
+        strip.background = element_blank(),
+        strip.text.x = element_text(size = 10, angle = 90, face = "bold"),
         axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-        legend.position = "top")
-ggsave(OUTPDF, p, width = 14, height = 4.2)
-ggsave(OUTPNG, p, width = 14, height = 4.2, dpi = 150)
+        legend.position = "top", legend.text = element_text(size = 14),
+        legend.key.width = unit(1.4, "cm"))
+ggsave(OUTPDF, p, width = 15, height = 5)
+ggsave(OUTPNG, p, width = 15, height = 5, dpi = 150)
 
 ## ---- summary: coverage of the empirical line by the simulated envelope ------
 cov <- pl[is.finite(emp) & is.finite(sim_lo)]

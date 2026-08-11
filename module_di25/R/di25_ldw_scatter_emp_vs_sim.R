@@ -21,19 +21,16 @@ lab <- sprintf("n = %d windows\nPearson r = %.3f\nSpearman rho = %.3f",
                nrow(pl), r_p, r_s)
 
 p <- ggplot(pl, aes(sim_med, emp)) +
-  geom_abline(slope = 1, intercept = 0, linetype = 2, colour = "grey55") +
-  geom_point(alpha = 0.35, size = 0.9, colour = "#1b6f5f", stroke = 0) +
-  geom_smooth(method = "lm", se = FALSE, colour = "#d95f02", linewidth = 0.7) +
-  annotate("text", x = 0.02, y = 0.98, hjust = 0, vjust = 1, size = 3.2, label = lab) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, colour = "grey55", linewidth = 0.7) +
+  geom_point(alpha = 0.4, size = 1.7, colour = "#1b6f5f", stroke = 0) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#d95f02", linewidth = 1.1) +
+  annotate("text", x = 0.02, y = 0.98, hjust = 0, vjust = 1, size = 5, label = lab) +
   coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
   labs(x = expression("simulated median (1000 reps)  " * ld[w][0.95]),
-       y = expression("empirical  " * ld[w][0.95]),
-       title = "DI25 windowed-median local LD: empirical vs simulated median",
-       subtitle = sprintf("one point per %dkb window; dashed = 1:1, orange = OLS fit",
-                          o$win_bp %/% 1000L)) +
-  theme_bw(base_size = 11) +
+       y = expression("empirical  " * ld[w][0.95])) +
+  theme_bw(base_size = 16) +
   theme(panel.grid.minor = element_blank())
 
-ggsave(OUTPDF, p, width = 5.6, height = 5.6)
-ggsave(OUTPNG, p, width = 5.6, height = 5.6, dpi = 150)
+ggsave(OUTPDF, p, width = 6.5, height = 6.5)
+ggsave(OUTPNG, p, width = 6.5, height = 6.5, dpi = 150)
 cat(sprintf("n=%d  Pearson=%.3f  Spearman=%.3f\nsaved: %s\n", nrow(pl), r_p, r_s, OUTPNG))
