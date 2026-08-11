@@ -22,9 +22,9 @@ lab <- sprintf("n = %d windows\nPearson r = %.3f\nSpearman rho = %.3f",
 
 p <- ggplot(pl, aes(sim_med, emp)) +
   geom_abline(slope = 1, intercept = 0, linetype = 2, colour = "grey55", linewidth = 0.7) +
-  geom_point(alpha = 0.4, size = 1.7, colour = "#1b6f5f", stroke = 0) +
+  geom_point(alpha = 0.4, size = 2.6, colour = "#1b6f5f", stroke = 0) +
   geom_smooth(method = "lm", se = FALSE, colour = "#d95f02", linewidth = 1.1) +
-  annotate("text", x = 0.02, y = 0.98, hjust = 0, vjust = 1, size = 5, label = lab) +
+  annotate("text", x = 0.98, y = 0.02, hjust = 1, vjust = 0, size = 5, label = lab) +
   coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
   labs(x = expression("simulated median (1000 reps)  " * ld[w][0.95]),
        y = expression("empirical  " * ld[w][0.95])) +
