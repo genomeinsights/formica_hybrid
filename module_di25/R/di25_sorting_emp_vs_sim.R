@@ -131,20 +131,16 @@ pA <- ggplot(sim, aes(factor(tau), pct_sorted)) +
   geom_jitter(width = 0.18, height = 0, colour = "#1b9e77", alpha = 0.25, size = 0.5) +
   geom_boxplot(width = 0.25, outlier.shape = NA, fill = NA, colour = "#0b3d2e") +
   geom_point(data = emp, aes(factor(tau), pct_sorted), colour = "#d95f02", size = 3, shape = 18) +
-  labs(x = expression("sorting threshold  " * tau), y = "% diagnostic SNPs sorted",
-       title = "% sorted: observed (orange) vs null (green)") +
+  labs(x = expression("sorting threshold  " * tau), y = "% diagnostic SNPs sorted") +
   theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank())
 pB <- ggplot(sim, aes(factor(tau), n_sorted + 1)) +
   geom_jitter(width = 0.18, height = 0, colour = "#1b9e77", alpha = 0.25, size = 0.5) +
   geom_boxplot(width = 0.25, outlier.shape = NA, fill = NA, colour = "#0b3d2e") +
   geom_point(data = emp_ns, aes(factor(tau), n_sorted + 1), colour = "#d95f02", size = 3, shape = 18) +
   scale_y_log10() +
-  labs(x = expression("sorting threshold  " * tau), y = "sorted SNP count + 1 (log scale)",
-       title = "sorted-SNP count: observed vs null") +
+  labs(x = expression("sorting threshold  " * tau), y = "sorted SNP count + 1 (log scale)") +
   theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank())
-p <- pA + pB + patchwork::plot_annotation(
-  title = "Per-SNP ancestry sorting: empirical observed vs simulated NULL",
-  subtitle = sprintf("%d DIEM replicates, matched 20-pop design; sorting estimated identically to di25_sorting.R (phi=0.85, binom). Directional bias: empirical %.0f%% toward aquilonia at tau=0.5; null has ~0 sorted loci so no testable direction.",
-                     length(done), emp[tau == 0.5, pct_aqu_of_resolved]))
+p <- pA + pB + patchwork::plot_annotation(tag_levels = "a") &
+  theme(plot.tag = element_text(face = "bold", size = 12))
 ggsave(OUTPDF, p, width = 11, height = 4.8); ggsave(OUTPNG, p, width = 11, height = 4.8, dpi = 150)
 cat("saved:", OUTPNG, "\n")
