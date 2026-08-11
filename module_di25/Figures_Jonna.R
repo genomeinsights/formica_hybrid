@@ -57,16 +57,14 @@ d8[, `:=`(frac = k/n, species = fifelse(species == "n_aqu", "aquilonia", "polyct
 d8[level == "eMLG", `:=`(lo = wilson(k, n)$lo, hi = wilson(k, n)$hi)]
 ne <- unique(e[!is.na(rdec), .(n = .N), by = rdec][order(rdec)]); lo_bins <- ne[n < 100L, rdec]
 xlab <- s[!is.na(rdec), round(median(recomb), 1), by = rdec][order(rdec)]$V1
-ymax <- max(d8$hi, d8$frac, na.rm = TRUE); bs <- ymax * 0.98 / max(ne$n)
-p2a <- ggplot(d8, aes(rdec, frac, colour = species, linetype = level)) +
+ymax <- d8[level == "eMLG", max(c(frac, hi), na.rm = TRUE)]; bs <- ymax * 0.98 / max(ne$n)
+p2a <- ggplot(d8[level == "eMLG"], aes(rdec, frac, colour = species)) +   # eMLG only (SNP line dropped)
   { if (length(lo_bins)) annotate("rect", xmin = min(lo_bins)-0.5, xmax = max(lo_bins)+0.5, ymin = -Inf, ymax = Inf, fill = "grey95") } +
   geom_col(data = ne, aes(rdec, n * bs), fill = "grey86", width = 0.85, inherit.aes = FALSE) +
-  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.15, na.rm = TRUE, linetype = 1, show.legend = FALSE) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.15, na.rm = TRUE, show.legend = FALSE) +
   geom_line(linewidth = 1) + geom_point(size = 2.2) +
   scale_colour_manual(values = c(aquilonia = COL_AQU, polyctena = COL_POL), breaks = c("aquilonia", "polyctena"),
                       labels = c(expression(italic("F. aquilonia")), expression(italic("F. polyctena"))), name = "sorted toward") +
-  scale_linetype_manual(values = c(eMLG = 1, SNP = 2), breaks = c("eMLG", "SNP"), name = "level") +
-  guides(linetype = guide_legend(override.aes = list(linewidth = 0.7)), colour = guide_legend(override.aes = list(linetype = 0, size = 3))) +
   scale_x_continuous(breaks = 1:10, labels = xlab) +
   scale_y_continuous(name = "fraction of units sorted\ntoward the species", labels = scales::percent,
                      sec.axis = sec_axis(~ . / bs, name = "n eMLG units")) +
@@ -104,7 +102,8 @@ p3a <- ggplot(fa, aes(sclass, frac, colour = dir, group = dir)) +
        title = expression(paste("Ancestry sorting vs LD-cluster size  (", tau, " = 0.8)"))) +
   theme_talk + theme(axis.text.x = element_text(angle = 30, hjust = 1))
 save2(p3a, "fig3a_clustersize_tau08", 7.5, 6)
-save2(p2a | p3a, "fig23a_tau08", 15, 6)
+save2((p2a | p3a) + plot_layout(guides = "collect") & theme(legend.position = "bottom"),
+      "fig23a_tau08", 15, 6)
 
 ## =========================================================================
 ## keep exact copies of the separately-generated talk circos figures here too,
