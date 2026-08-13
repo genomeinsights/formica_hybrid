@@ -106,6 +106,30 @@ save2((p2a | p3a) + plot_layout(guides = "collect") & theme(legend.position = "b
       "fig23a_tau08", 15, 6)
 
 ## =========================================================================
+## Fig 2a, SNP level (tau = 0.6 & 0.8 in one figure; no eMLG-count bars)
+## =========================================================================
+snp_dir <- function(tau) {
+  d <- copy(s)[!is.na(rdec)]
+  d[, dir := classify_sort(n_aqu, n_pol, n_obs, sort_th = tau, sort_rule = "binom", alpha = 0.05)]
+  ag <- d[, .(n = .N, n_aqu = sum(dir == "aquilonia"), n_pol = sum(dir == "polyctena")), by = rdec]
+  lg <- melt(ag, id.vars = c("rdec", "n"), measure.vars = c("n_aqu", "n_pol"), variable.name = "species", value.name = "k")
+  lg[, `:=`(frac = k/n, species = fifelse(species == "n_aqu", "aquilonia", "polyctena"),
+            tau = sprintf("tau == %.1f", tau))][]
+}
+ds <- rbind(snp_dir(0.6), snp_dir(0.8))
+ds[, species := factor(species, levels = c("aquilonia", "polyctena"))]
+p_snp <- ggplot(ds, aes(rdec, frac, colour = species)) +
+  geom_line(linewidth = 1) + geom_point(size = 2.2) +
+  facet_wrap(~ tau, labeller = label_parsed) +
+  scale_colour_manual(values = c(aquilonia = COL_AQU, polyctena = COL_POL), breaks = c("aquilonia", "polyctena"),
+                      labels = c(expression(italic("F. aquilonia")), expression(italic("F. polyctena"))), name = "sorted toward") +
+  scale_x_continuous(breaks = 1:10, labels = xlab) +
+  scale_y_continuous(name = "fraction of SNPs sorted\ntoward the species", labels = scales::percent) +
+  labs(x = "recombination decile (median cM/Mb)", title = "Ancestry sorting vs recombination (SNPs)") +
+  theme_talk + theme(strip.background = element_blank())
+save2(p_snp, "fig2a_snp_recomb_tau0608", 12, 5.5)
+
+## =========================================================================
 ## keep exact copies of the separately-generated talk circos figures here too,
 ## so all talk figures live in one folder. They are produced by their own
 ## scripts (rerun those first to refresh): diem_circos_compare.R,
