@@ -43,9 +43,11 @@ MIN_PARENT_MAF <- 0.15
 FIX_TH         <- 0.15                         # major-allele fixation floor 0.85
 SORT_TH        <- 0.6
 SORT_RULE      <- "binom"                       # prop_fixed magnitude gate + binomial direction test (see parallelism_stats)
+ALPHA          <- 0.05                          # binom direction-test significance (matches the rest of Module A)
 SNP_SAMPLE     <- 200000L
 SORT_TH_SWEEP  <- c(0.5, 0.6, 0.7, 0.8)        # for the [SUPP S3] direction sweep
 CLUSTERING     <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
+BESTSNP        <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05_bestsnp.rds"
 RECMAP         <- "data/Frufa_DTOL_PR.ref_genome.recmap"
 RECOMPUTE      <- FALSE
 
@@ -79,6 +81,10 @@ for (ch in unique(map$Chr)) {
 
 ## per-marker cluster size (canonical cM05 clustering)
 g <- readRDS(CLUSTERING)$groups
+## canonical best-SNP: one real marker per cluster (best_marker for has_eMLG,
+## else the centrality representative for < min_n_loci_eMLG clusters). The
+## LD-reduced-unit architecture is built on this real SNP, not the consensus.
+rep_snp_all <- as.data.table(readRDS(BESTSNP)$rep_snp_all)
 memb <- data.table(marker = unlist(g$members), cluster_size = rep(g$n_loci, lengths(g$members)))
 map <- memb[map, on = "marker"]
 
@@ -98,7 +104,7 @@ map[, parent_maf := pmin(par_pool, 1 - par_pool)]
 DI_by     <- setNames(map$DiagnosticIndex, map$marker)
 maf_by    <- setNames(map$parent_maf,      map$marker)
 recomb_by <- setNames(map$recomb,          map$marker)
-cs_by     <- setNames(g$n_loci,            g$representative)
+cs_by     <- setNames(rep_snp_all$n_loci,  rep_snp_all$rep_snp)   # n_loci keyed by best-SNP marker
 hyb       <- setdiff(unique(smeta$Population), c(aqu, pol))
 
 ## ========================================================================
@@ -140,7 +146,7 @@ PS_PARAMS <- list(min_parent_maf = MIN_PARENT_MAF, sort_th = SORT_TH, fix_th = F
 classify_cached <- function(path, mk_fun, label)
   cache_rds(path, label = label, valid = function(o) identical(o$params, PS_PARAMS),
             build = function() list(params = PS_PARAMS, r = run_ps(mk_fun())))$r
-reps <- intersect(g$representative, colnames(GTs))
+reps <- intersect(rep_snp_all$rep_snp, colnames(GTs))            # best-SNP LD-reduced unit set
 cat("\n[B2] LD-reduced units:", length(reps), "| SNP sample:", SNP_SAMPLE, "\n")
 t0 <- Sys.time()
 r_unit <- classify_cached("moduleA_sorting/data/moduleA_r_unit.rds", function() reps,
@@ -199,10 +205,14 @@ cat(sprintf("  DI %+.2f (z=%.0f) [PDF +1.46/125] ; recomb %+.2f (z=%.1f) [PDF -0
 ##    Reclassify unidirectional set at each sort_th (uni_score/bi_score stored),
 ##    refit with the z-covariates held fixed over the full differentiated set.
 ## ========================================================================
-um_du <- abs(du$uni_score); base_ok <- du$n_obs > 0 & is.finite(du$uni_score)
+## Unidirectional set defined by the binom rule (classify_sort), reclassified at
+## each sort_th -- consistent with the main direction model above (sort_class %in%
+## uni), NOT the superseded |uni_score| >= bi_score component criterion.
 dir_sweep <- rbindlist(lapply(SORT_TH_SWEEP, function(th) {
-  dd <- du[base_ok & um_du >= du$bi_score & um_du >= th]
-  dd[, is_aqu := as.integer(uni_score > 0)]
+  du2 <- copy(du)
+  du2[, sc := classify_sort(n_aqu, n_pol, n_obs, sort_th = th, sort_rule = "binom", alpha = ALPHA)]
+  dd  <- du2[sc %in% uni]
+  dd[, is_aqu := as.integer(sc == "aquilonia")]
   f  <- glm(is_aqu ~ zDI + zr + zmaf + zcs, data = dd, family = binomial())
   cc <- as.data.table(summary(f)$coefficients, keep.rownames = "term")
   setnames(cc, c("term", "estimate", "se", "z", "p"))

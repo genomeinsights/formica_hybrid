@@ -176,46 +176,57 @@ if (done >= NBATCH_RUN) {
   message("[regen] already at or beyond requested batch ", NBATCH_RUN, "; nothing to run")
 } else for (b in (done + 1L):NBATCH_RUN) {
   t0   <- Sys.time()
-  ef   <- ENV_FILES[b]
-  pref <- file.path(ND, sprintf("cRegen_b%02d", b))
-  of   <- paste0(pref, "_summary_betai_reg.out")
-
-  ## (re)run BayPass on the preserved null covariates -- unless a complete raw output
-  ## for this batch already exists (e.g. a prior invocation crashed AFTER BayPass but
-  ## before parsing), in which case reuse it. Completeness is re-asserted at parse.
-  reuse <- file.exists(of) && file.info(of)$size > 0
-  if (reuse) {
-    message(sprintf("  [regen] reusing existing raw output for batch %d (skipping BayPass)", b))
-  } else {
-    st <- system(paste0(BAYPASS, " -countdatafile ", ND, "/u_eMLG.geno -omegafile ", ND,
-      "/omega_mat_omega.out -efile ", ef, " -poolsizefile ", ND, "/u_DIEM.size ",
-      OPT, " -outprefix ", pref, " > ", pref, "_stdout.log 2>&1"))
-    stopifnot("BayPass batch failed" = st == 0)
-  }
-
-  ## parse and validate the 32,840 x 1,000 BF matrix (covariate-major rows).
-  ## MRK is the structural guarantee (covariate-major => within each NM-row block the
-  ## markers run 1..NM; MRK does not overflow). COVARIABLE is validated only where it
-  ## parses: BayPass prints '***' for covariate indices that overflow its fixed-width
-  ## integer field (>= 1000), so those rows are checked via MRK + row position instead.
-  nb <- fread(of, select = c("COVARIABLE", "MRK", "BF(dB)"))
-  row_cov <- rep(seq_len(BATCH), each = NM)
-  covnum  <- suppressWarnings(as.integer(nb$COVARIABLE)); okcov <- !is.na(covnum)
-  stopifnot("wrong row count" = nrow(nb) == BATCH * NM,
-            "MRK ordering wrong (not covariate-major)" = all(nb$MRK == rep(seq_len(NM), times = BATCH)),
-            "COVARIABLE (where parseable) disagrees with covariate-major order" =
-              all(covnum[okcov] == row_cov[okcov]),
-            "unparseable COVARIABLE outside the expected >=1000 field-overflow" =
-              all(row_cov[!okcov] >= 1000),
-            "non-finite BF in batch" = all(is.finite(nb$`BF(dB)`)))
-  if (any(!okcov)) message(sprintf("  [regen] %d rows had overflowed COVARIABLE ('***', cov idx >= 1000); validated via MRK/row position",
-                                   sum(!okcov)))
-  M <- matrix(nb$`BF(dB)`, nrow = NM, ncol = BATCH); rm(nb, covnum, okcov, row_cov); invisible(gc())
-
-  ## persist the raw null BF matrix (KEPT) so future re-reductions need no BayPass.
-  ## atomic write (tmp then rename) so a crash mid-save cannot leave a partial file.
+  pref   <- file.path(ND, sprintf("cRegen_b%02d", b))
+  of     <- paste0(pref, "_summary_betai_reg.out")
   bf_out <- file.path(BFDIR, sprintf("cRegen_bf_b%02d.rds", b))
-  saveRDS(M, paste0(bf_out, ".tmp")); file.rename(paste0(bf_out, ".tmp"), bf_out)
+
+  ## FAST RE-REDUCTION PATH: if this batch's null BF matrix is already persisted,
+  ## reduce from it directly -- NO BayPass. The null BF is climate-only and does not
+  ## depend on the sorting/DI ANNOTATION, so when only the annotation changed (e.g. a
+  ## Module A sorting recompute) the persisted matrix is still exact; this turns a
+  ## ~21 h regeneration into minutes. Delete BFDIR to force a full BayPass rebuild.
+  if (file.exists(bf_out)) {
+    message(sprintf("  [regen] batch %d: reduce from persisted BF matrix (no BayPass)", b))
+    M <- readRDS(bf_out)
+    stopifnot("persisted BF matrix wrong shape" = nrow(M) == NM && ncol(M) == BATCH,
+              "non-finite BF in persisted matrix" = all(is.finite(M)))
+  } else {
+    ef <- ENV_FILES[b]
+    ## (re)run BayPass on the preserved null covariates -- unless a complete raw output
+    ## for this batch already exists (e.g. a prior invocation crashed AFTER BayPass but
+    ## before parsing), in which case reuse it. Completeness is re-asserted at parse.
+    reuse <- file.exists(of) && file.info(of)$size > 0
+    if (reuse) {
+      message(sprintf("  [regen] reusing existing raw output for batch %d (skipping BayPass)", b))
+    } else {
+      st <- system(paste0(BAYPASS, " -countdatafile ", ND, "/u_eMLG.geno -omegafile ", ND,
+        "/omega_mat_omega.out -efile ", ef, " -poolsizefile ", ND, "/u_DIEM.size ",
+        OPT, " -outprefix ", pref, " > ", pref, "_stdout.log 2>&1"))
+      stopifnot("BayPass batch failed" = st == 0)
+    }
+
+    ## parse and validate the 32,840 x 1,000 BF matrix (covariate-major rows).
+    ## MRK is the structural guarantee (covariate-major => within each NM-row block the
+    ## markers run 1..NM; MRK does not overflow). COVARIABLE is validated only where it
+    ## parses: BayPass prints '***' for covariate indices that overflow its fixed-width
+    ## integer field (>= 1000), so those rows are checked via MRK + row position instead.
+    nb <- fread(of, select = c("COVARIABLE", "MRK", "BF(dB)"))
+    row_cov <- rep(seq_len(BATCH), each = NM)
+    covnum  <- suppressWarnings(as.integer(nb$COVARIABLE)); okcov <- !is.na(covnum)
+    stopifnot("wrong row count" = nrow(nb) == BATCH * NM,
+              "MRK ordering wrong (not covariate-major)" = all(nb$MRK == rep(seq_len(NM), times = BATCH)),
+              "COVARIABLE (where parseable) disagrees with covariate-major order" =
+                all(covnum[okcov] == row_cov[okcov]),
+              "unparseable COVARIABLE outside the expected >=1000 field-overflow" =
+                all(row_cov[!okcov] >= 1000),
+              "non-finite BF in batch" = all(is.finite(nb$`BF(dB)`)))
+    if (any(!okcov)) message(sprintf("  [regen] %d rows had overflowed COVARIABLE ('***', cov idx >= 1000); validated via MRK/row position",
+                                     sum(!okcov)))
+    M <- matrix(nb$`BF(dB)`, nrow = NM, ncol = BATCH); rm(nb, covnum, okcov, row_cov); invisible(gc())
+
+    ## persist the raw null BF matrix (KEPT). atomic write (tmp then rename).
+    saveRDS(M, paste0(bf_out, ".tmp")); file.rename(paste0(bf_out, ".tmp"), bf_out)
+  }
 
   ## accumulate per-eMLG exceedance counts (exact cross-check vs Module B; tau-independent)
   k1r <- k1r + rowSums(M >= b1)

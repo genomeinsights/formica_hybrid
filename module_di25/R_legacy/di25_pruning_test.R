@@ -67,7 +67,7 @@ is_par <- pops %in% c("aquilonia_parent", "polyctena_parent")
 
 n_hyb <- sum(!is_par); n_par <- sum(is_par)
 cat(sprintf("Individuals: %d hybrids in %d populations + %d parents\n", n_hyb, length(hp), n_par))
-stopifnot(n_hyb == 164L, length(hp) == 20L, n_par == 30L)
+stopifnot(n_hyb == 165L, length(hp) == 20L, n_par == 30L)
 
 ## per-unit dosage: eMLG consensus for >2-marker clusters, representative SNP else.
 ## D is units x individuals (matches di25_sielva_pruning.R); flip so 2 = aquilonia.

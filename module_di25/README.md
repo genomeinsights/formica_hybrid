@@ -24,6 +24,17 @@ hex codes in the scripts (`diem_circos_core.R` `DIEM_COL` drives every DIEM circ
 
 ## Pipeline (`R/`)
 
+> **Folder layout (2026-08, 165-individual rerun).** `R/` now holds only the scripts that
+> produce the manuscript figures (`doc/manuscript_figures.pdf`) on the corrected 165-hybrid
+> sample: the data pipeline `di25_ld_clustering.R` → `di25_sorting.R`, the shared renderer
+> `diem_circos_core.R`, and the figure producers `diem_circos_compare.R`,
+> `bdmi_sorting_{circos,overlap,null_hist,direction,recomb_controlled,ternary}.R`,
+> `di25_ldw_manhattan_envelope.R`, `di25_ldw_scatter_emp_vs_sim.R`, and
+> `di25_sorting_emp_vs_sim.R`. Figures 2, 3 and 10 come from the root `Figures.R`. All the
+> other (exploratory) scripts documented below have been moved to **`R_legacy/`** — kept for
+> reference, not part of the manuscript build; prefix their paths with `R_legacy/` rather than
+> `R/` if you run them.
+
 | script | role |
 |----|----|
 | `diem_circos_core.R` | Shared renderer `render_diem_circos()` — draws a DIEM genotype circos by direct polar rasterisation. Sourced by both plot scripts so they stay pixel-comparable. |

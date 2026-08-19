@@ -286,8 +286,16 @@ parallelism_stats <- function(prep,
   if (length(undef)) f_aqu_hyb[, undef] <- NA_real_
 
   ## ---- per-population near-fixation calls ----
-  is_aqu <- f_aqu_hyb >= (1 - fix_th)
-  is_pol <- f_aqu_hyb <= fix_th
+  ## Numerical tolerance so a population sitting EXACTLY on a boundary frequency
+  ## (e.g. 3/20 = 0.15, 17/20 = 0.85) is classified identically regardless of how
+  ## the caller expressed the threshold: fix_th = 0.15 (literal) and fix_th =
+  ## 1 - 0.85 differ at ~2e-17 in double precision, which without tolerance flips
+  ## thousands of boundary SNPs between nominally-identical analyses (primary pass
+  ## vs the fix_major sweep). EPS is far below the smallest achievable frequency
+  ## step (1/(2*max poolsize)), so it only absorbs floating-point boundary ties.
+  EPS <- 1e-8
+  is_aqu <- f_aqu_hyb >= (1 - fix_th) - EPS
+  is_pol <- f_aqu_hyb <= fix_th + EPS
 
   n_obs   <- colSums(!is.na(f_aqu_hyb))
   n_aqu   <- colSums(is_aqu, na.rm = TRUE)

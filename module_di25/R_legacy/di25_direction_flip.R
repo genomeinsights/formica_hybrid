@@ -43,14 +43,14 @@ e2  <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e2)
 sd  <- e2$sample_data_with_parents
 DI_vec <- setNames(e2$map_hyb_005$DiagnosticIndex, e2$map_hyb_005$marker)
 
-## ---- rebuild the 194-individual matrix EXACTLY as di25_sorting.R --------
+## ---- rebuild the 195-individual matrix EXACTLY as di25_sorting.R --------
 GTs_all <- rbind(inp$GTs_hyb, inp$GTs_par)
 GTs_all <- GTs_all[rownames(GTs_all) %in% sd$Sample_ID, ]
 pops     <- sd$Population[match(rownames(GTs_all), sd$Sample_ID)]
 aqu_pops <- "aquilonia_parent"; pol_pops <- "polyctena_parent"
 hybrid_pops <- setdiff(unique(pops), c(aqu_pops, pol_pops))
 parent_rows <- grepl("_parent$", pops)
-stopifnot(nrow(GTs_all) == 194L, sum(!parent_rows) == 164L,
+stopifnot(nrow(GTs_all) == 195L, sum(!parent_rows) == 165L,
           length(hybrid_pops) == 20L, sum(parent_rows) == 30L)
 par_freq_snp <- colMeans(GTs_all[parent_rows, , drop = FALSE], na.rm = TRUE) / 2
 pmaf_snp     <- pmin(par_freq_snp, 1 - par_freq_snp)
@@ -232,7 +232,7 @@ cat(sprintf("2. sorted%% at tau=0.6: per-SNP %.1f (exp ~12.6) | per-eMLG %.1f (e
             sweep[level=="SNP" & tau==0.6, pct_sorted], sweep[level=="eMLG" & tau==0.6, pct_sorted]))
 cat(sprintf("3. pct_aqu at tau=0.8: per-SNP %.1f (exp ~34) | per-eMLG %.1f (exp ~80)\n",
             sweep[level=="SNP" & tau==0.8, pct_aqu_of_resolved], sweep[level=="eMLG" & tau==0.8, pct_aqu_of_resolved]))
-cat("4. individuals 194 / 164 hybrids / 20 pops / 30 parents: OK (asserted)\n")
+cat("4. individuals 195 / 165 hybrids / 20 pops / 30 parents: OK (asserted)\n")
 cat(sprintf("5. thinned matrix %d cols; all colnames are per-SNP markers: %s\n",
             ncol(GTs_thin), all(colnames(GTs_thin) %in% ps_snp$marker)))
 

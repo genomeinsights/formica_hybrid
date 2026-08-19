@@ -25,9 +25,9 @@
 ##     else `unresolved`, or `ambiguous` when too few populations are fixed to
 ##     ever reach significance.
 ##
-## Individuals: the 164 hybrids + 30 parents present in sample_data (the one
-## extra tsv hybrid, Hei159_h, has no population label and is dropped). 20 hybrid
-## populations tested; parents supply the aquilonia/polyctena orientation.
+## Individuals: the 165 hybrids + 30 parents present in sample_data (Hei159_h now
+## carries a population label and is included; earlier runs dropped it as unlabelled).
+## 20 hybrid populations tested; parents supply the aquilonia/polyctena orientation.
 ##
 ## Run from the repo root:  Rscript module_di25/R/di25_sorting.R
 ## =========================================================
@@ -53,7 +53,7 @@ e2  <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e2)
 sd  <- e2$sample_data_with_parents
 DI_vec <- setNames(e2$map_hyb_005$DiagnosticIndex, e2$map_hyb_005$marker)   # marker-named DI
 
-## matched 194-individual matrix (drop the one hybrid absent from sample_data)
+## matched 195-individual matrix (all hybrids now present in sample_data)
 GTs_all <- rbind(inp$GTs_hyb, inp$GTs_par)                    # 195 x markers (012)
 keep_ind <- rownames(GTs_all) %in% sd$Sample_ID
 GTs_all  <- GTs_all[keep_ind, ]

@@ -1,7 +1,7 @@
 test	axis	observed	null_median	null_lo	null_hi	p_emp	p_adj
-DI (Spearman rho)	PC1	0.0605	-0.0086	-0.1064	0.0901	0.192	0.287
+DI (Spearman rho)	PC1	0.0605	-0.0086	-0.1064	0.0901	0.192	0.383
 DI (Spearman rho)	PC2	-0.1149	-0.0086	-0.1064	0.0901	0.0295	0.177
-recombination (Spearman rho)	PC1	-0.0132	-8e-04	-0.0192	0.0167	0.191	0.287
+recombination (Spearman rho)	PC1	-0.0132	-8e-04	-0.0192	0.0167	0.191	0.383
 recombination (Spearman rho)	PC2	0.0035	-8e-04	-0.0192	0.0167	0.659	0.659
-sorting, differentiated only (BF percentile gap)	PC1	0.0389	0.0269	0.0018	0.0509	0.362	0.435
-sorting, differentiated only (BF percentile gap)	PC2	0.0095	0.0269	0.0018	0.0509	0.176	0.287
+sorting, differentiated only (BF percentile gap)	PC1	0.038	0.0264	0.002	0.0498	0.363	0.441
+sorting, differentiated only (BF percentile gap)	PC2	0.0149	0.0264	0.002	0.0498	0.368	0.441

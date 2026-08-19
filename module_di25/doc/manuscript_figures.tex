@@ -140,11 +140,8 @@ complexity reduction, and the ancestry-sorting analysis --- is based exclusively
 high-diagnostic-index (DI $>-25$) markers; other analyses in this study use the full marker
 set.
 
-%% TODO: 164 -> 165 hybrids once the DI25 clustering + sorting are rerun on the corrected
-%% 195-individual sample (one hybrid was missing from the earlier sample info). Fig. 1
-%% (circos) already displays the full 195; this analysis still reflects the 164-hybrid run.
 \emph{Diagnostic markers and populations.} We analysed the 51{,}612 species-diagnostic
-SNPs (diagnostic index $>-25$) genotyped in 164 \Faq{}\,$\times$\,\Fpo{} hybrid workers
+SNPs (diagnostic index $>-25$) genotyped in 165 \Faq{}\,$\times$\,\Fpo{} hybrid workers
 from 20 populations, with 30 parental reference individuals, coded as 0/1/2 allele dosage.
 
 \emph{LD-reduced units.} Linkage-disequilibrium clustering was rebuilt from scratch on the
@@ -201,8 +198,8 @@ genome-wide Module-A sorting, and it enters here only because that gate is delib
 applied to the DI25 set (the DI\,$>-25$ selection is itself the gate). Because the
 low-recombination contrast rests on so few large units it is sensitive to their handful: it is
 significant at $\tau=0.5$--$0.7$ but only marginal at $\tau=0.8$ ($p=0.06$). All of this will be
-revisited when the analyses are rerun on the corrected 195-individual sample with reseeded
-diagnostic indices.
+revisited when the diagnostic indices are reseeded (these analyses now use the corrected
+195-individual sample).
 
 \emph{This does not contradict the all-marker (Module~A) result.} Module~A finds sorting
 \emph{depleted} at low recombination (low recombination holds few independent units, most washing
@@ -278,7 +275,7 @@ than being refuted by it.
 Larger clusters also sort less often overall (a measurement effect: a large eMLG consensus
 averages over many markers and near-fixes in fewer populations); the representative-marker refit
 in panel c controls for that averaging and the size--direction effect persists. All preliminary
-pending the 195-individual, reseeded rerun (see Fig.~2).
+pending the reseeded-DI rerun (see Fig.~2).
 
 \emph{Caveat --- this size$\to$direction pattern is specific to the diagnostic set and does not
 generalise.} Refitting the direction model on Module~A's all-marker units (same clustering
@@ -292,20 +289,21 @@ mechanism.}
 
 %% ==========================================================================
 \figblock{bdmi_sorting_circos_cutoff5.png}
-{Figure 4 --- BDMI candidate regions coincide with ancestry-sorted regions}
+{Figure 4 --- BDMI candidate regions coincide with ancestry-sorted, low-recombination regions}
 {% caption
 \textbf{Genomic regions carrying candidate hybrid incompatibilities (BDMIs) sit on the
-ancestry-sorted parts of the genome, not the unsorted background.} An ancestry-sorting
-$\tau$ sweep (four concentric rings, $\tau=0.5$--$0.8$ inner$\to$outer; each
-diagnostic SNP coloured by its sort class --- \Faq{} teal, \Fpo{} yellow, direction
-unresolved purple, unsorted near-white), with an added outer ring (orange) marking the
-diagnostic SNPs that fall inside a set of BDMI candidate regions. The regions shown are the
-$\chi^2\ge 0.05$ set (58 merged regions); orange ticks concentrate on the coloured (sorted)
-sectors --- most visibly the large \Fpo{}-sorted block spanning chromosomes~25--26 and the
-\Faq{}-sorted stripes on chromosomes~11, 15 and 16--17 --- rather than being spread evenly
-around the circle. Chromosomes~1--27 are arranged by diagnostic-SNP rank (arc
-$\propto$ number of diagnostic SNPs), so the BDMI ring aligns unit-for-unit with the sorting
-rings.}
+ancestry-sorted, low-recombination parts of the genome, not the unsorted background.} Three
+aligned tracks share one polar geometry (chromosomes~1--27 by diagnostic-SNP rank; arc
+$\propto$ number of diagnostic SNPs). \textbf{Middle:} an ancestry-sorting $\tau$ sweep (four
+rings, $\tau=0.5$--$0.8$ inner$\to$outer; each diagnostic SNP coloured by sort class --- \Faq{}
+teal, \Fpo{} yellow, direction unresolved purple, unsorted near-white). \textbf{BDMI ring:}
+diagnostic SNPs inside a BDMI candidate region (the $\chi^2\ge 0.05$ set, 58 merged regions),
+coloured \textbf{blue} where that SNP is itself ancestry-sorted (at $\tau=0.6$) and
+\textbf{orange} otherwise --- the blue segments (chr~25, 11, 15, 17, 24) mark where the BDMI
+regions overlap sorting rather than lying on unsorted background. \textbf{Outermost ring (magenta):}
+diagnostic SNPs in a low-recombination window (LD-decay rate close to zero; see Methods). The three
+tracks coincide: the blue BDMI-overlap segments fall on the sorted blocks, which in turn sit on
+the magenta low-recombination blocks.}
 {% methods
 \emph{BDMI candidate regions.} An independent between-population DMI screen (collaborator
 data) tested pairs of loci in male hybrids of one \Faq{}\,$\times$\,\Fpo{} hybrid population
@@ -316,18 +314,24 @@ Each file is the union of participating loci as merged intervals (the pairing th
 edges between them is not retained), so this analysis treats them as candidate \emph{regions},
 not as an incompatibility network. Overlapping intervals were merged per chromosome.
 
-\emph{Overlay.} Using the same marker order and chromosome geometry as Figure~1 and the same
-sort classification as Figure~2 (four thresholds $\tau=0.5$--$0.8$, $\varphi=0.85$, binomial
-direction test at $\alpha=0.05$; DI\,$>-25$ SNP set, $n=51{,}612$), each diagnostic SNP was
-oriented and flagged as inside/outside the BDMI regions at
-the chosen cutoff and drawn as the outer ring. Rendered by
-\texttt{module\_di25/R/bdmi\_sorting\_circos.R} (\texttt{CUTOFF} selects the cutoff) as a
-polar raster over \texttt{render\_circos\_raster()}.}
+\emph{Rings.} Using the same marker order and chromosome geometry as Figure~1 and the same sort
+classification as Figure~2 (four thresholds $\tau=0.5$--$0.8$, $\varphi=0.85$, binomial direction
+test at $\alpha=0.05$; DI\,$>-25$ SNP set, $n=51{,}612$), each diagnostic SNP was flagged as
+inside/outside the BDMI regions at the chosen cutoff and, if inside, coloured by whether it is
+also sorted at $\tau=0.6$ (blue) or not (orange). The outermost low-recombination ring uses
+per-chromosome sliding-window LD decay ($\sim$500-kb windows; \texttt{di25\_ld\_decay.rds}), where each window
+carries an exponential decay rate $a$ in $r^2 \approx c\,e^{-a d}+b$: windows with $a$ close to
+zero ($a<10^{-5}$, i.e. LD half-decay $>\sim$70\,kb --- slow decay, high LD, low recombination)
+were merged and every diagnostic SNP inside one marked. Rendered by
+\texttt{module\_di25/R/bdmi\_sorting\_circos.R} (\texttt{CUTOFF} selects the cutoff, \texttt{LD\_A}
+the decay-rate cut) as a polar raster over \texttt{render\_circos\_raster()}.}
 {% note
 \emph{Coordinates are shared.} The colleague's regions and this study's diagnostic markers are
 both on the \emph{Frufa\_DTOL\_PR} assembly, so base-pair positions are directly comparable; no
 further liftover was applied on our side. Chromosome~23 carries no diagnostic markers and is
-absent in both. The visual overlap is quantified in Figure~5.}
+absent in both. This figure is a qualitative, three-track overview; the BDMI\,$\leftrightarrow$\,sorting
+overlap is quantified in Figure~5, its independence from recombination architecture in
+Figures~10--11.}
 
 %% ==========================================================================
 \figblock{bdmi_sorting_overlap.png}
@@ -375,7 +379,7 @@ controls for genomic \emph{position} but not for this shared dependence on diffe
 part of the overlap may be a power coincidence rather than a causal link. Because the input
 regions are the union of participating loci (edges not retained), this figure speaks to
 \emph{co-location} of BDMI candidates and sorting, not to specific incompatible pairs. Preliminary
-pending the 195-individual, reseeded rerun (see Fig.~2).}
+pending the reseeded-DI rerun (see Fig.~2).}
 
 %% ==========================================================================
 \figblock{bdmi_sorting_null_hist_cutoff5.png}
@@ -474,7 +478,7 @@ selection.} Because the simulation shares the diagnostic marker panel and the re
 captures the recombination-driven LD landscape by construction and matches the empirical level and
 shape. The contrast with ancestry sorting (Figure~9), which the \emph{same} replicates fail to
 reproduce, is what isolates sorting as the non-neutral signal. Preliminary pending the
-195-individual, reseeded rerun (see Fig.~2).}
+reseeded-DI rerun (see Fig.~2).}
 
 %% ==========================================================================
 \figblock{di25_ldw_scatter_emp_vs_sim.pdf}
@@ -553,7 +557,7 @@ alternative explanation.
 (it requires re-clustering each replicate, or applying the empirical cluster definitions as a
 same-units shortcut). The null is a single demographic model, so it bounds what neutral
 demography of this design can produce rather than exhausting all neutral scenarios. Preliminary
-pending the 195-individual, reseeded rerun (see Fig.~2).}
+pending the reseeded-DI rerun (see Fig.~2).}
 
 %% ==========================================================================
 \figblock{fig_bdmi_recomb.pdf}
@@ -609,7 +613,7 @@ high-recombination regions. Either way the key comparison --- BDMI candidacy \em
 sorting's low-recombination concentration --- holds. The sorting reference is fitted at the SNP
 level for a like-for-like comparison and is accordingly weaker than the LD-reduced estimate in
 Figure~2 (SNPs over-weight the large blocks and are non-independent). Preliminary pending the
-195-individual, reseeded rerun (see Fig.~2).}
+reseeded-DI rerun (see Fig.~2).}
 
 %% ==========================================================================
 \figblock{bdmi_sorting_recomb_controlled.png}
@@ -652,7 +656,7 @@ removes that suppression, so the BDMI coefficient rises. This is the regression 
 rotation-null result in Figure~5, now with recombination entered explicitly rather than only through
 chromosome-level resampling. The sorted/unsorted response is taken at the SNP level; the lowest-recomb
 deciles in panel a carry few BDMI loci and are correspondingly noisy. Preliminary pending the
-195-individual, reseeded rerun (see Fig.~2).}
+reseeded-DI rerun (see Fig.~2).}
 
 %% ==========================================================================
 \figblock{bdmi_sorting_ternary_cutoff13.png}

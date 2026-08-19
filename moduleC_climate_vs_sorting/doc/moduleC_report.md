@@ -1,6 +1,6 @@
 # Module C (revised): genome-wide, eMLG-level climate calibration
 
-*Generated 2026-08-18. NSIM = 10000 Omega-structured null covariates; eMLG universe = 32854 clusters (Aland excluded, 19 pops, fixed LD-pruned Omega).*
+*Generated 2026-08-19. NSIM = 10000 Omega-structured null covariates; eMLG universe = 32854 clusters (Aland excluded, 19 pops, fixed LD-pruned Omega).*
 
 ## Data provenance
 
@@ -22,33 +22,33 @@ For every covariate (observed PC1/PC2 and each of the 10,000 nulls) the genome-w
 
 | test | axis | observed | null median | null 95% | p_emp | p_adj |
 |---|---|---|---|---|---|---|
-| DI (Spearman rho) | PC1 | 0.060 | -0.009 | [-0.106, 0.090] | 0.192 | 0.287 |
+| DI (Spearman rho) | PC1 | 0.060 | -0.009 | [-0.106, 0.090] | 0.192 | 0.383 |
 | DI (Spearman rho) | PC2 | -0.115 | -0.009 | [-0.106, 0.090] | 0.0295 | 0.177 |
-| recombination (Spearman rho) | PC1 | -0.013 | -0.001 | [-0.019, 0.017] | 0.191 | 0.287 |
+| recombination (Spearman rho) | PC1 | -0.013 | -0.001 | [-0.019, 0.017] | 0.191 | 0.383 |
 | recombination (Spearman rho) | PC2 | 0.003 | -0.001 | [-0.019, 0.017] | 0.659 | 0.659 |
-| sorting, differentiated only (BF percentile gap) | PC1 | 0.039 | 0.027 | [0.002, 0.051] | 0.362 | 0.435 |
-| sorting, differentiated only (BF percentile gap) | PC2 | 0.010 | 0.027 | [0.002, 0.051] | 0.176 | 0.287 |
+| sorting, differentiated only (BF percentile gap) | PC1 | 0.038 | 0.026 | [0.002, 0.050] | 0.363 | 0.441 |
+| sorting, differentiated only (BF percentile gap) | PC2 | 0.015 | 0.026 | [0.002, 0.050] | 0.368 | 0.441 |
 
 ### Supplementary statistics (not in the FDR family)
 
 | test | axis | observed | null median | null 95% | p_emp |
 |---|---|---|---|---|---|
-| sorting, all eMLGs (raw-BF gap) | PC1 | 0.696 | 0.301 | [-0.151, 0.834] | 0.126 |
-| sorting, all eMLGs (raw-BF gap) | PC2 | -0.101 | 0.301 | [-0.151, 0.834] | 0.118 |
-| sorting, differentiated (raw-BF gap) | PC1 | 0.707 | 0.455 | [0.143, 0.838] | 0.167 |
-| sorting, differentiated (raw-BF gap) | PC2 | 0.425 | 0.455 | [0.143, 0.838] | 0.873 |
+| sorting, all eMLGs (raw-BF gap) | PC1 | 0.673 | 0.294 | [-0.147, 0.803] | 0.128 |
+| sorting, all eMLGs (raw-BF gap) | PC2 | -0.027 | 0.294 | [-0.147, 0.803] | 0.198 |
+| sorting, differentiated (raw-BF gap) | PC1 | 0.683 | 0.449 | [0.143, 0.809] | 0.182 |
+| sorting, differentiated (raw-BF gap) | PC2 | 0.503 | 0.449 | [0.143, 0.809] | 0.764 |
 | DI (raw-BF Pearson) | PC1 | 0.058 | -0.004 | [-0.092, 0.083] | 0.183 |
 | DI (raw-BF Pearson) | PC2 | -0.112 | -0.004 | [-0.092, 0.083] | 0.0105 |
 | recombination (raw-BF Pearson) | PC1 | -0.016 | 0.002 | [-0.017, 0.022] | 0.0691 |
 | recombination (raw-BF Pearson) | PC2 | -0.008 | 0.002 | [-0.017, 0.022] | 0.337 |
-| sorting magnitude (raw-BF Pearson) | PC1 | 0.077 | 0.076 | [0.033, 0.119] | 0.952 |
-| sorting magnitude (raw-BF Pearson) | PC2 | 0.112 | 0.076 | [0.033, 0.119] | 0.101 |
-| sorting magnitude / prop_fixed (Spearman rho) | PC1 | 0.048 | 0.054 | [0.012, 0.090] | 0.779 |
-| sorting magnitude / prop_fixed (Spearman rho) | PC2 | 0.084 | 0.054 | [0.012, 0.090] | 0.139 |
-| sorting orientation / uni_score (Spearman rho) | PC1 | 0.085 | -0.010 | [-0.118, 0.095] | 0.0861 |
-| sorting orientation / uni_score (Spearman rho) | PC2 | -0.160 | -0.010 | [-0.118, 0.095] | 0.0019 |
-| sorting, all eMLGs (BF percentile gap) | PC1 | 0.041 | 0.017 | [-0.019, 0.051] | 0.195 |
-| sorting, all eMLGs (BF percentile gap) | PC2 | -0.031 | 0.017 | [-0.019, 0.051] | 0.0055 |
+| sorting magnitude (raw-BF Pearson) | PC1 | 0.073 | 0.075 | [0.032, 0.120] | 0.942 |
+| sorting magnitude (raw-BF Pearson) | PC2 | 0.121 | 0.075 | [0.032, 0.120] | 0.0394 |
+| sorting magnitude / prop_fixed (Spearman rho) | PC1 | 0.045 | 0.053 | [0.011, 0.091] | 0.702 |
+| sorting magnitude / prop_fixed (Spearman rho) | PC2 | 0.092 | 0.053 | [0.011, 0.091] | 0.059 |
+| sorting orientation / uni_score (Spearman rho) | PC1 | 0.085 | -0.010 | [-0.119, 0.096] | 0.0885 |
+| sorting orientation / uni_score (Spearman rho) | PC2 | -0.162 | -0.010 | [-0.119, 0.096] | 0.0018 |
+| sorting, all eMLGs (BF percentile gap) | PC1 | 0.040 | 0.016 | [-0.018, 0.049] | 0.184 |
+| sorting, all eMLGs (BF percentile gap) | PC2 | -0.026 | 0.016 | [-0.018, 0.049] | 0.0119 |
 
 ### Sensitivity to minimum cluster size and fixation threshold
 
@@ -58,18 +58,18 @@ The calibration is reported over a grid of the minimum eMLG cluster size (min_n_
 
 | min_n_loci | tau | axis | observed | null 95% | p_emp |
 |---|---|---|---|---|---|
-| 5 | 0.5 | PC1 | 0.031 | [-0.001, 0.042] | 0.366 |
-| 5 | 0.5 | PC2 | 0.008 | [-0.001, 0.042] | 0.268 |
-| 5 | 0.6 | PC1 | 0.039 | [0.002, 0.051] | 0.362 |
-| 5 | 0.6 | PC2 | 0.010 | [0.002, 0.051] | 0.176 |
-| 5 | 0.8 | PC1 | 0.034 | [0.005, 0.096] | 0.512 |
-| 5 | 0.8 | PC2 | 0.044 | [0.005, 0.096] | 0.801 |
-| 10 | 0.5 | PC1 | 0.040 | [-0.008, 0.050] | 0.237 |
-| 10 | 0.5 | PC2 | 0.007 | [-0.008, 0.050] | 0.355 |
-| 10 | 0.6 | PC1 | 0.050 | [-0.002, 0.056] | 0.158 |
-| 10 | 0.6 | PC2 | 0.025 | [-0.002, 0.056] | 0.812 |
-| 10 | 0.8 | PC1 | 0.032 | [0.014, 0.095] | 0.319 |
-| 10 | 0.8 | PC2 | 0.065 | [0.014, 0.095] | 0.597 |
+| 5 | 0.5 | PC1 | 0.029 | [-0.001, 0.041] | 0.404 |
+| 5 | 0.5 | PC2 | 0.012 | [-0.001, 0.041] | 0.475 |
+| 5 | 0.6 | PC1 | 0.038 | [0.002, 0.050] | 0.363 |
+| 5 | 0.6 | PC2 | 0.015 | [0.002, 0.050] | 0.368 |
+| 5 | 0.8 | PC1 | 0.029 | [0.003, 0.097] | 0.413 |
+| 5 | 0.8 | PC2 | 0.050 | [0.003, 0.097] | 0.999 |
+| 10 | 0.5 | PC1 | 0.039 | [-0.007, 0.049] | 0.244 |
+| 10 | 0.5 | PC2 | 0.012 | [-0.007, 0.049] | 0.504 |
+| 10 | 0.6 | PC1 | 0.049 | [-0.002, 0.056] | 0.16 |
+| 10 | 0.6 | PC2 | 0.029 | [-0.002, 0.056] | 0.996 |
+| 10 | 0.8 | PC1 | 0.028 | [0.011, 0.096] | 0.271 |
+| 10 | 0.8 | PC2 | 0.068 | [0.011, 0.096] | 0.524 |
 
 **DI and recombination across min (tau-invariant), at primary tau = 0.6:**
 
@@ -86,9 +86,9 @@ The calibration is reported over a grid of the minimum eMLG cluster size (min_n_
 
 ## Interpretation
 
-**Directional sorting (primary, differentiated-only): no climate association on either axis.** PC1 observed 0.039 (FDR 0.435), PC2 0.010 (FDR 0.287) both lie within the structured-null 95% interval [0.002, 0.051]; sorting magnitude (`prop_fixed`) is likewise null on both axes (supplementary, p_emp 0.78/0.14). Directional ancestry sorting is not organised by the measured climate gradients beyond population structure.
-**Recombination: no climate association.** PC1 -0.013 (FDR 0.287), PC2 0.003 (FDR 0.659), both within the null.
-**Diagnostic Index: no climate association after FDR** (PC1 rho 0.060 FDR 0.287; PC2 rho -0.115 FDR 0.177).
+**Directional sorting (primary, differentiated-only): no climate association on either axis.** PC1 observed 0.038 (FDR 0.441), PC2 0.015 (FDR 0.441) both lie within the structured-null 95% interval [0.002, 0.050]; sorting magnitude (`prop_fixed`) is likewise null on both axes (supplementary, p_emp 0.70/0.06). Directional ancestry sorting is not organised by the measured climate gradients beyond population structure.
+**Recombination: no climate association.** PC1 -0.013 (FDR 0.383), PC2 0.003 (FDR 0.659), both within the null.
+**Diagnostic Index: no climate association after FDR** (PC1 rho 0.060 FDR 0.383; PC2 rho -0.115 FDR 0.177).
 **Overall:** no primary test is exceptional; climate-association evidence is not concentrated in diagnostic, directionally-sorted, or low-recombination eMLGs beyond population structure and genomic architecture -- a clean basis for concluding the measured climate gradients are not a robust organising axis of ancestry sorting.
 
 ## What this analysis can and cannot establish
