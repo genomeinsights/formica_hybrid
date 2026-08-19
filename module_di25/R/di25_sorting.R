@@ -3,8 +3,9 @@
 ## =========================================================
 ## Estimates ancestry sorting exactly as Module A does, but on the high-DI-only
 ## data set: per SNP (51,612 diagnostic markers) and per eMLG unit (the from-
-## scratch 5 cM clustering; eMLG consensus for >2-marker clusters, representative
-## SNP for 1-2). Near-fixation floor phi = 0.85 (fix_th = 0.15) held fixed; the
+## scratch 5 cM clustering; best-SNP -- the consensus-optimal member -- for
+## >2-marker clusters, representative SNP for 1-2). Near-fixation floor
+## phi = 0.85 (fix_th = 0.15) held fixed; the
 ## sorting threshold tau is swept {0.5, 0.6, 0.7, 0.8} as in Module A (Fig S1).
 ##
 ## Method (Module A conventions, sort_rule = "binom", alpha = 0.05):
@@ -33,7 +34,7 @@
 ## =========================================================
 
 suppressMessages(library(data.table))
-devtools::load_all("~/gitlab/LDscnR/")             # ohta_fast_prepare(), consensus_dosage()
+devtools::load_all("~/gitlab/LDscnR/")             # ohta_fast_prepare(), eMLG_best_snp()
 source("moduleA_sorting/R/parallelism_stats.R")    # parallelism_stats(), classify_sort()
 
 ## ---- parameters ---------------------------------------------------------
@@ -81,23 +82,29 @@ ps_snp <- parallelism_stats(prep_snp, hybrid_pops = hybrid_pops,
 saveRDS(ps_snp, file.path(OUTDIR, "di25_sorting_snp.rds"))
 
 ## =========================================================================
-## per-eMLG sorting (5 cM clustering; consensus for >2 markers, else rep SNP)
+## per-eMLG sorting (5 cM clustering) -- BEST-SNP representation (canonical,
+## consistent with the main pipeline): each unit is ONE real SNP. For >2-marker
+## clusters, eMLG_best_snp() picks the member whose genotype best matches the
+## cluster consensus (best_marker); 1-2-marker clusters keep their centrality
+## representative. So genotype AND DI come from a real SNP, never averaged --
+## replacing the earlier consensus dosage + max-over-members DI.
 ## =========================================================================
 res <- readRDS(CLUST); g <- res$groups
 is_emlg <- g$n_loci > 2
-cat(sprintf("\n[per-eMLG] %d units (%d eMLG + %d rep-SNP); building unit matrix ...\n",
+best <- eMLG_best_snp(res, inp$GTs_hyb, fill = FALSE)          # best_marker per >2-marker cluster
+bm   <- setNames(best$stats$best_marker, best$stats$group_id)
+rep_snp <- g$representative                                    # 1-2-marker units keep representative
+rep_snp[is_emlg] <- bm[g$group_id[is_emlg]]                    # >2-marker units use best_marker
+stopifnot(!anyNA(rep_snp), all(rep_snp %in% colnames(GTs_all)))
+cat(sprintf("\n[per-eMLG] %d units (%d eMLG best-SNP + %d rep-SNP); building unit matrix ...\n",
             nrow(g), sum(is_emlg), sum(!is_emlg)))
-E <- vapply(seq_len(nrow(g)), function(i) {
-  if (is_emlg[i]) consensus_dosage(GTs_all, g$members[[i]]) else GTs_all[, g$representative[i]]
-}, numeric(nrow(GTs_all)))                                    # individuals x units
+E <- GTs_all[, rep_snp, drop = FALSE]                          # individuals x units (real best-SNP genotypes)
 colnames(E) <- g$group_id
 
-## per-unit pooled-parental MAF and DI (max over members, ungated covariate)
+## per-unit pooled-parental MAF and DI, both from the unit's real best-SNP (no averaging)
 par_freq_u <- colMeans(E[parent_rows, , drop = FALSE], na.rm = TRUE) / 2
 pmaf_u     <- setNames(pmin(par_freq_u, 1 - par_freq_u), g$group_id)
-DI_u <- setNames(vapply(g$members, function(mk) {
-  v <- DI_vec[mk]; if (all(is.na(v))) NA_real_ else max(v, na.rm = TRUE)
-}, numeric(1)), g$group_id)
+DI_u       <- setNames(DI_vec[rep_snp], g$group_id)            # best-SNP DI (was max over members)
 
 prep_emlg <- ohta_fast_prepare(E, pops = pops)
 ps_emlg <- parallelism_stats(prep_emlg, hybrid_pops = hybrid_pops,

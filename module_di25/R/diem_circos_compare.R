@@ -37,18 +37,22 @@ inp <- readRDS(INPUTS)
 GTs_all <- rbind(inp$GTs_hyb, inp$GTs_par)                              # 195 x markers (012)
 faqu <- grep("^Faqu", rownames(GTs_all)); fpol <- grep("^Fpol", rownames(GTs_all))
 is_emlg <- g$n_loci > 2
-D <- vapply(seq_len(nrow(g)), function(i) {
-  if (is_emlg[i]) consensus_dosage(GTs_all, g$members[[i]]) else GTs_all[, g$representative[i]]
-}, numeric(nrow(GTs_all)))
-D <- t(D)                                                              # units x individuals
+## BEST-SNP representation (consistent with di25_sorting.R): each unit is one real
+## SNP -- the consensus-optimal member (best_marker) for >2-marker clusters, the
+## representative for 1-2-marker clusters -- not the averaged consensus dosage.
+best <- eMLG_best_snp(res, inp$GTs_hyb, fill = FALSE)
+bm   <- setNames(best$stats$best_marker, best$stats$group_id)
+rep_snp <- g$representative
+rep_snp[is_emlg] <- bm[g$group_id[is_emlg]]
+D <- t(GTs_all[, rep_snp, drop = FALSE])                              # units x individuals (real best-SNP)
 flip <- which(rowMeans(D[, faqu, drop = FALSE], na.rm = TRUE) <
               rowMeans(D[, fpol, drop = FALSE], na.rm = TRUE))
 D[flip, ] <- 2 - D[flip, ]                                             # 2 = aquilonia
 emlg_code <- 3L - round(D); emlg_code[is.na(emlg_code)] <- 0L
 storage.mode(emlg_code) <- "integer"
 colnames(emlg_code) <- rownames(GTs_all)
-rep_chr <- as.integer(sub("Chr", "", sub(":.*", "", g$representative)))
-rep_pos <- as.integer(sub(".*:", "", g$representative))
+rep_chr <- as.integer(sub("Chr", "", sub(":.*", "", rep_snp)))
+rep_pos <- as.integer(sub(".*:", "", rep_snp))
 ord_u   <- order(rep_chr, rep_pos)
 emlg_code <- emlg_code[ord_u, ]; emlg_chr <- rep_chr[ord_u]
 
@@ -66,7 +70,7 @@ render_diem_circos(snp_gt, snp_chr, new_device = FALSE,
                    title = sprintf("a   Per-SNP: %s diagnostic SNPs", format(nrow(snp_gt), big.mark = ",")),
                    cex_main = 1.0, chr_label_cex = 0.85)
 render_diem_circos(emlg_code, emlg_chr, new_device = FALSE,
-                   title = sprintf("b   LD-reduced: %s units (5 cM) = %s eMLG + %s rep-SNP",
+                   title = sprintf("b   LD-reduced: %s units (5 cM) = %s best-SNP + %s rep-SNP",
                                    format(nrow(emlg_code), big.mark = ","),
                                    format(sum(is_emlg), big.mark = ","),
                                    format(sum(!is_emlg), big.mark = ",")),

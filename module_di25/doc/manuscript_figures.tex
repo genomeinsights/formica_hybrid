@@ -68,8 +68,8 @@ arranged by genomic position around the circle (chromosomes~1--27). Cell colour 
 ancestry: purple = homozygous \Faq{}, teal = heterozygous, yellow = homozygous \Fpo{}; missing
 genotypes are blank. \textbf{(a)} All 51{,}612 diagnostic SNPs. \textbf{(b)} The same
 individuals and markers after LD complexity reduction to 11{,}052 units at a 5\,cM merge cap
-(4{,}010 eMLG consensus units from clusters of $>2$ markers, plus 7{,}042 representative SNPs
-from 1--2-marker clusters). The large-scale ancestry structure --- the per-individual
+(4{,}010 best-SNP units --- the consensus-optimal member per cluster of $>2$ markers --- plus
+7{,}042 representative SNPs from 1--2-marker clusters). The large-scale ancestry structure --- the per-individual
 \Faq{}--\Fpo{} gradient and the chromosomal ancestry blocks --- is retained after the
 $\sim$4.7-fold reduction, with the redundant within-block SNP replication collapsed.}
 {% methods
@@ -79,9 +79,9 @@ $\sim$4.7-fold reduction, with the redundant within-block SNP replication collap
 species). Genotypes are shown in three states --- homozygous \Faq{}, heterozygous, homozygous
 \Fpo{} --- with missing calls left blank.
 
-\emph{Units (panel b).} Each LD-reduced unit was summarised across its member markers:
-clusters of more than two markers by an expected multi-locus genotype (eMLG) consensus
-dosage, 1--2-marker clusters by their representative SNP. Each unit was oriented to the
+\emph{Units (panel b).} Each LD-reduced unit is represented by a single real SNP:
+clusters of more than two markers by their best-SNP (the member whose genotype best matches
+the cluster's eMLG consensus), 1--2-marker clusters by their representative SNP. Each unit was oriented to the
 \Faq{} allele by the sign of the parental allele-frequency difference and then discretised to
 the three-state ancestry code; units are placed at their representative marker's genomic
 position.
@@ -149,8 +149,8 @@ diagnostic markers only, using hybrids alone (including parents would inflate LD
 parent--hybrid structure): chromosome-specific LD-decay, a per-marker local-LD statistic,
 and a two-stage, quality-gated complexity reduction with a 0.5\,cM Stage-1 threshold and a
 5\,cM merge cap. This collapsed the 51{,}612 SNPs to 11{,}052 LD-reduced units; clusters of
-more than two markers are represented by an expected multi-locus genotype (eMLG) consensus,
-and 1--2-marker clusters by their representative SNP.
+more than two markers are represented by their best-SNP (the member whose genotype best matches
+the cluster's eMLG consensus), and 1--2-marker clusters by their representative SNP.
 
 \emph{Ancestry sorting.} Each unit was oriented to the \Faq{} allele by the sign of the
 parental allele-frequency difference. A population was scored near-fixed toward a species
@@ -220,7 +220,7 @@ recombination; recombination instead predicts whether a unit sorts at all.} Unit
 ($\tau=0.8$ in a--b; SNPs are all single-marker).
 \textbf{(a)} Fraction of units sorted toward \Faq{} (teal) or \Fpo{} (yellow) by cluster-size
 class: \Faq{}-directed predominates among small clusters, \Fpo{}-directed among large ones. The
-top classes are sparse (32 and 17 units) --- essentially the $\sim$12 large blocks named in
+top classes are sparse --- essentially the $\sim$12 large blocks named in
 Fig.~2's note (F2233 chr13, F7174 chr26, F6986 chr25, F8626/F8627 chr5, \dots), re-binned by
 size. \textbf{(b)} The same relationship without binning: each sorted unit is a point at its
 cluster size (log scale), at $y=0$ if sorted toward \Faq{} or $y=1$ toward \Fpo{}, with the
@@ -231,25 +231,29 @@ carried by a scatter of a few large blocks --- not an independent axis escaping 
 sparsity. \textbf{(c)} A single model, conditional on sorting:
 $P(\Fpo\mid\text{sorted}) \sim \log_{10}(\text{recombination}) + \log_{10}(\text{cluster size})$,
 fitted across all sorted units per $\tau$ (chromosome block bootstrap, 1000 replicates), on both
-the eMLG-consensus sorting (filled) and the representative-marker sorting (open; no averaging
-over cluster members). \emph{Cluster size is the stronger predictor of direction}: its
-coefficient is positive with a 95\,\% CI excluding zero (consensus $+1.1$ at $\tau=0.6$, $+1.6$
-at $\tau=0.8$; it holds on representative markers, $+0.6$/$+1.4$, so it is not a consensus
-artefact, though the consensus inflates it). Recombination has a direction effect of the
-\emph{same} sign, significant on its own ($-1.15$ at $\tau=0.6$), that is attenuated to
-non-significance once size is included --- not because the two are independent but because they
-are collinear among the sorted units ($r=-0.36$) and size carries more of the shared signal.
-Recombination is thus not eliminated as a direction predictor; size is simply the stronger one.}
+two single-SNP representations of each unit: its best-SNP (the consensus-optimal member; filled)
+and its centrality representative (the highest-median-$r^2$ member, from the per-SNP analysis;
+open). \emph{Cluster size is the stronger predictor of direction}: its coefficient is positive
+with a 95\,\% CI excluding zero on \emph{both} representations (best-SNP $+0.6$ at $\tau=0.6$,
+$+1.2$ at $\tau=0.8$; centrality representative $+0.5$/$+1.4$), so the size--direction effect does
+not depend on which single member represents the cluster. Recombination has a direction effect of
+the \emph{same} sign, but its 95\,\% CI now includes zero once size is entered ($-0.4$ at
+$\tau=0.6$), because the two predictors are collinear among the sorted units ($r\approx-0.3$) and
+size carries more of the shared signal. Recombination is thus not eliminated as a direction
+predictor; size is simply the stronger one.}
 {% methods
 \emph{Data and units.} The same DI\,$>-25$ units as Figure~2 (no MAF gate), unit level. Cluster
 size is the number of diagnostic markers per unit; recombination is the map-interpolated rate
 (cM/Mb) at the unit's representative marker. The two correlate weakly across all units
 (Pearson $-0.19$ on the logs) but appreciably among the sorted units the direction model is
-fitted on ($-0.36$).
+fitted on ($\approx-0.3$).
 
-\emph{Two sorting bases.} \emph{Consensus} scores each unit from its eMLG consensus dosage
-(representative SNP for 1--2-marker units), as in Fig.~2; \emph{representative} scores every unit
-from its representative marker alone (from the per-SNP analysis), with no averaging over members.
+\emph{Two single-SNP representations.} \emph{best-SNP} scores each unit from its consensus-optimal
+member --- the member whose genotype best matches the cluster's eMLG consensus (representative SNP
+for 1--2-marker units), as in Fig.~2; \emph{centrality representative} scores each unit from its
+representative marker, the highest-median-$r^2$ member (from the per-SNP analysis). Both are single
+real SNPs; neither averages over members, so the comparison probes whether the direction effect
+depends on which member represents the cluster.
 
 \emph{Panels a--b ($\tau=0.8$).} Panel a bins units by size class (fraction sorted toward each
 species, Wilson 95\,\% CIs). Panel b plots each sorted unit at its cluster size with the logistic
@@ -272,14 +276,14 @@ propensity effect showing through, which is why Fig.~2b's paired difference and 
 conditional size effect agree in sign. Figure~2b therefore \emph{motivates} this figure rather
 than being refuted by it.
 
-Larger clusters also sort less often overall (a measurement effect: a large eMLG consensus
-averages over many markers and near-fixes in fewer populations); the representative-marker refit
-in panel c controls for that averaging and the size--direction effect persists. All preliminary
-pending the reseeded-DI rerun (see Fig.~2).
+The size--direction effect holds on both single-SNP representations (panel c), so it does not
+depend on how the cluster is summarised --- neither the consensus-optimal member nor the centrality
+representative is an averaged value, and the effect survives swapping one for the other. All
+preliminary pending the reseeded-DI rerun (see Fig.~2).
 
 \emph{Caveat --- this size$\to$direction pattern is specific to the diagnostic set and does not
 generalise.} Refitting the direction model on Module~A's all-marker units (same clustering
-machinery; sorting on either the representative or the eMLG consensus) \emph{reverses} the size
+machinery; sorting on either the representative or the best-SNP) \emph{reverses} the size
 coefficient (larger clusters then lean \Faq{}, $\approx-0.3$ to $-0.5$); the positive DI25 effect
 appears only once clustering is restricted to diagnostic markers, where the large clusters
 \emph{are} the polyctena centromeric blocks. Panel c is therefore best read as a property of the
