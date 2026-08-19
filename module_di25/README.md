@@ -1,5 +1,13 @@
 # module_di25 (high-DI analyses)
 
+> **Status (2026-08, best-SNP / 165-individual migration).** The authoritative methods record
+> for the manuscript figures is `doc/manuscript_figures.tex`, not this README. The pipeline now
+> runs on **165 hybrids** (+30 parents) and represents each LD cluster by its **best-SNP** (the
+> consensus-optimal member) rather than the eMLG consensus. Descriptions below that still mention
+> the eMLG consensus, 164 hybrids, or a parental-MAF gate refer to the pre-migration state or to
+> exploratory scripts now archived in `R_legacy/`; the current `R/` set is listed under the
+> "Folder layout" note in the Pipeline section.
+
 Figures for the plenary talk, focused on **Module A** (ancestry sorting) with the
 high-DI diagnostic markers (DI > −25).
 
@@ -43,7 +51,7 @@ hex codes in the scripts (`diem_circos_core.R` `DIEM_COL` drives every DIEM circ
 | `di25_ld_clustering.R` | **From-scratch** LD-decay → complexity reduction on the DI25 markers ONLY (so clusters summarise high-DI variation exclusively). Hybrids-only LD; cM-cap sensitivity sweep. Writes `data/di25_clustering_cM*.rds`. |
 | `diem_circos_di25_eMLG.R` | DIEM circos on the from-scratch DI25 clustering (5 cM), all units: eMLG consensus for >2-marker clusters, representative SNP for 1–2. Writes `Figures/diem_circos_di25_eMLG_cM5.png`. |
 | `diem_circos_compare.R` | Side-by-side per-SNP vs LD-reduced (5 cM) DIEM circos, same markers and a shared individual order (ring _k_ = same ant in both). Writes `Figures/diem_circos_compare_snp_vs_ldreduced.png`. Uses `render_diem_circos(new_device = FALSE)` to draw both panels into one canvas. |
-| `di25_sorting.R` | Ancestry sorting à la Module A on the DI25 data, per SNP and per eMLG (5 cM). φ=0.85 fixed, τ swept {0.5,0.6,0.7,0.8}, `sort_rule="binom"`, parent-MAF gate 0.15, DI ungated. Writes `data/di25_sorting_{snp,emlg,sweep}.rds`. |
+| `di25_sorting.R` | Ancestry sorting à la Module A on the DI25 data, per SNP and per eMLG (5 cM; **best-SNP** — the consensus-optimal member — for >2-marker clusters, representative SNP for 1–2). 165 hybrids + 30 parents. φ=0.85 fixed, τ swept {0.5,0.6,0.7,0.8}, `sort_rule="binom"`, **no** parental-MAF gate (the DI>−25 selection is the ascertainment gate; `min_parent_maf=NULL`), DI ungated. Writes `data/di25_sorting_{snp,emlg,sweep}.rds`. |
 | `diem_circos_sorting_sweep.R` | The τ sweep drawn around the genome in the DIEM circos layout: 4 concentric rings = τ (0.5→0.8 inner→outer), each unit coloured by sort class (aqu purple / pol yellow / unresolved teal / unsorted grey). `SWEEP_LEVEL=SNP|eMLG` env var. Writes `Figures/diem_circos_sorting_sweep_{snp,emlg}.png`. Uses `render_circos_raster()` (general categorical circos added to the core). |
 | `diem_circos_di25_sortclass.R` | LD-reduced DIEM circos (genotype rings) with the sort class at τ=0.6 as an **outer annotation ring**, aligned unit-for-unit. Writes `Figures/diem_circos_di25_eMLG_sortclass_cM5.png`. Composites `render_diem_circos(..., r_out=0.80, draw_chr_labels=FALSE)` with `render_circos_raster(..., add=TRUE, bg_col=NA)` (transparent overlay; core gained `add`/`draw_chr_labels`/transparent-bg support). |
 | `diem_circos_population.R` | Per-**population** DIEM circos: the 195 individual rings collapse to 20 hybrid-population rings, each cell = the population's mean *F. aquilonia*-allele frequency at the unit (continuous viridis via a 100-step palette). Both levels. Rings inner→outer by overall ancestry. Writes `Figures/diem_circos_population_{snp,emlg}.png`. |
@@ -189,13 +197,14 @@ direction flip quantified in `di25_sorting.R`.
 ### `di25_sorting.R` (sorting, per SNP + per eMLG)
 
 Runs `parallelism_stats()` once per level (τ-independent counts), then
-`classify_sort()` at each τ. Individuals: 164 hybrids (20 pops) + 30 parents from
-`sample_data` (drops `Hei159_h`, the one tsv hybrid with no population label);
-parents supply aquilonia/polyctena orientation. Per-eMLG units use the consensus
-for >2-marker clusters and the representative SNP otherwise. Key results at τ=0.6:
-per-SNP 12.6% sorted vs per-eMLG 7.2% (LD pseudoreplication removed); and the
-direction of the most strongly sorted loci flips from polyctena-leaning at the SNP
-level (34% aqu at τ=0.8) to a stable ~80% aquilonia bias at the eMLG level — the
+`classify_sort()` at each τ. Individuals: 165 hybrids (20 pops) + 30 parents from
+`sample_data` (`Hei159_h` now carries a population label and is included; earlier
+runs dropped it as unlabelled); parents supply aquilonia/polyctena orientation.
+Per-eMLG units use the **best-SNP** (consensus-optimal member) for >2-marker clusters
+and the representative SNP otherwise. Key results at τ=0.6: per-SNP 13.6% sorted vs
+per-eMLG 8.5% (LD pseudoreplication removed); and the direction of the most strongly
+sorted loci flips from polyctena-leaning at the SNP level (34% aqu at τ=0.8) to a
+stable ~77% aquilonia bias at the eMLG level — the
 per-SNP polyctena signal is a few large low-recombination blocks counted many times.
 
 ### `diem_circos_di25_eMLG.R` (the high-DI-only LD-reduced circos)

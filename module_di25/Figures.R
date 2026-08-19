@@ -213,7 +213,7 @@ fig_size_directional <- function() {
     for (cc in unique(ch)) { r <- rec[Chr == paste0("Chr", cc)]; if (nrow(r) < 2) next
       i <- which(ch == cc); o[i] <- approx(r$p, r$cMMb, xout = pos[i], rule = 2)$y }; o }
   g <- as.data.table(readRDS(file.path(OUTDIR, "di25_clustering_cM5.rds"))$groups)
-  e <- as.data.table(readRDS(file.path(OUTDIR, "di25_sorting_emlg.rds")))   # consensus sorting
+  e <- as.data.table(readRDS(file.path(OUTDIR, "di25_sorting_emlg.rds")))   # best-SNP eMLG sorting (the "consensus" basis is now best-SNP)
   s <- as.data.table(readRDS(file.path(OUTDIR, "di25_sorting_snp.rds")))    # per-SNP sorting
 
   ## per-unit table: consensus AND representative-marker sorting, recomb, size
@@ -324,7 +324,7 @@ fig_size_directional <- function() {
     geom_point(size = 2.6, shape = 21, colour = "#2C6E8F", position = pdg) +
     facet_wrap(~ term) +
     scale_fill_manual(values = c(consensus = "#2C6E8F", representative = "white"),
-                      name = "sorting basis", labels = c("eMLG consensus", "representative SNP")) +
+                      name = "sorting basis", labels = c("best-SNP", "centrality representative")) +
     labs(x = "sorting threshold (fraction of populations near-fixed)",
          y = "joint-model coefficient\n(logit; P(polyctena | sorted))") + theme_ms +
     theme(strip.background = element_blank())

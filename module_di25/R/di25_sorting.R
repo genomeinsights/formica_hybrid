@@ -79,6 +79,11 @@ ps_snp <- parallelism_stats(prep_snp, hybrid_pops = hybrid_pops,
                             fix_th = FIX_TH, DI = DI_vec, min_DI = NULL,
                             parent_maf = pmaf_snp, min_parent_maf = NULL,
                             sort_rule = SORT_RULE, alpha = ALPHA)
+## The DI passed here is the LATER full-data map DI (an ungated covariate), NOT the
+## frozen DIEM panel's DI that defined the DI25 marker set (see header) -- and it is
+## missing for the markers absent from the later map. Rename so it can never be
+## mistaken for the ascertainment DI; sorting does not depend on it.
+setnames(ps_snp, "DI", "current_map_DI")
 saveRDS(ps_snp, file.path(OUTDIR, "di25_sorting_snp.rds"))
 
 ## =========================================================================
@@ -91,6 +96,11 @@ saveRDS(ps_snp, file.path(OUTDIR, "di25_sorting_snp.rds"))
 ## =========================================================================
 res <- readRDS(CLUST); g <- res$groups
 is_emlg <- g$n_loci > 2
+## fill = FALSE: each unit carries its best-SNP's STRICTLY OBSERVED calls (no
+## consensus imputation of missing genotypes). This differs from the main pipeline's
+## canonical best-SNP matrix (Module A), which fills missing calls from the cluster
+## consensus; here we deliberately keep observed-only genotypes. Set fill = TRUE for
+## literal parity with Module A.
 best <- eMLG_best_snp(res, inp$GTs_hyb, fill = FALSE)          # best_marker per >2-marker cluster
 bm   <- setNames(best$stats$best_marker, best$stats$group_id)
 rep_snp <- g$representative                                    # 1-2-marker units keep representative
@@ -113,6 +123,10 @@ ps_emlg <- parallelism_stats(prep_emlg, hybrid_pops = hybrid_pops,
                              parent_maf = pmaf_u, min_parent_maf = NULL,
                              sort_rule = SORT_RULE, alpha = ALPHA)
 ps_emlg <- g[, .(group_id, n_loci, is_emlg)][ps_emlg, on = c(group_id = "marker")]
+## record each unit's chosen best-SNP marker (rep_snp) so its SNP id / DI / MAF /
+## genomic position remain fully traceable back to a single real marker.
+ps_emlg[, unit_marker := setNames(rep_snp, g$group_id)[group_id]]
+setnames(ps_emlg, "DI", "current_map_DI")                      # later full-data map DI (see per-SNP note)
 saveRDS(ps_emlg, file.path(OUTDIR, "di25_sorting_emlg.rds"))
 
 ## =========================================================================

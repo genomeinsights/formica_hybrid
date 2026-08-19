@@ -31,7 +31,9 @@ WORKERS <- if (length(args) >= 2) as.integer(args[2]) else 9L
 STAGE1    <- "module_di25/data/di25_stage1.rds"
 BEDFMT    <- "data/diem_outs_demo/diem_boot%d_output.bed"
 CACHE_DIR <- "module_di25/data/ldw_sim_cache"
-GDS_TMP   <- "/private/tmp/claude-539526166/-Users-petrikem-gitlab-LDscnR/63fce5ef-28e0-4215-afc5-5b7620c2c579/scratchpad"
+## per-run scratch dir for the temporary SNPRelate GDS files (was a hard-coded path
+## from an earlier session -- a clean rerun on another machine would have failed).
+GDS_TMP   <- tempfile("di25_ldw_gds_"); dir.create(GDS_TMP, showWarnings = FALSE, recursive = TRUE)
 OUTRDS    <- "module_di25/data/di25_ldw_envelope.rds"
 OUTPNG    <- "module_di25/Figures/di25_ldw_manhattan_envelope.png"
 OUTPDF    <- sub("\\.png$", ".pdf", OUTPNG)
@@ -50,6 +52,13 @@ win_median <- function(dt) {
 }
 
 ## ---- per-replicate ld_w_095 -> windowed medians (cached) -------------------
+## CAVEAT (this null is PRELIMINARY):
+##  (1) Ascertainment NOT matched -- every simulated marker enters the LD null; the
+##      empirical DI > -25 diagnostic ascertainment is not recreated on the
+##      simulations, so the null panel is not ascertainment-matched to the observed.
+##  (2) Cache keyed by REPLICATE INDEX ONLY -- existence-based, not parameter-
+##      stamped. If any LD/window parameter or the empirical panel changes, delete
+##      CACHE_DIR to force a recompute; the cache cannot detect the change itself.
 process_rep <- function(REP) {
   cache <- file.path(CACHE_DIR, sprintf("rep%d.rds", REP))
   if (file.exists(cache)) return(invisible(TRUE))

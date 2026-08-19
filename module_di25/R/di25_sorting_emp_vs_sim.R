@@ -54,6 +54,13 @@ tally_reps <- function(ps, REP) {
 }
 
 ## ---- per-replicate sorting (cached) ----------------------------------------
+## CAVEAT (this null is PRELIMINARY):
+##  (1) Ascertainment NOT matched -- every simulated marker enters the null; the
+##      empirical DI > -25 diagnostic ascertainment is not recreated on the
+##      simulations, so the null panel is not ascertainment-matched to the observed.
+##  (2) Cache keyed by REPLICATE INDEX ONLY -- existence-based, not parameter-
+##      stamped. If any sorting parameter or the empirical panel changes, delete
+##      CACHE_DIR to force a recompute; the cache cannot detect the change itself.
 process_rep <- function(REP) {
   cache <- file.path(CACHE_DIR, sprintf("rep%d.rds", REP))
   if (file.exists(cache)) return(invisible(TRUE))
