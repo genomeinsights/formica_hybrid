@@ -136,9 +136,9 @@ per-decile fraction, whereas the regression enters every unit --- including the 
 chromosome-level block bootstrap accounting for their non-independence.}
 {% methods
 \emph{Scope.} The entire pipeline underlying this figure --- LD-decay estimation, LD-based
-complexity reduction, and the ancestry-sorting analysis --- is based exclusively on the
-high-diagnostic-index (DI $>-25$) markers; other analyses in this study use the full marker
-set.
+complexity reduction, and the ancestry-sorting analysis --- is based exclusively on a frozen,
+externally defined panel previously classified as DI $>-25$; other analyses in this study use
+the full marker set.
 
 \emph{Diagnostic markers and populations.} We analysed the 51{,}612 species-diagnostic
 SNPs (diagnostic index $>-25$) genotyped in 165 \Faq{}\,$\times$\,\Fpo{} hybrid workers
@@ -160,9 +160,9 @@ threshold $\tau$; among sorted units the direction was assigned to the majority 
 a two-sided binomial test of $n_{\text{aqu}}$ among $n_{\text{fixed}}$ ($\alpha=0.05$)
 rejected parity, and left unresolved otherwise. The only diagnosticity gate is the
 DI\,$>-25$ marker selection itself; unlike the genome-wide Module-A sorting, no additional
-pooled-parental MAF\,$\ge 0.15$ filter is applied, since restricting to DI\,$>-25$ already
-removes the near-monomorphic loci that filter guards against (it dropped only $\sim$398 of
-51{,}612 SNPs). The same statistics were computed at the SNP level for comparison.
+pooled-parental MAF gate was applied; applying the Module-A threshold (MAF\,$\ge 0.15$) would
+exclude approximately 398 of the 51{,}612 SNPs. The same statistics were computed at the SNP
+level for comparison.
 
 \emph{Recombination.} Recombination rate (cM/Mb) was assigned to each marker (and each
 unit's representative position) by per-chromosome linear interpolation of the linkage map.
@@ -231,7 +231,7 @@ carried by a scatter of a few large blocks --- not an independent axis escaping 
 sparsity. \textbf{(c)} A single model, conditional on sorting:
 $P(\Fpo\mid\text{sorted}) \sim \log_{10}(\text{recombination}) + \log_{10}(\text{cluster size})$,
 fitted across all sorted units per $\tau$ (chromosome block bootstrap, 1000 replicates), on both
-two single-SNP representations of each unit: its best-SNP (the consensus-optimal member; filled)
+two single-SNP representations of each unit: its best-SNP (the consensus-optimal member)
 and its centrality representative (the highest-median-$r^2$ member, from the per-SNP analysis;
 open). \emph{Cluster size is the stronger predictor of direction}: its coefficient is positive
 with a 95\,\% CI excluding zero on \emph{both} representations (best-SNP $+0.6$ at $\tau=0.6$,
@@ -559,9 +559,11 @@ alternative explanation.
 
 \emph{Scope and caveats.} Per-SNP only here; the per-LD-cluster (eMLG) null is not yet run
 (it requires re-clustering each replicate, or applying the empirical cluster definitions as a
-same-units shortcut). The null is a single demographic model, so it bounds what neutral
-demography of this design can produce rather than exhausting all neutral scenarios. Preliminary
-pending the reseeded-DI rerun (see Fig.~2).}
+same-units shortcut). \emph{The simulated markers were not subjected to the empirical DI\,$>-25$
+ascertainment --- every simulated marker enters the null --- so the null is not
+ascertainment-matched to the observed diagnostic panel.} The null is a single demographic model,
+so it bounds what neutral demography of this design can produce rather than exhausting all neutral
+scenarios. Preliminary pending the reseeded-DI rerun (see Fig.~2).}
 
 %% ==========================================================================
 \figblock{fig_bdmi_recomb.pdf}
