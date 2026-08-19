@@ -46,6 +46,12 @@ assoc <- readRDS("moduleB_climate_GEA/data/moduleB_eMLG_association.rds")   # gr
 grp   <- readLines("aland_excluded_eMLG/eMLG_group_order.txt")         # BayPass row order
 groups <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$groups
 he     <- groups[has_eMLG == TRUE, .(group_id, representative, n_loci)]
+## canonical best-SNP: read recomb at each cluster's best_marker (its real
+## representative SNP), consistent with DI now coming from best_marker
+## (moduleA_cluster_sorting.rds), rather than the centrality representative.
+rep_snp <- as.data.table(readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05_bestsnp.rds")$rep_snp_all)
+he[rep_snp, on = "group_id", best_marker := i.rep_snp]
+stopifnot("best_marker missing for some has_eMLG cluster" = all(!is.na(he$best_marker)))
 
 ## ---- Module A sorting, tau series ---------------------------------------
 ## Read the stamped cluster-sorting objects; the DIRECTIONAL classification is the
@@ -94,8 +100,8 @@ rec <- fread("data/Frufa_DTOL_PR.ref_genome.recmap")
 stopifnot(ncol(rec) >= 4)
 setnames(rec, 1:4, c("chr", "pos", "cM", "cMMb"))
 rec[, Chr := sub("chromosome_", "Chr", chr)]
-he[, `:=`(rep_chr = sub(":.*", "", representative),
-          rep_pos = as.integer(sub(".*:", "", representative)),
+he[, `:=`(rep_chr = sub(":.*", "", best_marker),
+          rep_pos = as.integer(sub(".*:", "", best_marker)),
           recomb  = NA_real_)]
 for (ch in unique(he$rep_chr)) {
   r <- rec[Chr == ch]
@@ -146,8 +152,8 @@ attr(ann, "meta") <- list(
   tau_series = TAUS, tau_primary = MODULEC_TAU_PRIMARY, tau_stamp = TSTAMP,
   n_directional = sum(ann$directional == 1L),           # primary (tau06)
   n_directional_by_tau = n_dir_by_tau,
-  recomb_source = "map-interpolated cM/Mb at representative marker (moduleB_architecture convention)",
-  DI_source = "per-eMLG consensus DI (moduleA_cluster_sorting.rds)",
+  recomb_source = "map-interpolated cM/Mb at best-SNP marker (canonical best-SNP representation)",
+  DI_source = "per-eMLG best-SNP DI (moduleA_cluster_sorting.rds)",
   magnitude_source = "prop_fixed = degree of fixation (moduleA_cluster_sorting.rds); NOT uni_score",
   orientation_source = "uni_score = signed direction (moduleA_cluster_sorting.rds); supplementary only",
   n_prop_fixed_NA = sum(is.na(ann$prop_fixed)),

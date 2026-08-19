@@ -1,8 +1,9 @@
 ## =========================================================
 ## Module B: BayPass input for the eMLG-level climate association
 ## =========================================================
-## Builds a BayPass -countdatafile in which each "marker" is one LD cluster's
-## eMLG (its consensus genotype across member markers), rather than an
+## Builds a BayPass -countdatafile in which each "marker" is one LD cluster,
+## represented by its best-SNP genotype (the member SNP best matching the
+## consensus; canonical best-SNP representation), rather than an
 ## individual SNP. This lets us test whether the CLUSTER AS A UNIT tracks the
 ## climate covariate -- a stronger candidate criterion than ">=5 member SNPs
 ## individually cross BF(dB)>=15", which the raw candidate list uses (see
@@ -20,11 +21,11 @@
 ## assert they equal aland_excluded/u_DIEM.size -- if the order disagreed, that
 ## check fails rather than silently misaligning covariates with genotypes.
 ##
-## eMLG dosages are continuous in [0,2]; per the established convention
-## (formica_hybrid_old/R/baypass_eMLG.R) they are round()ed to {0,1,2} per
-## individual before the diploid allele-count aggregation.
+## Best-SNP genotypes are already integer {0,1,2} (real member-SNP calls,
+## consensus-filled for missing), so no dosage rounding is needed before the
+## diploid allele-count aggregation.
 ##
-## Writes: aland_excluded_eMLG/u_eMLG.geno  (32,840 rows x 2*19 cols)
+## Writes: aland_excluded_eMLG/u_eMLG.geno  (32,854 rows x 2*19 cols)
 ##         aland_excluded_eMLG/eMLG_group_order.txt  (group_id per geno row)
 ##         aland_excluded_eMLG/{omega_mat_omega.out,u.PC1,u.PC2,u_DIEM.size} (copies)
 ## Run from the formica_hybrid repo root.
@@ -39,20 +40,24 @@ dir.create(OUTDIR, showWarnings = FALSE, recursive = TRUE)
 ## ---- inputs -------------------------------------------------------------
 e <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e)
 sd <- as.data.table(e$sample_data)                       # Population, Sample_ID, PC1, PC2
-E  <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$eMLG      # inds x has_eMLG clusters, dosage [0,2]
+## Best-SNP representation (canonical): each cluster is one real SNP's genotype
+## (best_marker; missing filled from consensus), already integer {0,1,2} -- NOT
+## the averaged consensus dosage. Columns are group_ids, as before.
+E  <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05_bestsnp.rds")$geno   # inds x has_eMLG clusters, {0,1,2}
 
 ## ---- align eMLG rows to sample_data, drop the excluded population -------
 stopifnot("eMLG individuals not all in sample_data" = all(rownames(E) %in% sd$Sample_ID))
-sd <- sd[Sample_ID %in% rownames(E)]                     # (all 164; defensive)
-sd <- sd[Population != EXCLUDE]                           # -> 154 inds, 19 pops
+sd <- sd[Sample_ID %in% rownames(E)]                     # (all 165; defensive)
+sd <- sd[Population != EXCLUDE]                           # -> 155 inds, 19 pops
 E  <- E[sd$Sample_ID, , drop = FALSE]                    # reorder eMLG rows to sd order
 pop <- sd$Population
 pop_order <- unique(pop)                                  # first-appearance order
 cat("Populations (n=", length(pop_order), "): ", paste(pop_order, collapse = ", "), "\n", sep = "")
 cat("Individuals: ", nrow(E), "   eMLG clusters: ", ncol(E), "\n", sep = "")
 
-## ---- round dosages to {0,1,2}; NA preserved (round(NA)=NA) --------------
-Er <- round(E)
+## ---- best-SNP genotypes are already integer {0,1,2}; NA preserved --------
+## (no dosage rounding needed -- these are real SNP calls, not consensus means)
+Er <- E
 stopifnot(all(Er %in% c(0, 1, 2, NA)))
 
 ## ---- per-population diploid allele counts (same formula as the SNP run) -

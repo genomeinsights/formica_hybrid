@@ -25,6 +25,10 @@ message("=== Loading data and Creating gds ======")
 # includes maf and ld_w_095
 load("data/hybrids_only_maf005.Rdata")
 
+## alias used by the diagnostic plot_pruning_comparison() calls at the end of
+## this script; the loaded .Rdata provides map_hyb_005, not `map`.
+map <- copy(map_hyb_005)
+
 gds_hyb <- create_gds_from_geno(geno=GTs_hybrids_005, map_hyb_005, "gds_hybrids.gds")
 
 
@@ -176,6 +180,30 @@ eMLG_5loci_0025 <- ld_prune_and_eMLG(
 )
 
 saveRDS(eMLG_5loci_0025,"module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")
+
+## --- best-SNP representative companion (canonical eMLG representation) --------
+## Instead of the averaged consensus, represent every cluster by a single real
+## SNP: eMLG_best_snp() picks, per has_eMLG block (>=5 loci), the member whose
+## genotype best matches the consensus (|r|), returning that SNP's real calls
+## (missing filled from consensus) in $geno and its id in $stats$best_marker --
+## so cluster DI/position come from a real SNP, never averaged. Clusters below
+## the eMLG threshold (n_loci < 5) have no consensus and are already single
+## SNPs, so they keep their centrality representative. $rep_snp_all gives the
+## unified per-cluster real-SNP mapping (best_marker where has_eMLG, else
+## representative) that downstream modules (A cluster-level, B/C/D) join on.
+eMLG_best_cM05 <- eMLG_best_snp(eMLG_5loci_0025, GTs_hybrids_005,
+                               fill = TRUE, round_fill = TRUE)
+local({
+  g  <- data.table::as.data.table(eMLG_5loci_0025$groups)
+  g[, has_eMLG := as.logical(has_eMLG)]
+  allrep <- g[, .(group_id, representative, n_loci, has_eMLG)]
+  allrep[data.table::as.data.table(eMLG_best_cM05$stats)[, .(group_id, best_marker)],
+         on = "group_id", best_marker := i.best_marker]
+  allrep[, rep_snp := data.table::fifelse(has_eMLG & !is.na(best_marker),
+                                          best_marker, representative)]
+  eMLG_best_cM05$rep_snp_all <<- allrep[]
+})
+saveRDS(eMLG_best_cM05, "module0_ld_pruning/data/eMLG_5loci_0025_cM05_bestsnp.rds")
 
 ## one with 1cM
 eMLG_5loci_0025_cM1 <- ld_prune_and_eMLG(

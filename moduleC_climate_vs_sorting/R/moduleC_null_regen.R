@@ -66,7 +66,7 @@ NBATCH     <- NSIM_TOTAL / BATCH                       # 10
 MCMC_SEED  <- 74                                       # identical each batch (Module B)
 TOL_BF     <- 1e-6                                     # observed-vs-eBF tolerance
 BAYPASS    <- "/Users/petrikem/gitlab/baypass_public-master/sources/g_baypass"
-OPT        <- sprintf("-nthreads 10 -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed %d", MCMC_SEED)
+OPT        <- sprintf("-nthreads 6 -nocovscaling -nval 500 -burnin 5000 -thin 25 -seed %d", MCMC_SEED)
 ND         <- "aland_excluded_eMLG/null"
 STATFNS    <- "moduleC_climate_vs_sorting/R/moduleC_stat_functions.R"
 OBS_PC1    <- "aland_excluded_eMLG/PC1_eMLG_withOmega_summary_betai_reg.out"

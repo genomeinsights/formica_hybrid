@@ -178,7 +178,7 @@ fig_sorting_sweep <- function() {
                           labels = function(l) parse(text = l), name = "sorting direction") +
     labs(x = lab_tau, y = lab_pctdiff) + theme_plain(9)
   ## (right) direction-unresolved as a fraction of SORTED loci (unresolved / sorted)
-  sw[, prop_unres := bidirectional / sorted]
+  sw[, prop_unres := unresolved / sorted]
   p_prop <- ggplot(sw, aes(sort_th, prop_unres, colour = factor(fix_major), group = fix_major)) +
     geom_line() + geom_point(size = 1.0) +
     scale_x_continuous(breaks = taus) +
@@ -519,6 +519,10 @@ MB_D       <- "moduleB_climate_GEA"
 MB_ASSOC   <- file.path(MB_D, "data/moduleB_eMLG_association.rds")
 MB_BFCACHE <- file.path(MB_D, "data/moduleB_snp_bf.rds")
 MB_CLUST   <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
+## canonical best-SNP marker per cluster (group_id -> best_marker); used to anchor
+## each eMLG at its real representative SNP rather than the centrality representative.
+mB_bestmk  <- { bs <- as.data.table(readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05_bestsnp.rds")$rep_snp_all)
+                setNames(bs$rep_snp, bs$group_id) }
 MB_SIG <- 15; MB_EMLG <- 15; MB_MIN5 <- 5L
 mB_clpal <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33",
               "#A65628","#F781BF","#1B9E77","#D95F02","#7570B3","#66A61E")
@@ -605,7 +609,7 @@ fig_moduleB_snp_manhattan_clustered <- function() {
   snp <- mB_snp_bf(); co <- mB_coords(snp)
   he  <- readRDS(MB_CLUST)$groups[has_eMLG == TRUE]
   m2g <- he[, .(marker = unlist(members)), by = group_id]
-  gp  <- snp[he[, .(group_id, marker = representative)], on = "marker"][, .(group_id, Chr, Pos)]
+  gp  <- snp[he[, .(group_id, marker = mB_bestmk[group_id])], on = "marker"][, .(group_id, Chr, Pos)]
   gp[, chr_num := suppressWarnings(as.integer(gsub("[^0-9]", "", Chr)))]; setorder(gp, chr_num, Pos)
   gp[, col := mB_clpal[(seq_len(.N) - 1) %% length(mB_clpal) + 1]]           # global, position-ordered
   m2g <- gp[, .(group_id, col)][m2g, on = "group_id"]
@@ -689,7 +693,7 @@ fig_moduleB_manhattans <- function() {
     if (!bottom) p + strip_x else p
   }
   ## e,f -- eMLG-filtered SNP, clusters of >=5 loci BF>=15 coloured
-  gp <- snp[he[, .(group_id, marker = representative)], on = "marker"][, .(group_id, Chr, Pos)]
+  gp <- snp[he[, .(group_id, marker = mB_bestmk[group_id])], on = "marker"][, .(group_id, Chr, Pos)]
   gp[, chr_num := suppressWarnings(as.integer(gsub("[^0-9]", "", Chr)))]; setorder(gp, chr_num, Pos)
   gp[, col := mB_clpal[(seq_len(.N) - 1) %% length(mB_clpal) + 1]]
   emlg <- snp[, .(marker, x = co$xkey[marker], BF1, BF2)][gp[, .(group_id, col)][m2g, on = "group_id"], on = "marker"]
@@ -798,5 +802,7 @@ fig_moduleB_ancestry(); fig_moduleB_manhattans()
 cat("== Module C ==\n")
 fig_moduleC_calibration(); fig_moduleC_threshold_sensitivity()
 cat("== Tables ==\n")
-make_arch_table(); make_sorting_level_table(); make_models_table(); make_exposure_table()
+make_arch_table(); make_sorting_level_table(); make_models_table()
+## make_exposure_table() -- admixture-exposure is an internal check, left OUT of the
+## manuscript for now (2026-08); re-enable this call to rebuild the table if it returns.
 cat("\nAll figures and tables written.\n")

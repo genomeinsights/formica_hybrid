@@ -59,8 +59,11 @@ d <- d[dens >= MIN_DENS]
 cat(sprintf("SNP-density filter (>= %d SNPs/100kb): dropped %d of %d windows\n",
             MIN_DENS, n_win0 - uniqueN(d[, .(Chr, win)]), n_win0))
 
-## marker-level local LD (ld_w_095) from the map, joined on marker
-e <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e)
+## marker-level local LD (ld_w_095) from the map, joined on marker.
+## Read from hybrids_only_maf005.Rdata: module0 attaches ld_w_095 to map_hyb_005
+## only when re-saving that file (after the hybrids_and_parents save), so the
+## parents file's map_hyb_005 lacks the column. Same markers in both.
+e <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e)
 mp <- as.data.table(e$map_hyb_005)[, .(marker, ld_w_095)]
 d[mp, on = "marker", ld_w_095 := i.ld_w_095]; rm(e)
 

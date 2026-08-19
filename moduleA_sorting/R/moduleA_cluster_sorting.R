@@ -46,9 +46,11 @@ SORT_RULE      <- "binom"       # prop_fixed magnitude gate + binomial direction
 ALPHA          <- 0.05          # binom direction-test significance
 FIX_TH         <- 0.15    # per-pop near-fixation tolerance (near-fixation floor 0.85)
 MIN_DI         <- NULL    # DI is a covariate, never a gate
-DI_AGG         <- "max"   # cluster DI = max over members
+## DI_AGG (max-over-members) is superseded: under the best-SNP representation a
+## cluster's DI is simply its representative SNP's own DI -- no averaging.
 CORES          <- 4
 CLUSTERING     <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds"
+BESTSNP        <- "module0_ld_pruning/data/eMLG_5loci_0025_cM05_bestsnp.rds"
 OUT            <- "moduleA_sorting/data/moduleA_cluster_sorting.rds"
 uni_cls        <- c("aquilonia", "polyctena")
 
@@ -57,7 +59,8 @@ e2 <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e2)
 GTs_wp <- e2$GTs_with_parents; sample_data <- e2$sample_data_with_parents; map <- e2$map_hyb_005
 e1 <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e1); GTs_hyb <- e1$GTs_hybrids_005
 
-clust  <- readRDS(CLUSTERING); groups <- clust$groups; eMLG <- clust$eMLG
+clust  <- readRDS(CLUSTERING); groups <- clust$groups
+best   <- readRDS(BESTSNP)                    # best-SNP companion: $geno, $stats$best_marker
 DI_vec <- setNames(map$DiagnosticIndex, map$marker)
 aqu_pops <- "aquilonia_parent"; pol_pops <- "polyctena_parent"
 hybrid_pops <- setdiff(unique(sample_data$Population), c(aqu_pops, pol_pops))
@@ -65,16 +68,23 @@ parent_ids  <- sample_data[grepl("_parent$", Population), Sample_ID]
 GTs_parents <- GTs_wp[parent_ids, , drop = FALSE]
 
 ## ---- cluster-level parallelism over the FULL has_eMLG universe -----------
-has_ids <- colnames(eMLG)                                   # every >=5-loci cluster
-message("[A cluster-sorting] classifying ", length(has_ids), " has_eMLG clusters ...")
+## Best-SNP representation: each has_eMLG cluster is ONE real SNP (best_marker),
+## not the averaged consensus. Hybrid side = best$geno (that SNP's calls, missing
+## filled from consensus); parent side = the SAME SNP's real parental calls;
+## cluster DI = that SNP's own DI (no di_agg averaging). One real SNP throughout.
+has_ids <- colnames(best$geno)                             # every >=5-loci cluster
+bm      <- setNames(best$stats$best_marker, best$stats$group_id)[has_ids]
+stopifnot(!anyNA(bm), all(bm %in% colnames(GTs_parents)),
+          identical(rownames(best$geno), rownames(GTs_hyb)) |
+            all(rownames(best$geno) %in% rownames(GTs_wp)))
+message("[A cluster-sorting] classifying ", length(has_ids), " has_eMLG clusters (best-SNP) ...")
 t0 <- Sys.time()
-umem     <- setNames(groups[.(has_ids), on = "group_id", members], has_ids)
-par_cons <- build_group_consensus(umem, GTs_hyb, GTs_parents, cores = CORES,
-                                  progress = TRUE, label = "A cluster-sorting parent")
-GTs_units  <- rbind(eMLG[, has_ids, drop = FALSE], par_cons)
+hyb_units <- best$geno[, has_ids, drop = FALSE]                       # hybrids x clusters
+par_units <- GTs_parents[, bm, drop = FALSE]; colnames(par_units) <- has_ids  # parents x clusters
+GTs_units  <- rbind(hyb_units, par_units)
 pops_units <- sample_data[match(rownames(GTs_units), Sample_ID), Population]
-DI_units   <- cluster_DI(groups, has_ids, DI_vec, di_agg = DI_AGG)
-maf_units  <- { pf <- colMeans(par_cons, na.rm = TRUE) / 2; pmin(pf, 1 - pf) }
+DI_units   <- setNames(DI_vec[bm], has_ids)                # single-SNP DI, not max over members
+maf_units  <- { pf <- colMeans(par_units, na.rm = TRUE) / 2; pmin(pf, 1 - pf) }
 prep_units <- ohta_fast_prepare(GTs_units, pops = pops_units)
 ps <- parallelism_stats(prep_units, hybrid_pops = hybrid_pops, aqu_pops = aqu_pops,
                         pol_pops = pol_pops, DI = DI_units, min_DI = MIN_DI,

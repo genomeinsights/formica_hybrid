@@ -21,7 +21,7 @@ if (!FORCE_COLD && file.exists("module0_ld_pruning/data/diem_parsed.rds")) {
 # Parse diem data to GTs/map
 # ------------------------------------------------------------
 if(!file.exists("module0_ld_pruning/data/diem_parsed.rds")){
-  sample_data <- fread("data/Sample_covariate_info_outlier_analysis_20.txt")
+  sample_data <- fread("data/Sample_info_outlier_analysis.txt")
   DIEM <- fread("data/Formica_hybrids_filtered_diem_output.bed.gz")
   DIEM_samples <- colnames(DIEM)[10]
   DIEM_samples <- strsplit(DIEM_samples,"|",fixed = TRUE)[[1]]
@@ -76,7 +76,7 @@ if(!file.exists("module0_ld_pruning/data/diem_parsed.rds")){
   tmp <- readRDS("module0_ld_pruning/data/diem_parsed.rds")
   GTs <- tmp$GTs
   map <- tmp$map
-  sample_data <- fread("data/Sample_covariate_info_outlier_analysis_20.txt")
+  sample_data <- fread("data/Sample_info_outlier_analysis.txt")
   rm(tmp)
   gc()
 }
@@ -123,7 +123,10 @@ if(!file.exists("data/hybrids_and_parents_maf005.Rdata")){
   ## PC1/PC2 came from a hybrids-only PCA (see wherever sample_data was
   ## originally built) and have no natural extension to pure parental
   ## individuals -- left NA here rather than guessed at.
-  sample_data_with_parents <- rbind(sample_data, sample_data_parents, use.names = TRUE)
+  ## fill = TRUE so any hybrids-only columns absent from the parents table
+  ## (e.g. Mitotype, added to Sample_info_outlier_analysis.txt) are filled with
+  ## NA for parental rows rather than erroring on a column-count mismatch.
+  sample_data_with_parents <- rbind(sample_data, sample_data_parents, use.names = TRUE, fill = TRUE)
   setkey(sample_data_with_parents, Sample_ID)
   sample_data_with_parents <- sample_data_with_parents[rownames(GTs_with_parents)]
   
@@ -204,6 +207,20 @@ ld_decay <- readRDS("module0_ld_pruning/data/ld_decay_DIEM_100w.rds")
 ld_w_095 <- as.vector(compute_ld_w(0.95,ld_decay = ld_decay))
 map_hyb_005[,ld_w_095:=ld_w_095]
 save(GTs_hybrids_005,map_hyb_005,sample_data,ld_decay,file = "data/hybrids_only_maf005.Rdata")
+
+## Keep hybrids_and_parents_maf005.Rdata's map_hyb_005 in sync with the ld_w_095
+## just computed. That file is saved earlier (above), before ld_w exists, so its
+## map lacks the column; downstream modules (A/B/C/D) that read ld_w_095 from the
+## parents file's map otherwise fail. GTs_with_parents/sample_data_with_parents
+## were rm()'d before the decay step, so reload into a scratch env, attach
+## ld_w_095 by marker (identical maf005 marker set), and re-save in place.
+local({
+  ee <- new.env()
+  load("data/hybrids_and_parents_maf005.Rdata", envir = ee)
+  ee$map_hyb_005[map_hyb_005, on = "marker", ld_w_095 := i.ld_w_095]
+  save(list = c("GTs_with_parents", "sample_data_with_parents", "map_hyb_005"),
+       envir = ee, file = "data/hybrids_and_parents_maf005.Rdata")
+})
 
 ## --- lean inputs for the ld_w track figure (R/fig_ld_tracks.R) ---
 ## Saved here so that figure need not reload this 966 MB decay object or the

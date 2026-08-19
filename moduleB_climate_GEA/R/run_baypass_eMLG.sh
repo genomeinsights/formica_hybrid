@@ -12,7 +12,7 @@
 set -euo pipefail
 
 PATH_TO_BAYPASS=/Users/petrikem/gitlab/baypass_public-master/sources/g_baypass
-CORES=8
+CORES=6
 D=aland_excluded_eMLG
 
 echo "=== PC1 eMLG association (withOmega) ==="

@@ -20,7 +20,7 @@ cd "$(dirname "$0")"
 
 ## EDIT this for the machine you're running on -- do not assume the path
 ## used on the original machine is valid here.
-PATH_TO_BAYPASS=~/baypass_public/sources/g_baypass
+PATH_TO_BAYPASS=/Users/petrikem/gitlab/baypass_public-master/sources/g_baypass
 CORES=10
 
 echo "=== 1. Estimating Omega (pruned data, Aland excluded) ==="

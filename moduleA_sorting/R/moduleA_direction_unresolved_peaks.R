@@ -48,7 +48,11 @@ groups <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$groups
 snp[groups[, .(marker = unlist(members)), by = group_id], on = "marker", group_id := i.group_id]
 snp[, is_rep := marker %in% unique(groups$representative)]
 e <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e)
-snp[as.data.table(e$map_hyb_005)[, .(marker, ld_w_095)], on = "marker", ld_w := i.ld_w_095]
+## ld_w_095 lives on hybrids_only's map_hyb_005 (module0 attaches it only when
+## re-saving that file; the parents file's map lacks the column). Genotypes and
+## populations below still come from e (hybrids_and_parents).
+eo <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = eo)
+snp[as.data.table(eo$map_hyb_005)[, .(marker, ld_w_095)], on = "marker", ld_w := i.ld_w_095]; rm(eo)
 
 ## ---- (3) peaks: contiguous 100-kb windows enriched for direction-unresolved -----
 w <- snp[, .(n = .N, n_bi = sum(is_bi)), by = .(Chr, win)][, bi_frac := n_bi / n]

@@ -44,9 +44,14 @@ dir.create("moduleB_climate_GEA/Figures", showWarnings = FALSE)
 ## ---- clustering + representative positions ------------------------------
 g  <- readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05.rds")$groups
 he <- g[has_eMLG == TRUE]
+## canonical best-SNP: place each cluster at its best_marker (the real SNP that
+## represents it), not the centrality representative -- so the eMLG's plotted
+## position (and any per-marker annotation) is a real SNP's, no averaging.
+rep_snp <- as.data.table(readRDS("module0_ld_pruning/data/eMLG_5loci_0025_cM05_bestsnp.rds")$rep_snp_all)
+he[rep_snp, on = "group_id", best_marker := i.rep_snp]
 e <- new.env(); load("data/hybrids_only_maf005.Rdata", envir = e)
 map <- as.data.table(e$map_hyb_005)[, .(marker, Chr, Pos)]; mk <- map$marker; rm(e); invisible(gc())
-pos <- map[he[, .(group_id, marker = representative)], on = "marker"][, .(group_id, Chr, Pos)]
+pos <- map[he[, .(group_id, marker = best_marker)], on = "marker"][, .(group_id, Chr, Pos)]
 
 ## ---- member-SNP significance per cluster (vectorised: lookup OUTSIDE by) --
 m2g <- he[, .(marker = unlist(members)), by = group_id]
