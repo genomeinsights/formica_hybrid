@@ -691,6 +691,64 @@ composition and the points collapse toward the sorted-only corner. This panel is
 to Figures~10--11, not an independent test.}
 
 %% ==========================================================================
+\figblock{di25_sorting_multipanel.pdf}
+{Figure 12 --- Ancestry sorting is pervasive, directional, non-neutral, and coincides with candidate incompatibilities}
+{% caption
+\textbf{Ancestry sorting across the hybrid zone is pervasive, directional, and far in excess of
+neutral demography, and it physically coincides with candidate hybrid incompatibilities and
+low-recombination genome.}
+\textbf{(a)} Genome-wide map of ancestry sorting and its overlap with candidate
+Bateson--Dobzhansky--Muller incompatibility (BDMI) regions. From the inside out, the four
+concentric genotype rings give each diagnostic SNP's sort class at sorting thresholds
+$\tau=0.5$--$0.8$ (teal, sorted toward \Faq{}; yellow, toward \Fpo{}; purple, direction unresolved;
+near-white, unsorted); the next ring marks SNPs inside BDMI candidate regions (orange, or blue where
+the region overlaps a sorted locus); the outermost ring (magenta) marks low-recombination windows
+(LD-decay rate $a\approx 0$). Chromosomes 1--27 are arranged by diagnostic-SNP count
+($X^2\ge 0.05$ region set, 58 regions).
+\textbf{(b)} The percentage of the 51{,}612 diagnostic SNPs called sorted at each threshold in the
+empirical hybrids (orange) greatly exceeds a matched neutral-demographic null (green): across 1000
+coalescent replicates simulated under the hybrid-zone demography and passed through the identical
+pipeline, the null produces essentially no sorting (at most 3 sorted SNPs in any replicate; none at
+$\tau\ge 0.8$), against observed values of $22.0/13.6/9.0/4.7\%$ at $\tau=0.5/0.6/0.7/0.8$ (empirical
+$P=0.001$ at every threshold).
+\textbf{(c)} Sorted diagnostic SNPs fall inside BDMI candidate regions far more often than expected
+under a per-chromosome circular-rotation null (5000 permutations): 904 observed versus 211 expected
+for any-direction sorting ($4.3\times$, $P<2\times10^{-4}$), 402 versus 65 toward \Fpo{}
+($6.2\times$, $P=0.003$) and 458 versus 144 toward \Faq{} ($3.2\times$, $P=4\times10^{-4}$); the
+coloured line marks the observed count in each null distribution.
+\textbf{(d)} Among LD-reduced (eMLG) units the fraction sorted rises toward low recombination at
+every threshold (left; lines coloured by $\tau$, grey bars = independent units per decile, shaded
+deciles too sparse to estimate reliably), and the recombination coefficient of a logistic sorting
+model is negative at all $\tau$ ($-0.82$ to $-1.68$) with a genomic block-bootstrap 95\% CI
+excluding zero (right; negative = sorting concentrated at low recombination).}
+{% methods
+\emph{Sorting.} The 51{,}612 diagnostic SNPs (diagnostic index $>-25$) in 164
+\Faq{}\,$\times$\,\Fpo{} hybrid workers from 20 populations (30 parental references for orientation)
+were scored per population at the near-fixation floor $\varphi=0.85$; oriented to the \Faq{} allele
+by the parental allele-frequency difference, a SNP is called sorted when the proportion of
+near-fixed populations reaches $\tau$, with direction from a two-sided binomial test
+($\alpha=0.05$). \emph{(a)} overlays these sort classes with BDMI candidate intervals (an
+independent between-population DMI screen in male hybrids, lifted to the \emph{Frufa\_DTOL\_PR}
+reference) and with low-recombination windows (LD-decay rate below $10^{-5}$). \emph{(b)} re-estimates
+sorting identically on 1000 DIEM replicates (\texttt{data/diem\_outs\_demo}), a matched 20-population
+design; empirical one-sided $P=(1+\#\{\mathrm{null}\ge\mathrm{obs}\})/1001$. \emph{(c)} uses a
+per-chromosome circular-rotation null that holds each chromosome's sort pattern and BDMI coverage
+fixed and randomises only the phase of the regions relative to the SNPs. \emph{(d)} fits, per $\tau$,
+a logistic regression of the binary sorted indicator on $\log_{10}(\text{recombination})$ across eMLG
+units, with 95\% CIs from a genomic block bootstrap resampling whole chromosomes. Assembled by
+\texttt{module\_di25/R/di25\_sorting\_multipanel.R}.}
+{% note
+\emph{Consolidated main figure.} These panels bring together, at main-figure scale, analyses also
+shown individually in Figures~4 (sorting/BDMI/low-recombination circos), 5---figure supplement~1
+(rotation null) and 9 (sorting vs the demographic null); the recombination sweep in (d) extends
+Figure~2 across all four thresholds. Two caveats carry over: the neutral null in (b) is a single
+demographic model (it bounds what drift under this design can produce, not all neutral scenarios),
+and the BDMI overlap in (a,c) shares power with sorting --- a DMI screen based on
+allele-frequency/LD contrasts has more power where ancestry is differentiated, which is also where
+sorting is detected, so the rotation null controls for genomic position but not for this shared
+dependence on differentiation. Preliminary pending the 195-individual, reseeded rerun (see Fig.~2).}
+
+%% ==========================================================================
 %% Add the next figure with \figblock{file.pdf}{Title}{caption}{methods}{note-or-empty}
 
 \end{document}
