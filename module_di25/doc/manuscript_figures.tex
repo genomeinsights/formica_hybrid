@@ -158,7 +158,9 @@ when its oriented allele frequency reached $\varphi=0.85$ (\Faq{}) or fell to $\
 (\Fpo{}). A unit was called sorted when the proportion of populations near-fixed reached the
 threshold $\tau$; among sorted units the direction was assigned to the majority species when
 a two-sided binomial test of $n_{\text{aqu}}$ among $n_{\text{fixed}}$ ($\alpha=0.05$)
-rejected parity, and left unresolved otherwise. The only diagnosticity gate is the
+rejected parity, and otherwise left unresolved --- i.e.\ no consistent direction could be
+statistically assigned, the numbers of populations near-fixed toward each species not differing
+significantly from parity. The only diagnosticity gate is the
 DI\,$>-25$ marker selection itself; unlike the genome-wide Module-A sorting, no additional
 pooled-parental MAF gate was applied; applying the Module-A threshold (MAF\,$\ge 0.15$) would
 exclude approximately 398 of the 51{,}612 SNPs. The same statistics were computed at the SNP
@@ -726,8 +728,9 @@ excluding zero (right; negative = sorting concentrated at low recombination).}
 \Faq{}\,$\times$\,\Fpo{} hybrid workers from 20 populations (30 parental references for orientation)
 were scored per population at the near-fixation floor $\varphi=0.85$; oriented to the \Faq{} allele
 by the parental allele-frequency difference, a SNP is called sorted when the proportion of
-near-fixed populations reaches $\tau$, with direction from a two-sided binomial test
-($\alpha=0.05$). \emph{(a)} overlays these sort classes with BDMI candidate intervals (an
+near-fixed populations reaches $\tau$; its direction is assigned by a two-sided binomial test of
+the populations near-fixed toward each species ($\alpha=0.05$), or left unresolved where no
+direction could be statistically assigned. \emph{(a)} overlays these sort classes with BDMI candidate intervals (an
 independent between-population DMI screen in male hybrids, lifted to the \emph{Frufa\_DTOL\_PR}
 reference) and with low-recombination windows (LD-decay rate below $10^{-5}$). \emph{(b)} re-estimates
 sorting identically on 1000 DIEM replicates (\texttt{data/diem\_outs\_demo}), a matched 20-population
