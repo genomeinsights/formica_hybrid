@@ -122,9 +122,11 @@ process_rep <- function(REP) {
     dos <- matrix(NA_integer_, nrow(S), ncol(S)); dos[S == "0"] <- 0L; dos[S == "1"] <- 1L; dos[S == "2"] <- 2L
     hyb <- grep("^hyb_", inds); pop <- sub("^hyb_(.*)_[0-9]+$", "\\1", inds[hyb])
     G <- t(dos[, hyb, drop = FALSE]); colnames(G) <- markers          # hybrids x markers
-    ## Fst at the overlapping best-SNP units, by fixed DI bin + overall
-    ac  <- wc_ac(G[, ov$best], pop)
-    fst <- fst_by_bin(ac, ov$bin); overall <- fst_ratio(ac)
+    ## Fst at the overlapping best-SNP units, by fixed DI bin + overall.
+    ## A few replicates drop a handful of markers, so keep only those present.
+    mi  <- match(ov$best, colnames(G)); keep <- !is.na(mi)
+    ac  <- wc_ac(G[, mi[keep], drop = FALSE], pop)
+    fst <- fst_by_bin(ac, ov$bin[keep]); overall <- fst_ratio(ac)
     set.seed(100 + REP); bg <- bg_ld(G, chr_id)
     saveRDS(list(fst = fst, overall = overall, bg = bg, rep = REP), cache); TRUE
   }, error = function(e) { message(sprintf("  rep%d FAILED: %s", REP, conditionMessage(e))); FALSE })
