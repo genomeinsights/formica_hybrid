@@ -94,6 +94,26 @@ message(sprintf("[fst] empirical overall Fst = %.3f (neutral bg DI<-90 %.3f -> d
 emp_chr <- as.integer(sub("Chr", "", sub(":.*", "", colnames(G0))))
 set.seed(1); emp_bg <- bg_ld(G0, emp_chr)
 message(sprintf("[fst] empirical background LD = %.4f", emp_bg))
+
+## ---- empirical Fst stratified by POOLED PARENTAL MAF -------------------------
+## Low pooled-parental MAF (possible only at low-DI loci) mechanically deflates
+## Fst, so the low-DI drop could be an MAF artefact. Stratifying by parental MAF
+## tests this: if the drop persists within a fixed (esp. high) MAF stratum it is
+## not driven by MAF. Reuses the per-unit W&C components (no recompute).
+ep <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = ep)
+par_rows <- grepl("_parent$", ep$sample_data_with_parents$Population)
+pf <- colMeans(ep$GTs_with_parents[par_rows, units$best, drop = FALSE], na.rm = TRUE) / 2
+units[, pmaf := pmin(pf, 1 - pf)]
+rm(ep); gc()
+MAF_BREAKS <- c(0, 0.1, 0.2, 0.35, 0.5); MAF_LAB <- levels(cut(0, MAF_BREAKS, include.lowest = TRUE))
+units[, mstr := cut(pmaf, MAF_BREAKS, include.lowest = TRUE)]
+MIN_STRAT <- 30L
+strat <- rbindlist(lapply(MAF_LAB, function(ms) data.table(mstr = ms, bin = seq_len(N_BIN),
+  n   = vapply(seq_len(N_BIN), function(d) sum(!is.na(units$mstr) & units$mstr == ms & units$bin == d), integer(1)),
+  fst = vapply(seq_len(N_BIN), function(d) fst_ratio(ac_emp, !is.na(units$mstr) & units$mstr == ms & units$bin == d), numeric(1)))))
+strat <- strat[n >= MIN_STRAT]; strat[, mstr := factor(mstr, levels = MAF_LAB)]
+message(sprintf("[fst] parental-MAF strata: %s", paste(MAF_LAB, collapse = ", ")))
+
 ## free the big empirical genotype objects before forking -- the workers only need
 ## `ov` (overlap markers/bins) and the helper fns, not the 1.5 GB genotype matrix.
 rm(G0, Gb, ac_emp, e); gc()
@@ -153,8 +173,8 @@ env  <- data.table(bin = seq_len(N_BIN), DI_bin = BIN_LAB,
                    sim_hi  = apply(simF, 2, quantile, 0.975, na.rm = TRUE))
 env[is.na(n_sim_units) | n_sim_units < MIN_SIM_UNITS, `:=`(sim_med = NA, sim_lo = NA, sim_hi = NA)]
 neutral <- c(med = median(simO), lo = quantile(simO, 0.025), hi = quantile(simO, 0.975))
-saveRDS(list(env = env, neutral = neutral, emp_bg = emp_bg, sim_bg = simB,
-             n_rep = length(done), di_breaks = DI_BREAKS), OUTRDS)
+saveRDS(list(env = env, strat = strat, neutral = neutral, emp_bg = emp_bg, sim_bg = simB,
+             n_rep = length(done), di_breaks = DI_BREAKS, maf_breaks = MAF_BREAKS), OUTRDS)
 
 cat(sprintf("\n=== among-population Fst by DI bin (empirical vs %d-rep high-DI neutral sim) ===\n", length(done)))
 print(env[, .(DI_bin, n_emp_units, emp = round(emp, 3), n_sim_units, sim_med = round(sim_med, 3))])
@@ -166,21 +186,24 @@ cat(sprintf("background LD (inter-chr r^2, q%.2f): empirical %.4f | sim %.4f [%.
 p <- ggplot(env, aes(bin)) +
   annotate("rect", xmin = -Inf, xmax = Inf, ymin = neutral[2], ymax = neutral[3], fill = "#66c2a5", alpha = 0.30) +
   geom_hline(yintercept = neutral[1], colour = "#1b9e77", linetype = 2, linewidth = 0.7) +
-  geom_line(aes(y = emp, colour = "empirical"), linewidth = 0.9) +
-  geom_point(aes(y = emp, colour = "empirical"), size = 2.4) +
+  geom_line(data = strat, aes(bin, fst, linetype = mstr), colour = "#d95f02", linewidth = 0.55, na.rm = TRUE) +
+  geom_line(aes(y = emp, colour = "empirical (all SNPs)"), linewidth = 1.0) +
+  geom_point(aes(y = emp, colour = "empirical (all SNPs)"), size = 2.4) +
   geom_point(aes(y = sim_med, colour = "high-DI neutral sim"), size = 2.2, na.rm = TRUE) +
   geom_errorbar(aes(ymin = sim_lo, ymax = sim_hi, colour = "high-DI neutral sim"), width = 0.15, na.rm = TRUE) +
   annotate("text", x = 1, y = neutral[1], label = "neutral sim (high-DI)", colour = "#1b7f63",
            hjust = 0, vjust = -0.6, size = 3.4) +
   scale_x_continuous(breaks = seq_len(N_BIN), labels = BIN_LAB) +
-  scale_colour_manual(values = c("empirical" = "#d95f02", "high-DI neutral sim" = "#1b9e77"), name = NULL) +
+  scale_colour_manual(values = c("empirical (all SNPs)" = "#d95f02", "high-DI neutral sim" = "#1b9e77"), name = NULL) +
+  scale_linetype_manual(values = c("[0,0.1]" = "dotted", "(0.1,0.2]" = "dotdash",
+                                   "(0.2,0.35]" = "longdash", "(0.35,0.5]" = "22"), name = "parental MAF") +
   labs(x = "DiagnosticIndex bin  (left = near-neutral background, right = ancestry-informative)",
-       y = expression("among-population " * F[ST] * "  (Weir & Cockerham)"),
-       title = sprintf("Among-population Fst scales with diagnostic index; high-DI sim stays near zero (n=%d reps)", length(done)),
-       subtitle = sprintf("full-data LD-reduced units (best SNPs), 20 hybrid populations; background inter-chr LD emp=%.3f vs sim=%.3f",
-                          emp_bg, median(simB))) +
-  theme_bw(base_size = 12) +
-  theme(panel.grid.minor = element_blank(), legend.position = "top",
-        axis.text.x = element_text(angle = 45, hjust = 1))
-ggsave(OUTPDF, p, width = 9, height = 5.6); ggsave(OUTPNG, p, width = 9, height = 5.6, dpi = 150)
+       y = expression("among-population " * F[ST] * "  (Weir & Cockerham)")) +
+  guides(colour = guide_legend(order = 1), linetype = guide_legend(order = 2, nrow = 1)) +
+  theme_bw(base_size = 13) +
+  theme(panel.grid.minor = element_blank(), legend.position = "top", legend.box = "vertical",
+        legend.margin = margin(1, 1, 1, 1), legend.spacing.y = unit(1, "pt"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.margin = margin(8, 12, 4, 6))
+ggsave(OUTPDF, p, width = 8.6, height = 5.6); ggsave(OUTPNG, p, width = 8.6, height = 5.6, dpi = 200)
 cat("saved:", OUTPNG, "\n")
