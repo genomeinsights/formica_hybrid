@@ -456,9 +456,9 @@ fig_popfix <- function() {
   ci   <- image_info(circ)
   crop_top <- round(ci$height * 0.032)                 # drop the title band (~top 3%)
   circ <- image_crop(circ, geometry_area(ci$width, ci$height - crop_top, 0, crop_top))
-  pa   <- ggdraw() + draw_image(circ)
-  pb   <- ggdraw() + draw_image(file.path(FIGDIR, "di25_popfix_bars.png"))
-  fig  <- plot_grid(pa, pb, ncol = 1, rel_heights = c(1, 0.56),
+  p_circ <- ggdraw() + draw_image(circ)
+  p_bars <- ggdraw() + draw_image(file.path(FIGDIR, "di25_popfix_bars.png"))
+  fig  <- plot_grid(p_bars, p_circ, ncol = 1, rel_heights = c(0.56, 1),
                     labels = c("a", "b"), label_size = 20, label_fontface = "bold") +
     theme(plot.background = element_rect(fill = "white", colour = NA))   # cowplot bg is transparent
   save_fig(fig, "di25_popfix_combined", width = 8, height = 12.4)
