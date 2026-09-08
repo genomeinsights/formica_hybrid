@@ -1,0 +1,386 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{21918C}
+\definecolor{Muted}{HTML}{5B6570}
+\definecolor{Warn}{HTML}{B03A2E}
+
+\newcommand{\Faq}{\textit{F.~aquilonia}}
+\newcommand{\Fpo}{\textit{F.~polyctena}}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}Ancestry, climate \& mitotype -- supplementary analysis (corrected)}
+\rhead{\small\color{Muted}Poikela et al., rho05 pipeline}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.5em}\setlength{\parindent}{0pt}
+
+\title{\vspace{-3em}\textbf{\color{Accent}Genome-wide ancestry, climate, and mitotype}\\[0.2em]
+\large A population-level follow-up to the BayPass climate-GEA scan \\[0.3em]
+\normalsize\color{Warn}Corrected version -- see Erratum}
+\author{}
+\date{\small Generated \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\section*{\color{Warn}Erratum}
+An external audit of the first version of this document identified two implementation
+bugs, both now fixed. All numbers, tables and figures below are corrected;
+Section~\ref{sec:limitations} also incorporates the audit's remaining recommendations.
+\begin{enumerate}
+  \item \textbf{Block permutation silently dropped one population per shared-origin
+    pair.} The reduction from 19 populations to 17 independent lineage units was
+    implemented as ``take the first population's value, broadcast it to both members of
+    the pair.'' This was harmless for L{\aa}ngholmenW/L{\aa}ngholmenR (identical climate
+    values) but wrong for Bunkkeri/Grundsund, whose PC1 values differ ($-3.409$ vs.\
+    $-3.899$) -- Grundsund's actual value was discarded, not averaged in. \textbf{Fix:}
+    ancestry, climate, and mitotype are now genuinely \emph{averaged} within each
+    shared-origin pair to build a real 17-observation dataset, and every correlation,
+    null, and permutation below operates on that dataset directly.
+  \item \textbf{The $\Omega$-structured null for the partial correlation replaced the
+    wrong variable.} $\Omega$ is a nuclear allele-frequency covariance matrix, so it is
+    an appropriate null generator only for the one tested quantity that is itself a
+    direct function of nuclear allele frequencies -- ancestry. The original
+    implementation drew random vectors standing in for PC1 (holding ancestry and
+    mitotype fixed) instead of standing in for ancestry (holding PC1 and mitotype
+    fixed). \textbf{Fix:} throughout this document, $\Omega$-null draws always replace
+    ancestry. For comparisons where \emph{neither} variable is ancestry (mitotype vs.\
+    PC1/PC2/bio6/bio11), the $\Omega$-null is not well-motivated and is omitted; those
+    rows report the block-permutation result only.
+\end{enumerate}
+$\Omega$ itself was reduced to match the 17-unit dataset via $M\Omega M^\top$, where $M$
+is the same population-to-lineage-unit averaging operator applied to the phenotypes --
+propagating the actually-estimated relatedness structure through the reduction, rather
+than drawing null vectors from an arbitrary 17-dimensional matrix. Corrected results were
+cross-checked against an independent re-implementation: all $r$ values matched exactly,
+and $p$-values agreed closely (small differences are expected Monte Carlo noise between
+independent permutation runs).
+
+\section*{\color{Accent}Motivation}
+
+The Stage-1-direct BayPass climate-association scan (PC1, PC2, and the winter-temperature
+variables bio6/bio11) produced raw candidate counts under a descriptive BF(dB)$\geq$15
+threshold, but none of the climate axes are expected to survive full structured-null
+calibration cleanly, because PC1 and PC2 are both partially confounded with genome-wide
+ancestry (established in \texttt{moduleB\_ancestry\_confound.R}: cor(PC1,ancestry)$=-0.23$,
+cor(PC2,ancestry)$=+0.57$ across all 20 populations). Rather than treating that confound
+purely as a caveat that explains away the locus-level scan, this document asks whether the
+population-level ancestry--climate link is itself real and worth reporting on its own
+terms -- and traces it down to what actually drives it.
+
+All analyses here operate on the population level (\emph{not} individual genotypes), on the
+\texttt{aland\_excluded} set of hybrid populations that the BayPass scan itself uses
+(\AA land excluded because its individuals carry mixed mitotypes and it is a known
+high-leverage outlier in several of the ORIGINAL PC1/PC2 diagnostics), further reduced to
+\textbf{17 independent lineage units} as described in the Erratum.
+
+\subsection*{\color{Muted}Two non-independence-aware significance tests}
+A plain Pearson correlation across populations overstates the effective sample size: two
+population pairs have a documented shared origin from the phylogenetic network analysis
+(L{\aa}ngholmenW+L{\aa}ngholmenR; Bunkkeri+Grundsund; Nouhaud et al.\ 2022), and all
+populations share allele-frequency covariance captured by the fixed population covariance
+matrix $\Omega$ already estimated for the BayPass scan (from all 698{,}251 Stage-1 cluster
+representatives). Two complementary null designs are used throughout, both now operating on
+the genuine 17-lineage-unit dataset:
+\begin{itemize}
+  \item \textbf{$\Omega$-structured null.} 10{,}000 random vectors are drawn from the
+    17-unit-reduced $\Omega$'s eigendecomposition, standing in for ancestry (see Erratum).
+    Empirical $p = (1+k)/(n_{\mathrm{sim}}+1)$, $k$ = number of null draws with
+    $|r_{\mathrm{null}}| \geq |r_{\mathrm{obs}}|$.
+  \item \textbf{Shared-origin block permutation.} 10{,}000 permutations shuffle the tested
+    variable across the 17 independent units directly, recomputing the correlation each
+    time.
+\end{itemize}
+Benjamini-Hochberg correction is applied within each family of tests (the 4 climate
+variables; the 5 mitotype comparisons), using the block-permutation $p$-values as the
+primary statistic, since the $\Omega$-null is not defined for every row.
+
+\clearpage
+\section*{\color{Accent}1. Ancestry vs.\ climate axes}
+
+Population ancestry (mean oriented \Faq\ allele frequency at diagnostic markers,
+DI$>-25$, $|\Delta p|\geq0.5$) is compared against the two original climate axes (PC1, PC2)
+and the two new winter-temperature variables suggested for the GEA scan
+(bio6 = min.\ temperature of the coldest month; bio11 = mean temperature of the coldest
+quarter).
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Variable & $r$ (17 units) & $\Omega$-null $p$ & Block-perm.\ $p$ & Block-perm.\ $p_{\mathrm{BH}}$ \\
+\midrule
+PC1   & $-0.481$ & $0.044$ & $0.051$ & $0.164$ \\
+PC2   & $+0.381$ & $0.110$ & $0.123$ & $0.164$ \\
+bio6  & $+0.404$ & $0.091$ & $0.110$ & $0.164$ \\
+bio11 & $+0.287$ & $0.210$ & $0.267$ & $0.267$ \\
+\bottomrule
+\end{tabular}
+\caption{Ancestry vs.\ climate, 17 independent lineage units. $p_{\mathrm{BH}}$ =
+Benjamini-Hochberg corrected across the 4 tests.}
+\end{table}
+
+\textbf{Finding.} PC1 has the strongest ancestry association among the four variables and
+is the only one to fall below $p=0.05$ under the block-permutation test ($p=0.051$, i.e.\
+right at the boundary) -- but the two null designs disagree (\smash{$\Omega$-null $p=0.044$}
+vs.\ block-permutation $p=0.051$), and \textbf{none of the four variables survive
+Benjamini-Hochberg correction} (minimum $p_{\mathrm{BH}}=0.164$). The accurate summary is
+that PC1's ancestry association is \emph{suggestive but not formally significant}, not that
+it ``clears'' a defensible statistical test. bio6 is the next-closest candidate but is
+weaker on both nulls than PC1.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=\linewidth]{../Figures/moduleB_ancestry_vs_climate_17units_CORRECTED.png}
+  \caption{Ancestry vs.\ PC1/PC2/bio6/bio11, 17 independent lineage units, with corrected
+  statistics annotated per panel.}
+\end{figure}
+
+\clearpage
+\section*{\color{Accent}2. What drives the PC1--ancestry signal?}
+
+Three complementary diagnostics identify which population(s) are responsible for the
+PC1--ancestry correlation: leave-one-population-out, leave-one-independent-unit-out, and
+standard regression influence statistics (Cook's distance, standardized residuals) from
+$\mathrm{lm}(\mathrm{ancestry}\sim\mathrm{PC1})$. \emph{This diagnostic predates the
+17-unit correction and is reported on the original 19-population scale} (observed
+$r=-0.502$) -- Heinam\"aki and Jarvenpaa are not part of either shared-origin pair, so the
+bug did not affect their values, and the qualitative finding is unchanged at 17-unit
+resolution (raw $r=-0.481$; see Section~1).
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Population & Leave-one-out $\Delta r$ & $r$ without it & Cook's $D$ & Std.\ residual \\
+\midrule
+Heinam\"aki & $-0.211$ & $-0.712$ & $\mathbf{0.618}$ & $+2.75$ \\
+Jarvenpaa   & $+0.030$ & $-0.471$ & $0.288$ & $-2.30$ \\
+\emph{all others} & $|{\leq}0.06|$ & -- & $\leq0.07$ & $|{\leq}1.2|$ \\
+\bottomrule
+\end{tabular}
+\caption{Regression influence diagnostics for PC1 vs.\ ancestry, 19-population scale
+(observed $r=-0.502$). Rule-of-thumb cutoffs: Cook's $D > 4/n = 0.211$.}
+\end{table}
+
+\textbf{Finding.} Heinam\"aki dominates every diagnostic by a wide margin, with Jarvenpaa a
+distant second; every other population's individual influence is negligible. Critically,
+\textbf{Heinam\"aki dampens rather than drives} the correlation -- it combines high
+ancestry ($0.651$) with an extreme PC1 value ($4.29$) in a way that sits \emph{off} the
+negative trend, so excluding it makes the correlation \emph{stronger}
+($r:-0.502\rightarrow-0.712$). Whatever one makes of PC1's borderline significance (Section
+1), it is not an artifact of one population manufacturing a spurious signal.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.75\linewidth]{../Figures/moduleB_ancestry_PC1_leverage.png}
+  \caption{PC1 vs.\ ancestry (19-population scale), point size $=$ Cook's distance.
+  Heinam\"aki (largest point) is the dominant influence but pulls \emph{against} the fitted
+  trend.}
+\end{figure}
+
+\subsection*{\color{Muted}Is Heinam\"aki itself anomalous?}
+Three checks on Heinam\"aki's own data found nothing unusual: mitotype is uniform
+(10/10 \Faq-like, not mixed like \AA land); it was sampled from 2 nests (159, 160), typical
+of the panel; and its hybrid index ($0.357\pm0.017$) and heterozygosity ($0.314\pm0.038$)
+sit comfortably among the other \Faq-skewed mainland populations. Admixture timing (DATES)
+could not be checked here (not part of this repository).
+
+\clearpage
+\section*{\color{Accent}3. Mitotype vs.\ ancestry and climate}
+
+Mitotype (\Faq-like vs.\ \Fpo-like maternal lineage) is uniform within both shared-origin
+pairs, so it survives the 17-unit reduction unambiguously (6 \Faq-like, 11 \Fpo-like
+units). Tested as a population-level binary variable (point-biserial correlation) against
+the same five quantities.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Variable & $r$ with mitotype & $\Omega$-null $p$ & Block-perm.\ $p$ & Block-perm.\ $p_{\mathrm{BH}}$ \\
+\midrule
+ancestry & $+0.490$ & $0.037$ & $0.049$ & $0.243$ \\
+PC1      & $-0.299$ & -- & $0.255$ & $0.424$ \\
+PC2      & $+0.197$ & -- & $0.508$ & $0.508$ \\
+bio6     & $+0.291$ & -- & $0.250$ & $0.424$ \\
+bio11    & $+0.219$ & -- & $0.396$ & $0.494$ \\
+\bottomrule
+\end{tabular}
+\caption{Mitotype vs.\ ancestry/climate, 17 units. $\Omega$-null omitted where neither
+variable is ancestry (see Erratum). $p_{\mathrm{BH}}$ = Benjamini-Hochberg corrected
+across the 5 tests.}
+\end{table}
+
+\textbf{Finding.} Mitotype and genome-wide nuclear ancestry are nominally associated
+($p\approx0.037$--$0.049$ uncorrected) but \textbf{this does not survive correction for the
+5-comparison family} ($p_{\mathrm{BH}}=0.243$). No climate variable shows any evidence of a
+mitotype association. The most defensible description is an \emph{association between
+mitochondrial lineage and genome-wide nuclear ancestry, consistent with shared demographic
+history} -- language such as ``founder-history signal'' or ``populations founded by an
+\Faq-like queen'' asserts a specific causal mechanism (founding history) that this
+correlational analysis cannot distinguish from alternatives such as asymmetric
+introgression, retained population structure, or selection involving mitochondrial
+ancestry.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=\linewidth]{../Figures/moduleB_mitotype_vs_ancestry_climate_17units_CORRECTED.png}
+  \caption{Mitotype vs.\ each variable, 17 independent lineage units.}
+\end{figure}
+
+\clearpage
+\section*{\color{Accent}4. Does PC1's ancestry link survive controlling for mitotype?}
+
+Since mitotype correlates with both ancestry and, more weakly, PC1, the PC1--ancestry
+correlation could partly reflect the same demographic-history structure linking mitotype
+to ancestry rather than an independent signal. Tested via partial correlation on the
+17-unit dataset, with both nulls re-run on the partial statistic itself
+($\Omega$-null draws correctly replacing ancestry; see Erratum).
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrr}
+\toprule
+ & $r$ (17 units) & Notes \\
+\midrule
+Raw cor(PC1, ancestry)                     & $-0.481$ & $\Omega$-null $p=0.044$; block-perm.\ $p=0.051$ \\
+Partial cor(PC1, ancestry $\mid$ mitotype) & $-0.402$ & $\Omega$-null $p=0.097$; block-perm.\ $p=0.124$ \\
+\bottomrule
+\end{tabular}
+\caption{PC1--ancestry correlation before/after controlling for mitotype, 17 units.}
+\end{table}
+
+\textbf{Finding.} Controlling for mitotype moderately attenuates the PC1--ancestry
+correlation ($-0.481\rightarrow-0.402$), and the remaining association is not
+distinguishable from the population-structure null under either test ($p=0.097$--$0.124$).
+This is consistent with two readings -- a genuinely independent, if weaker, climate signal;
+or partial confounding by mitotype-linked demographic history -- and \textbf{the data
+cannot distinguish between them}. With only 17 independent lineage units, this sample
+cannot separate the contributions of climate and maternal-lineage history with any
+confidence; that is a limitation of the design, not a result in either direction.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.85\linewidth]{../Figures/moduleB_PC1_ancestry_partial_mitotype_17units_CORRECTED.png}
+  \caption{PC1 vs.\ ancestry, raw (left) and after removing the linear effect of mitotype
+  from both variables (right), 17 units.}
+\end{figure}
+
+\clearpage
+\section*{\color{Accent}5. Relationship to the BayPass locus-level scan}
+
+The population-level tests above and the BayPass climate-association scan ask related but
+\emph{different} questions. The population-level test asks whether a climate variable
+correlates with \emph{one genome-wide ancestry summary} across populations. BayPass asks
+whether \emph{particular loci or LD clusters} are unusually associated with that climate
+variable, after accounting for population covariance ($\Omega$) and thousands of tests. A
+population-level correlation being weak or non-significant does not, by itself, resolve
+whether it is relevant to the locus-level scan -- the two statements below need to be held
+together.
+
+\textbf{The climate axes are moderately aligned with population structure, but that
+alignment is not demonstrably stronger than expected by chance under that structure.} For
+PC1, the ancestry correlation is moderately large after excluding \AA land ($r\approx-0.48$
+on the corrected 17-unit dataset), but it is only suggestive under the $\Omega$-null
+($p=0.044$), nominal under the corrected lineage permutation ($p\approx0.051$), and
+non-significant after controlling for mitotype ($p=0.097$--$0.124$; Section~4). PC2 is
+weaker after \AA land exclusion and clearly non-significant under both structure-aware
+tests (Section~1).
+
+\textbf{This is fully compatible with, and plausibly explains, the original canonical
+BayPass climate scan's null-calibrated result} (Stage-2 eMLG-level scan, 32{,}854
+clusters, reported in the main manuscript -- the Stage-1-direct scan's own structured null,
+Sections~1--4 of this document notwithstanding, is still running and not yet available for
+this comparison). A moderate alignment between climate and ancestry can cause loci that
+strongly differentiate the underlying population groups to acquire large \emph{raw} Bayes
+factors, simply because those loci track the same population split the climate variable
+happens to track. But $\Omega$-structured null covariates -- random vectors sharing only
+the populations' covariance structure, with no causal link to climate at all -- frequently
+produce similarly-aligned, similarly-sized apparent outliers. Consequently the observed
+candidate counts were not exceptional against that null:
+\begin{itemize}
+  \item No PC1 cluster exceeded all 10{,}000 structured-null covariates.
+  \item Four PC2 clusters did, but $\approx3.29$ were expected by chance alone, giving an
+    estimated set-level FDR of $\approx0.82$.
+\end{itemize}
+The structured null is, in effect, saying: \emph{these apparent climate associations are
+approximately what is expected when a covariate happens to align with population history.}
+
+\textbf{Confounding does not have to be statistically significant to influence
+locus-level results.} Statistical significance asks whether the observed alignment is
+unusually strong given uncertainty and structure; confounding merely describes that climate
+and ancestry point partly in the same direction. With only 17--19 independent populations, a
+correlation of $0.4$--$0.5$ can be biologically noticeable, and large enough to shift which
+loci look like outliers in a raw BayPass scan, while still being far too weak for a
+population-level test with this little power to call it exceptional.
+
+\textbf{Bottom line.} Both climate axes were partially aligned with genome-wide ancestry,
+although these population-level correlations were not consistently distinguishable from
+expectations under the population-covariance null. This moderate alignment nevertheless
+provides a plausible source of the raw locus-level BayPass signal: loci that differentiate
+the same population groups can appear climate-associated even without any locus-specific
+environmental effect. Consistent with this interpretation, neither the number nor the
+strength of cluster-level BayPass associations exceeded what was obtained under
+$\Omega$-structured null covariates. The conclusion is \emph{not} that climate definitely
+has no relationship with ancestry -- it is that the data cannot separate a climate effect
+from population history, and the BayPass outliers provide no additional locus-specific
+evidence beyond that structure. Even a formally significant genome-wide PC1--ancestry
+correlation would not, on its own, rescue the BayPass candidates: it would show that overall
+ancestry covaries with PC1, but evidence for particular climate-associated genomic regions
+would still require their Bayes factors to exceed the structured-null distribution, which
+they did not.
+
+\clearpage
+\section*{\color{Accent}Limitations and recommended follow-up}\label{sec:limitations}
+This analysis should be treated as \textbf{supplementary and explicitly exploratory}, not a
+confirmed result, for several reasons:
+\begin{itemize}
+  \item \textbf{Only PC1 received the full mitotype-controlled (partial) analysis.} PC2,
+    bio6, and bio11 are examined only through bivariate correlations. The conclusion that no
+    climate variable shows an ancestry- and mitotype-independent signal is broader than what
+    has actually been tested for those three variables; either the same partial model should
+    be run for all four, or the conclusion should be narrowed to PC1 specifically.
+  \item \textbf{Ancestry was computed once, from the frozen DI$>-25$ marker panel.} It has
+    not been recomputed from an independent marker set or from LD-reduced diagnostic units,
+    so its sensitivity to the specific marker panel used is untested.
+  \item \textbf{A single coherent structure-aware model is preferable to a sequence of
+    bivariate/partial tests.} A model of the form
+    $\mathrm{ancestry} \sim \mathrm{climate} + \mathrm{mitotype}$ with an $\Omega$-based
+    residual covariance (or an equivalent parametric bootstrap) would estimate both
+    predictors' contributions jointly, with correctly propagated uncertainty, rather than
+    inferring their relative roles from separate bivariate/partial tests as done here.
+  \item With 17 independent lineage units and 4-5 tests per family, this analysis is
+    underpowered to detect anything but a fairly strong effect, and $\Omega$-null and
+    block-permutation $p$-values disagree by up to $\sim$0.03--0.05 in places (e.g.\ PC1:
+    $0.044$ vs.\ $0.051$) -- a reminder that ``significant'' here would depend on which
+    defensible null is treated as primary, not a settled question either null can resolve
+    alone.
+\end{itemize}
+
+\section*{\color{Accent}Summary}
+Across the 19 \AA land-excluded populations (17 independent lineage units after correcting
+for shared origins), genome-wide ancestry showed a moderate negative correlation with
+climate PC1 ($r=-0.48$). This relationship was nominally suggestive under the
+shared-lineage permutation ($p=0.051$) but did not clear the $\Omega$-structured null
+($p=0.044$ is itself only marginal, and the two nulls disagree), and it did not survive
+correction for testing four climate variables ($p_{\mathrm{BH}}=0.16$). The association was
+further attenuated and statistically indistinguishable from the population-structure null
+after controlling for mitotype ($r=-0.40$, $p=0.10$--$0.12$). Mitotype was itself nominally
+associated with nuclear ancestry ($p\approx0.04$) but not with any measured climate
+variable, and that association also did not survive multiple-testing correction. These
+patterns suggest contributions from population history and possibly climate, but the
+limited number of independent populations does not permit their effects to be separated
+confidently. Critically, this moderate, inconclusive population-level alignment is
+sufficient to explain the raw candidate counts in the original BayPass climate scan without
+invoking any locus-specific climate effect (Section~5): no PC1 cluster and only a
+null-expected number of PC2 clusters exceeded the $\Omega$-structured null. The BayPass
+scan therefore provides no locus-specific evidence for climate adaptation beyond what
+population structure already predicts. This document should be read as a supplementary,
+exploratory analysis, not a confirmed finding for the main text.
+
+\end{document}
