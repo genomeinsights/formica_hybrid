@@ -104,5 +104,11 @@ process_one(file.path(UNIT_DIR, "PC2_S1units_withOmega_summary_betai_reg.out"), 
 process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"), "log10(1/pval)", 3, "-log10(p)>=3",
            file.path(SNP_DIR, "mito_C2_fullSNP_stage1Omega_summary_contrast.out"), "log10(1/pval)",
            "mitoC2", "C2 -log10(p)")
+process_one(file.path(UNIT_DIR, "bio6_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
+           file.path(SNP_DIR, "bio6_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
+           "bio6", "BF(dB)")
+process_one(file.path(UNIT_DIR, "bio11_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
+           file.path(SNP_DIR, "bio11_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
+           "bio11", "BF(dB)")
 
 message("\n[moduleB-stage1-snp-manhattan] done")
