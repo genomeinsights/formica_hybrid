@@ -292,24 +292,41 @@ non-significant after controlling for mitotype ($p=0.097$--$0.124$; Section~4). 
 weaker after \AA land exclusion and clearly non-significant under both structure-aware
 tests (Section~1).
 
-\textbf{This is fully compatible with, and plausibly explains, the original canonical
-BayPass climate scan's null-calibrated result} (Stage-2 eMLG-level scan, 32{,}854
-clusters, reported in the main manuscript -- the Stage-1-direct scan's own structured null,
-Sections~1--4 of this document notwithstanding, is still running and not yet available for
-this comparison). A moderate alignment between climate and ancestry can cause loci that
-strongly differentiate the underlying population groups to acquire large \emph{raw} Bayes
-factors, simply because those loci track the same population split the climate variable
-happens to track. But $\Omega$-structured null covariates -- random vectors sharing only
-the populations' covariance structure, with no causal link to climate at all -- frequently
-produce similarly-aligned, similarly-sized apparent outliers. Consequently the observed
-candidate counts were not exceptional against that null:
-\begin{itemize}
-  \item No PC1 cluster exceeded all 10{,}000 structured-null covariates.
-  \item Four PC2 clusters did, but $\approx3.29$ were expected by chance alone, giving an
-    estimated set-level FDR of $\approx0.82$.
-\end{itemize}
-The structured null is, in effect, saying: \emph{these apparent climate associations are
-approximately what is expected when a covariate happens to align with population history.}
+\textbf{This is fully compatible with, and plausibly explains, both the original canonical
+BayPass climate scan's null-calibrated result and the new Stage-1-direct scan's.} A
+moderate alignment between climate and ancestry can cause loci that strongly differentiate
+the underlying population groups to acquire large \emph{raw} Bayes factors, simply because
+those loci track the same population split the climate variable happens to track. But
+$\Omega$-structured null covariates -- random vectors sharing only the populations'
+covariance structure, with no causal link to climate at all -- frequently produce
+similarly-aligned, similarly-sized apparent outliers. Consequently the observed candidate
+counts were not exceptional against that null, under \emph{either} scan:
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrr}
+\toprule
+ & Stage-2 eMLG scan (32{,}854 clusters) & Stage-1-direct scan (18{,}361 units) & Expected by chance \\
+\midrule
+PC1 floor survivors & 0 & 3 & 1.84 (Stage-1) / 3.29 (Stage-2) \\
+PC2 floor survivors & 4 & 3 & 1.84 (Stage-1) / 3.29 (Stage-2) \\
+Set-level FDR & $\approx0.82$ (PC2) & $\approx0.61$ (both axes) & -- \\
+\bottomrule
+\end{tabular}
+\caption{Floor-survivor candidate counts (BF(dB)$\geq$15 and beating all 10{,}000
+$\Omega$-structured null covariates) under both BayPass scans. ``Expected by chance'' is
+$N_{\mathrm{tested}}/(n_{\mathrm{sim}}+1)$.}
+\end{table}
+
+Both scans land at a high set-level FDR ($\geq0.6$) -- neither is a defensible discovery
+set. The one notable shift is that PC1, which had \emph{zero} floor survivors under the
+more heavily Stage-2-merged scan, has 3 under the less-diluted Stage-1-direct scan
+(BF(dB) = 53.7, 38.7, 31.1) -- consistent with, though not confirming, the population-level
+observation above that PC1 (not PC2) is the axis with the more suggestive ancestry link.
+PC2's candidate count is essentially unchanged (4 vs.\ 3) and remains similarly
+unremarkable relative to its own null expectation. The structured null is, in effect,
+saying: \emph{these apparent climate associations are approximately what is expected when a
+covariate happens to align with population history, regardless of how the markers were
+reduced to test units.}
 
 \textbf{Confounding does not have to be statistically significant to influence
 locus-level results.} Statistical significance asks whether the observed alignment is
@@ -326,7 +343,8 @@ provides a plausible source of the raw locus-level BayPass signal: loci that dif
 the same population groups can appear climate-associated even without any locus-specific
 environmental effect. Consistent with this interpretation, neither the number nor the
 strength of cluster-level BayPass associations exceeded what was obtained under
-$\Omega$-structured null covariates. The conclusion is \emph{not} that climate definitely
+$\Omega$-structured null covariates, under \emph{either} the Stage-2 or the Stage-1-direct
+scan (set-level FDR $\geq0.6$ in both). The conclusion is \emph{not} that climate definitely
 has no relationship with ancestry -- it is that the data cannot separate a climate effect
 from population history, and the BayPass outliers provide no additional locus-specific
 evidence beyond that structure. Even a formally significant genome-wide PC1--ancestry
