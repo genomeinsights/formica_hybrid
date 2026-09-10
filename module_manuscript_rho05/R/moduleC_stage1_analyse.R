@@ -45,6 +45,11 @@ EXPECT_STATS <- covariate_stat_names()
 
 ## ---- integrity gate (do NOT analyse an unfaithful / incomplete regeneration) ----
 kc <- res_in$k_check
+## pdir_diff columns carry expected NAs (empty-differentiated-top-fraction, 0/0 --
+## see moduleC_stat_functions.R / moduleC_stage1_null_regen.R); excluded from the
+## finiteness/completeness gate, which stays an exact hard stop for every other stat.
+PDIR_COLS   <- if (!is.null(res_in$pdir_cols)) res_in$pdir_cols else grep("_pdir_diff$", EXPECT_STATS, value = TRUE)
+STRICT_COLS <- setdiff(EXPECT_STATS, PDIR_COLS)
 stopifnot(
   "regeneration failed the Monte-Carlo equivalence gate (k_check$reproduced != TRUE)" = isTRUE(kc$reproduced),
   "PC1 k Pearson r <= 0.99"                 = kc$cor_k1 > 0.99,
@@ -52,15 +57,25 @@ stopifnot(
   "PC1 |sum(k) ratio - 1| >= 0.03"          = abs(kc$rel1) < 0.03,
   "PC2 |sum(k) ratio - 1| >= 0.03"          = abs(kc$rel2) < 0.03,
   "null_stats does not have 10,000 rows"    = NSIM == 10000,
-  "null_stats has non-finite entries"       = all(is.finite(null)),
-  "null_stats has incomplete rows"          = sum(complete.cases(null)) == NSIM,
+  "null_stats has non-finite entries outside *_pdir_diff" = all(is.finite(null[, STRICT_COLS])),
+  "null_stats has incomplete rows outside *_pdir_diff"    = sum(complete.cases(null[, STRICT_COLS])) == NSIM,
   "observed is not 2 rows (PC1/PC2)"        = nrow(obs) == 2,
   "observed has non-finite entries"         = all(is.finite(obs)),
   "a required statistic is missing (null)"  = setequal(colnames(null), EXPECT_STATS),
   "a required statistic is missing (obs)"   = setequal(colnames(obs),  EXPECT_STATS))
+if (length(PDIR_COLS)) {
+  na_ct <- vapply(PDIR_COLS, function(s) sum(is.na(null[, s])), integer(1))
+  cat("\npdir_diff NA counts in the regenerated null (expected; excluded from p-value denominators):\n")
+  print(na_ct)
+}
 
 ## ---- empirical two-sided P against the structured-null distribution ------
+## NA-aware: pdir_diff-family nulls carry expected NAs (empty differentiated top
+## fraction -- 0/0, documented in moduleC_stat_functions.R and tolerated by
+## moduleC_stage1_null_regen.R's finite-check). Excluded from the denominator/count
+## rather than treated as missing data to impute; every other statistic never has NAs.
 emp_p_two_sided <- function(t_obs, t_null) {
+  t_null <- t_null[!is.na(t_null)]
   med <- median(t_null)
   (1 + sum(abs(t_null - med) >= abs(t_obs - med))) / (length(t_null) + 1)
 }
@@ -84,8 +99,8 @@ build_row <- function(stat, axis, family) {
   tn <- null[, stat]; to <- obs[axis, stat]
   lab <- if (stat %in% names(LAB)) LAB[[stat]] else stat
   data.table(family = family, test = lab, stat = stat, axis = axis,
-             observed = to, null_median = median(tn),
-             null_lo = unname(quantile(tn, 0.025)), null_hi = unname(quantile(tn, 0.975)),
+             observed = to, null_median = median(tn, na.rm = TRUE),
+             null_lo = unname(quantile(tn, 0.025, na.rm = TRUE)), null_hi = unname(quantile(tn, 0.975, na.rm = TRUE)),
              p_emp = emp_p_two_sided(to, tn))
 }
 tab <- rbindlist(c(
@@ -107,8 +122,8 @@ if (!is.null(res_in$by_cell)) {
       tn <- nn[, s]; to <- o[ax, s]
       data.table(cell = k, tau = pc$tau,
                  test = if (s %in% names(LAB)) LAB[[s]] else s, stat = s, axis = ax,
-                 observed = to, null_median = median(tn),
-                 null_lo = unname(quantile(tn, 0.025)), null_hi = unname(quantile(tn, 0.975)),
+                 observed = to, null_median = median(tn, na.rm = TRUE),
+                 null_lo = unname(quantile(tn, 0.025, na.rm = TRUE)), null_hi = unname(quantile(tn, 0.975, na.rm = TRUE)),
                  p_emp = emp_p_two_sided(to, tn))
     }))))
   }))
@@ -263,6 +278,10 @@ sprintf("- Stage-1 unit count and order identical across observed / null / annot
 sprintf("- **Faithful regeneration (Monte-Carlo equivalence gate passed):** BayPass is not bit-reproducible (a fresh MCMC realization each run), so the regenerated per-unit exceedance counts match the moduleB_stage1_S1units_null.R run within MCMC tolerance rather than exactly: PC1 Pearson r = %.4f, sum ratio-1 = %+.4f; PC2 r = %.4f, sum ratio-1 = %+.4f (thresholds r > 0.99, |ratio-1| < 0.03; max|dk1| = %d, max|dk2| = %d reported as diagnostics only).",
         kc$cor_k1, kc$rel1, kc$cor_k2, kc$rel2, kc$max_abs_dk1, kc$max_abs_dk2),
 "- Input identity (the 50 `.env` covariates, geno, Omega, poolsize, params, statistic code) is guaranteed EXACTLY by md5 fingerprints. Observed BF vectors equal `eBF1`/`eBF2` (max|d| = 0); observed and null reduced by identical code (`moduleC_stat_functions.R`, shared unmodified with the canonical eMLG Module C).",
+if (length(PDIR_COLS))
+  sprintf("- The `*_pdir_diff` threshold-sensitivity statistics (proportion directional among differentiated units, within the top BF fraction) are undefined (0/0) whenever a null draw's top fraction contains zero differentiated units -- expected for the smallest fraction (top 0.1%%, ~18 units) given this smaller 18,361-unit universe. Those draws are excluded from the corresponding p-value/quantile calculation rather than imputed; NA counts (of 10,000 nulls): %s. No other statistic -- including the primary FDR family -- is ever NA.",
+          paste(sprintf("%s=%d", names(na_ct), na_ct), collapse = ", "))
+else NULL,
 "",
 "## Methods",
 "",
@@ -352,11 +371,12 @@ di_sentence <- if (di_sig) {
   sprintf("**Diagnostic Index: no climate association after FDR** (PC1 rho %.3f FDR %.3f; PC2 rho %.3f FDR %.3f).",
           d1$observed, d1$p_adj, d2$observed, d2$p_adj)
 }
-overall_sentence <- if (nrow(sig_primary) > 0)
+overall_sentence <- if (nrow(sig_primary) > 0) {
   sprintf("**Overall:** of the six primary tests, %d survives FDR (%s).",
           nrow(sig_primary), paste(sprintf("%s x %s", sig_primary$test, sig_primary$axis), collapse = "; "))
-else
+} else {
   "**Overall:** no primary test is exceptional; climate-association evidence is not concentrated in diagnostic, directionally-sorted, or low-recombination Stage-1 units beyond population structure and genomic architecture."
+}
 
 interp <- c(sort_sentence, rec_sentence, di_sentence, overall_sentence)
 

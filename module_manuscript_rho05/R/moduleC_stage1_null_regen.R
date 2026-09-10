@@ -84,6 +84,16 @@ PRIMARY_CELL <- cell_key(MINS, MODULEC_TAU_PRIMARY)   # "min05_tau06"
 NM  <- nrow(ann)
 STAT_NAMES <- covariate_stat_names(); NSTAT <- length(STAT_NAMES)
 
+## pdir_diff (proportion directional | differentiated, WITHIN the top BF fraction) is
+## DEFINED as NA when a null draw's top fraction contains zero differentiated units --
+## moduleC_stat_functions.R's own compute_covariate_stats() documents this as expected
+## (0/0), not an error. For the canonical 32,854-eMLG universe (~large differentiated
+## top-0.1% pool) this apparently never triggered; for the smaller 18,361-unit Stage-1
+## universe it does. Every OTHER statistic remains an exact hard stop -- in particular
+## the actual PRIMARY sorting stat (sort_gap_differentiated) is never in this list.
+PDIR_COLS   <- grep("_pdir_diff$", STAT_NAMES, value = TRUE)
+STRICT_COLS <- setdiff(STAT_NAMES, PDIR_COLS)
+
 stopifnot("annotation missing n_loci" = "n_loci" %in% names(ann),
           "all units must satisfy the single min threshold" = all(ann$n_loci >= MINS))
 idx_by_min <- setNames(list(seq_len(NM)), minC_stamp(MINS))
@@ -203,9 +213,14 @@ if (done >= NBATCH_RUN) {
   rows <- ((b - 1L) * BATCH + 1L):(b * BATCH)
   for (k in names(A_cell)) {
     idx <- cell_idx[[k]]
-    null_list[[k]][rows, ] <- t(apply(M[idx, , drop = FALSE], 2, compute_covariate_stats, A = A_cell[[k]]))
-    if (!all(is.finite(null_list[[k]][rows, ])))
-      stop(sprintf("non-finite statistic in batch %d, cell %s (e.g. empty differentiated top fraction)", b, k))
+    Mk <- t(apply(M[idx, , drop = FALSE], 2, compute_covariate_stats, A = A_cell[[k]]))
+    null_list[[k]][rows, ] <- Mk
+    if (!all(is.finite(Mk[, STRICT_COLS])))
+      stop(sprintf("non-finite statistic outside *_pdir_diff in batch %d, cell %s", b, k))
+    n_na_pdir <- sum(is.na(Mk[, PDIR_COLS]))
+    if (n_na_pdir > 0)
+      message(sprintf("  [regen-S1] batch %d, cell %s: %d NA pdir_diff value(s) (empty differentiated top fraction; expected, kept NA)",
+                      b, k, n_na_pdir))
   }
   rm(M); invisible(gc())
 
@@ -247,13 +262,17 @@ if (done == NBATCH) {
          "fingerprint-verified, so investigate covariate wiring / BayPass setup; only ",
          "recalibrate tolerances with additional independent reruns if genuinely warranted.")
 
+  n_na_pdir_by_cell <- setNames(integer(length(null_list)), names(null_list))
   for (k in names(null_list)) {
-    if (nrow(null_list[[k]]) != NSIM_TOTAL)                 stop(sprintf("%s null_stats wrong nrow", k))
-    if (!all(is.finite(null_list[[k]])))                   stop(sprintf("%s null_stats has non-finite entries", k))
-    if (sum(complete.cases(null_list[[k]])) != NSIM_TOTAL) stop(sprintf("%s not exactly 10,000 complete rows", k))
-    if (!all(is.finite(obs_list[[k]])))                    stop(sprintf("%s observed has non-finite entries", k))
-    if (!setequal(colnames(obs_list[[k]]), STAT_NAMES))    stop(sprintf("%s observed missing a statistic", k))
+    if (nrow(null_list[[k]]) != NSIM_TOTAL)                          stop(sprintf("%s null_stats wrong nrow", k))
+    if (!all(is.finite(null_list[[k]][, STRICT_COLS])))              stop(sprintf("%s null_stats has non-finite entries outside *_pdir_diff", k))
+    if (sum(complete.cases(null_list[[k]][, STRICT_COLS])) != NSIM_TOTAL) stop(sprintf("%s not exactly 10,000 complete rows (excluding *_pdir_diff)", k))
+    if (!all(is.finite(obs_list[[k]])))                              stop(sprintf("%s observed has non-finite entries", k))
+    if (!setequal(colnames(obs_list[[k]]), STAT_NAMES))              stop(sprintf("%s observed missing a statistic", k))
+    n_na_pdir_by_cell[k] <- sum(is.na(null_list[[k]][, PDIR_COLS]))
   }
+  cat("\npdir_diff NA counts (expected, empty-differentiated-top-fraction; excluded from FDR family):\n")
+  print(n_na_pdir_by_cell)
 
   by_cell <- setNames(lapply(names(A_cell), function(k)
     list(observed = obs_list[[k]], null_stats = null_list[[k]])), names(A_cell))
@@ -265,7 +284,8 @@ if (done == NBATCH) {
     min_series  = MINS, min_primary = MINS,
     primary_cell = PRIMARY_CELL,
     n_units_by_min = setNames(lengths(idx_by_min), minC_stamp(MINS)),
-    stat_names = STAT_NAMES,
+    stat_names = STAT_NAMES, pdir_cols = PDIR_COLS,
+    n_na_pdir_by_cell = n_na_pdir_by_cell,
     k_check    = list(k1r = k1r, k2r = k2r, k1_saved = k1_saved, k2_saved = k2_saved,
                       cor_k1 = cor_k1, cor_k2 = cor_k2, rel1 = rel1, rel2 = rel2,
                       cor_thr = COR_THR, sum_tol = SUM_TOL,
