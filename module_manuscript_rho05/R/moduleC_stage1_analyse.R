@@ -336,41 +336,36 @@ mag1 <- tab[stat == "rho_sort_magnitude" & axis == "PC1"]
 mag2 <- tab[stat == "rho_sort_magnitude" & axis == "PC2"]
 sideword <- function(row) if (row$observed > row$null_hi) "above" else if (row$observed < row$null_lo) "below" else "within"
 
-sort_sig <- s1$p_adj < 0.05 || s2$p_adj < 0.05
-rec_sig  <- r1$p_adj < 0.05 || r2$p_adj < 0.05
-di_sig   <- d1$p_adj < 0.05 || d2$p_adj < 0.05
+## Generic 3-way (both / one / neither significant) sentence builder -- handles
+## the case both axes survive FDR explicitly, rather than assuming at most one
+## (an earlier version of this code silently mislabelled a significant PC2 as
+## "within the null" whenever PC1 happened to be checked first).
+describe_axes <- function(row1, row2, label, extra1 = "", extra2 = "") {
+  sig1 <- row1$p_adj < 0.05; sig2 <- row2$p_adj < 0.05
+  if (sig1 && sig2) {
+    sprintf("**%s: a climate association survives FDR on both PC1 and PC2.** PC1 observed %.3f (FDR %.3f, %s the null)%s; PC2 observed %.3f (FDR %.3f, %s the null)%s.",
+            label, row1$observed, row1$p_adj, sideword(row1), extra1,
+            row2$observed, row2$p_adj, sideword(row2), extra2)
+  } else if (sig1 || sig2) {
+    sig <- if (sig1) row1 else row2; sig_ax <- if (sig1) "PC1" else "PC2"
+    oth <- if (sig1) row2 else row1; oth_ax <- if (sig1) "PC2" else "PC1"
+    ext <- if (sig1) extra1 else extra2
+    sprintf("**%s: a climate association survives FDR on %s only.** %s is within the null (observed %.3f, FDR %.3f); on %s the association is beyond the structured null (observed %.3f, FDR %.3f, %s the null)%s.",
+            label, sig_ax, oth_ax, oth$observed, oth$p_adj, sig_ax, sig$observed, sig$p_adj, sideword(sig), ext)
+  } else {
+    sprintf("**%s: no climate association survives FDR on either axis.** PC1 observed %.3f (FDR %.3f), PC2 %.3f (FDR %.3f), both within the structured-null 95%% interval.",
+            label, row1$observed, row1$p_adj, row2$observed, row2$p_adj)
+  }
+}
 
-sort_sentence <- if (sort_sig) {
-  sig_ax <- if (s1$p_adj < 0.05 && s2$p_adj < 0.05) "both PC1 and PC2" else if (s1$p_adj < 0.05) "PC1" else "PC2"
-  sprintf("**Directional sorting (primary, differentiated-only): a climate association survives FDR on %s.** PC1 observed %.3f (FDR %.3f), PC2 %.3f (FDR %.3f); the significant axis/axes lie %s the structured-null 95%% interval.",
-          sig_ax, s1$observed, s1$p_adj, s2$observed, s2$p_adj,
-          if (s1$p_adj < 0.05) sideword(s1) else sideword(s2))
-} else {
-  sprintf("**Directional sorting (primary, differentiated-only): no climate association survives FDR on either axis.** PC1 observed %.3f (FDR %.3f), PC2 %.3f (FDR %.3f) both lie within the structured-null 95%% interval [%.3f, %.3f]; sorting magnitude (`prop_fixed`) is likewise null on both axes (supplementary, p_emp %.2f/%.2f).",
-          s1$observed, s1$p_adj, s2$observed, s2$p_adj, s1$null_lo, s1$null_hi,
-          mag1$p_emp, mag2$p_emp)
-}
-rec_sentence <- if (rec_sig) {
-  sig_ax <- if (r1$p_adj < 0.05 && r2$p_adj < 0.05) "both PC1 and PC2" else if (r1$p_adj < 0.05) "PC1" else "PC2"
-  sprintf("**Recombination: a climate association survives FDR on %s.** PC1 %.3f (FDR %.3f), PC2 %.3f (FDR %.3f).",
-          sig_ax, r1$observed, r1$p_adj, r2$observed, r2$p_adj)
-} else {
-  sprintf("**Recombination: no climate association survives FDR.** PC1 %.3f (FDR %.3f), PC2 %.3f (FDR %.3f), both within the null.",
-          r1$observed, r1$p_adj, r2$observed, r2$p_adj)
-}
-di_sentence <- if (di_sig) {
-  sig_row  <- if (d1$p_adj < 0.05) d1 else d2
-  sig_pear <- if (d1$p_adj < 0.05) pd1 else pd2
-  other    <- if (d1$p_adj < 0.05) d2 else d1
-  other_ax <- if (d1$p_adj < 0.05) "PC2" else "PC1"
-  sig_ax   <- if (d1$p_adj < 0.05) "PC1" else "PC2"
-  sprintf("**Diagnostic Index: a signal on %s.** %s is within the null (Spearman rho %.3f, FDR %.3f), but on %s the climate-association strength is correlated with DI beyond the structured null (rho %.3f, empirical p %.3g, FDR %.3f; observed %s the null 95%% interval), corroborated by the raw-BF analysis (Pearson %.3f, p %.3g). (DI is a signed index; the sign is reported as-is and should not be read as locus-level adaptation in diagnostic regions.)",
-          sig_ax, other_ax, other$observed, other$p_adj, sig_ax, sig_row$observed, sig_row$p_emp,
-          sig_row$p_adj, sideword(sig_row), sig_pear$observed, sig_pear$p_emp)
-} else {
-  sprintf("**Diagnostic Index: no climate association after FDR** (PC1 rho %.3f FDR %.3f; PC2 rho %.3f FDR %.3f).",
-          d1$observed, d1$p_adj, d2$observed, d2$p_adj)
-}
+sort_sentence <- describe_axes(s1, s2, "Directional sorting (primary, differentiated-only)")
+if (s1$p_adj >= 0.05 && s2$p_adj >= 0.05)
+  sort_sentence <- paste0(sort_sentence, sprintf(" Sorting magnitude (`prop_fixed`) is likewise null on both axes (supplementary, p_emp %.2f/%.2f).", mag1$p_emp, mag2$p_emp))
+rec_sentence <- describe_axes(r1, r2, "Recombination")
+di_sentence  <- describe_axes(d1, d2, "Diagnostic Index",
+  extra1 = sprintf(", corroborated by the raw-BF analysis (Pearson %.3f, p %.3g)", pd1$observed, pd1$p_emp),
+  extra2 = sprintf(", corroborated by the raw-BF analysis (Pearson %.3f, p %.3g)", pd2$observed, pd2$p_emp))
+di_sentence <- paste0(di_sentence, " (DI is a signed index; the sign is reported as-is and should not be read as locus-level adaptation in diagnostic regions.)")
 overall_sentence <- if (nrow(sig_primary) > 0) {
   sprintf("**Overall:** of the six primary tests, %d survives FDR (%s).",
           nrow(sig_primary), paste(sprintf("%s x %s", sig_primary$test, sig_primary$axis), collapse = "; "))
