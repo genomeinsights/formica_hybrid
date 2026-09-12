@@ -1,6 +1,18 @@
 ## =========================================================
 ## module_manuscript_rho05 -- mitotype vs ancestry/PC1/PC2/bio6/bio11
 ## =========================================================
+## SUPERSEDED (2026-09-12 audit): this script's OWN printed correlations/
+## permutation results and figure (moduleB_mitotype_vs_ancestry_climate.png,
+## quarantined to stale_pre_fix_20260912/) predate the block-permutation and
+## Omega-null bug fixes (the block-permutation broadcast bug in particular
+## affects this script directly) -- do NOT treat them as authoritative. See
+## moduleB_ancestry_climate_mitotype_CORRECTED.R for the current numbers.
+## HOWEVER this script's DATA-PREPARATION output
+## (data/moduleB_mitotype_vs_ancestry_climate.rds, the 19-population dt19
+## dataset incl. mitotype) is NOT superseded -- it is still a valid, actively-
+## read input to moduleB_ancestry_climate_mitotype_CORRECTED.R itself. Do not
+## delete this script or its .rds output.
+## =========================================================
 ## Does mitotype (aquilonia-like vs polyctena-like maternal lineage, uniform
 ## within every aland_excluded population -- see u.mito_contrast) predict
 ## genome-wide nuclear ancestry or any of the climate variables? Point-

@@ -2,6 +2,17 @@
 ## module_manuscript_rho05 -- genome-wide ancestry vs winter-temperature
 ## climate (bio6, bio11), non-independence-aware significance
 ## =========================================================
+## SUPERSEDED (2026-09-12 audit): this script's OWN printed correlations/
+## permutation results and figure (moduleB_ancestry_vs_winter_climate.png,
+## quarantined to stale_pre_fix_20260912/) predate the block-permutation and
+## Omega-null bug fixes -- do NOT treat them as authoritative. See
+## moduleB_ancestry_climate_mitotype_CORRECTED.R for the current numbers.
+## HOWEVER this script's DATA-PREPARATION output
+## (data/moduleB_ancestry_vs_winter_climate.rds, the 19-population dt19-style
+## dataset) is NOT superseded -- it is still a valid, actively-read input to
+## moduleB_ancestry_PC1_leverage.R and moduleB_mitotype_vs_ancestry_climate.R.
+## Do not delete this script or its .rds output.
+## =========================================================
 ## Extends moduleB_climate_GEA/R/moduleB_ancestry_confound.R (which
 ## established cor(PC1,ancestry)=-0.23/-0.50-no-Aland, cor(PC2,ancestry)=
 ## +0.57/+0.38-no-Aland) to the new winter-temperature covariates

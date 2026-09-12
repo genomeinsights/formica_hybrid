@@ -2,6 +2,15 @@
 ## module_manuscript_rho05 -- does PC1's ancestry link survive controlling
 ## for mitotype?
 ## =========================================================
+## FULLY SUPERSEDED (2026-09-12 audit): this script has the Omega-null
+## variable-substitution bug (null draws replaced PC1, holding ancestry fixed,
+## instead of replacing ancestry -- the quantity Omega actually models).
+## Nothing downstream reads this script's own output
+## (data/moduleB_PC1_ancestry_partial_mitotype.rds, moduleB_PC1_ancestry_
+## partial_mitotype.png -- both quarantined to stale_pre_fix_20260912/). Do
+## not run this script or cite its numbers; use
+## moduleB_ancestry_climate_mitotype_CORRECTED.R instead.
+## =========================================================
 ## Follow-up to moduleB_ancestry_vs_winter_climate.R (PC1 vs ancestry,
 ## aland_excluded: r=-0.502, block-perm p=0.033) and
 ## moduleB_mitotype_vs_ancestry_climate.R (mitotype vs ancestry: r=+0.498,
