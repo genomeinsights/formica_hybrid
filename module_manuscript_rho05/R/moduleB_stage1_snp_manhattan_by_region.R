@@ -226,11 +226,16 @@ process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"), "log10(
            "mitoC2", "C2 -log10(p)",
            file.path(DATA_DIR, "moduleB_stage1_mitoC2_null.rds"), "floor3")
 
-process_one(file.path(UNIT_DIR, "bio6_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
-           file.path(SNP_DIR, "bio6_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
-           "bio6", "BF(dB)")   # no per-variable floor test -- see bio_winter
-
-## bio11 full-SNP scan still running on mini2 (Issue 1 audit fix rerun) --
-## add once available (no per-variable floor test either -- see bio_winter).
+## USER DECISION (2026-09-13): bio6/bio11 individually are not visualised --
+## only their combined, calibrated bio_winter axis is (see
+## moduleB_stage1_prepare_bio_winter_covariate.R for how it's built: the
+## COVARIATE itself is averaged before ever running BayPass, not a post-hoc
+## combination of bio6's/bio11's separate BF outputs). bio11's now-redundant
+## full-SNP rerun was killed on mini2 and replaced with a bio_winter full-SNP
+## run (in progress); add the call below once it lands:
+# process_one(file.path(UNIT_DIR, "bio_winter_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
+#            file.path(SNP_DIR, "bio_winter_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
+#            "bio_winter", "BF(dB)",
+#            file.path(DATA_DIR, "moduleB_stage1_bio_winter_null.rds"), "floor")
 
 message("\n[moduleB-stage1-snp-manhattan-by-region] done")
