@@ -16,8 +16,14 @@
 ## dilutes/inflates the test count vs the right-sized Stage-1 units) -- only
 ## the plotted y-value moved to real per-SNP data. Concretely:
 ##   1. Threshold the STAGE-1-UNIT scan (PC1/PC2 BF(dB)>=15, mito C2
-##      -log10(p)>=3, descriptive, not null-calibrated) to get significant
-##      Stage-1 clusters.
+##      -log10(p)>=3) to get significant Stage-1 clusters. This raw threshold
+##      is still what decides which units get coloured, for all four panels.
+##      For mitoC2, an Omega-structured null calibration now exists
+##      (moduleB_stage1_mitoC2_null.R -> data/moduleB_stage1_mitoC2_null.rds):
+##      of the 11 Stage-1 units crossing -log10(p)>=3, ZERO survive the floor
+##      test (beat all 10,000 null draws) -- the mitoC2 panel's subtitle
+##      reports this calibrated count so the plot doesn't read as validated
+##      the way the (also still only threshold-based) PC1/PC2 panels might.
 ##   2. Find which FULL canonical Stage-2 (rho05) group each significant
 ##      Stage-1 cluster's core_snp falls in -- flags that group.
 ##   3. Every member SNP of a flagged Stage-2 group is coloured by that
@@ -57,7 +63,8 @@ cat("Stage-2 (rho05) groups: ", nrow(g2), " covering ", nrow(marker2s2), " marke
 ## ---- one covariate: threshold Stage-1 units -> flag Stage-2 parent(s) ->
 ## plot every SNP at its OWN full-SNP-scan value, coloured by flagged group -
 process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
-                        snp_stat_file, snp_stat_col, tag, title_stat) {
+                        snp_stat_file, snp_stat_col, tag, title_stat,
+                        null_file = NULL, null_flag_col = NULL) {
   message("\n[", tag, "] loading Stage-1-unit scan: ", unit_stat_file)
   s <- fread(unit_stat_file)
   stopifnot(nrow(s) == nrow(cl5))
@@ -66,6 +73,20 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
 
   sig <- cl5s[stat >= thresh]
   message("[", tag, "] ", nrow(sig), " significant Stage-1 units (", thresh_label, ")")
+
+  ## optional: report how many of the threshold-significant units also
+  ## survive an Omega-structured null floor test (moduleB_stage1_*_null.R),
+  ## so the subtitle doesn't imply the raw threshold alone is calibrated.
+  calib_note <- ""
+  if (!is.null(null_file)) {
+    nullobj <- readRDS(null_file)
+    stopifnot(null_flag_col %in% names(nullobj))
+    n_floor <- sum(nullobj[[null_flag_col]][match(sig$group_id, nullobj$group_id)], na.rm = TRUE)
+    calib_note <- sprintf(" Null-calibrated (10,000 Omega-structured draws): %d of those %d survive the floor test (beat every null draw)%s.",
+                          n_floor, nrow(sig),
+                          if (n_floor == 0) " -- none are distinguishable from the structured null" else "")
+    message("[", tag, "] null-calibrated floor survivors: ", n_floor, " of ", nrow(sig))
+  }
 
   sig_s2 <- unique(marker2s2[.(sig$core_snp), on = "marker", nomatch = NULL]$s2_group)
   message("[", tag, "] -> ", length(sig_s2), " Stage-2 (rho05) group(s) flagged")
@@ -86,8 +107,8 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
     title = sprintf("%s: every SNP (own full-SNP BF/C2), coloured by Stage-2 (rho05) cluster containing a significant Stage-1 unit", tag),
     point_size = 0.6
   ) + labs(subtitle = sprintf(
-    "Significance decided at Stage-1-unit resolution (%d tested, %d significant, %s); Stage-2 used only to describe physical extent -> %d group(s), %d SNPs coloured; y-axis is the full per-SNP scan",
-    nrow(cl5s), nrow(sig), thresh_label, length(sig_s2), n_region_snps))
+    "Significance decided at Stage-1-unit resolution (%d tested, %d significant, %s); Stage-2 used only to describe physical extent -> %d group(s), %d SNPs coloured; y-axis is the full per-SNP scan.%s",
+    nrow(cl5s), nrow(sig), thresh_label, length(sig_s2), n_region_snps, calib_note))
 
   outpng <- file.path(FIGDIR, sprintf("moduleB_stage1_%s_snp_manhattan.png", tag))
   ggsave(outpng, p, width = 22, height = 4.5, dpi = 200, limitsize = FALSE)
@@ -103,7 +124,8 @@ process_one(file.path(UNIT_DIR, "PC2_S1units_withOmega_summary_betai_reg.out"), 
            "PC2", "BF(dB)")
 process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"), "log10(1/pval)", 3, "-log10(p)>=3",
            file.path(SNP_DIR, "mito_C2_fullSNP_stage1Omega_summary_contrast.out"), "log10(1/pval)",
-           "mitoC2", "C2 -log10(p)")
+           "mitoC2", "C2 -log10(p)",
+           null_file = "module_manuscript_rho05/data/moduleB_stage1_mitoC2_null.rds", null_flag_col = "floor3")
 process_one(file.path(UNIT_DIR, "bio6_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
            file.path(SNP_DIR, "bio6_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
            "bio6", "BF(dB)")
