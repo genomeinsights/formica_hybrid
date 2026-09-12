@@ -68,6 +68,23 @@ cross-checked against an independent re-implementation: all $r$ values matched e
 and $p$-values agreed closely (small differences are expected Monte Carlo noise between
 independent permutation runs).
 
+\textbf{Second erratum (2026-09-12, systematic pipeline audit).} A further implementation
+bug was found in the code above: the reduced $\Omega_{17}$ matrix was built in
+\texttt{unique()}'s first-appearance population order, while the phenotype table
+\texttt{dt17} is sorted alphabetically (\texttt{setorder}) -- two genuinely different
+orderings, verified by direct comparison. Every $\Omega$-null draw was therefore compared
+against the wrong lineage unit's phenotype, with no name-based alignment to catch it.
+\textbf{Fix:} $\Omega_{17}$ is now explicitly reordered to \texttt{dt17\$unit\_id} via
+\texttt{match()}, with a hard rownames/colnames assertion. All six corrected $\Omega$-null
+$p$-values below now match an independent colleague's cross-check exactly (ancestry--PC1
+$0.074$, ancestry--PC2 $0.190$, ancestry--bio6 $0.142$, ancestry--bio11 $0.292$,
+ancestry--mitotype $0.050$, partial PC1--ancestry$\mid$mitotype $0.141$) -- strong evidence
+the fix is correct. Raw correlations and block-permutation results do not depend on
+$\Omega$'s row order and are, as expected, unchanged. This same audit also corrected a
+covariate-standardization bug in the Stage-1-direct BayPass scan referenced in Section~5,
+materially changing that section's floor-survivor counts; see AUDIT\_FIXES.md in this
+module for the full list of fixes.
+
 \section*{\color{Accent}Motivation}
 
 The Stage-1-direct BayPass climate-association scan (PC1, PC2, and the winter-temperature
@@ -131,10 +148,10 @@ quarter).
 \toprule
 Variable & $r$ (17 units) & $\Omega$-null $p$ & Block-perm.\ $p$ & Block-perm.\ $p_{\mathrm{BH}}$ \\
 \midrule
-PC1   & $-0.481$ & $0.044$ & $0.051$ & $0.164$ \\
-PC2   & $+0.381$ & $0.110$ & $0.123$ & $0.164$ \\
-bio6  & $+0.404$ & $0.091$ & $0.110$ & $0.164$ \\
-bio11 & $+0.287$ & $0.210$ & $0.267$ & $0.267$ \\
+PC1   & $-0.481$ & $0.074$ & $0.051$ & $0.164$ \\
+PC2   & $+0.381$ & $0.190$ & $0.123$ & $0.164$ \\
+bio6  & $+0.404$ & $0.142$ & $0.110$ & $0.164$ \\
+bio11 & $+0.287$ & $0.292$ & $0.267$ & $0.267$ \\
 \bottomrule
 \end{tabular}
 \caption{Ancestry vs.\ climate, 17 independent lineage units. $p_{\mathrm{BH}}$ =
@@ -143,7 +160,7 @@ Benjamini-Hochberg corrected across the 4 tests.}
 
 \textbf{Finding.} PC1 has the strongest ancestry association among the four variables and
 is the only one to fall below $p=0.05$ under the block-permutation test ($p=0.051$, i.e.\
-right at the boundary) -- but the two null designs disagree (\smash{$\Omega$-null $p=0.044$}
+right at the boundary) -- but the two null designs disagree (\smash{$\Omega$-null $p=0.074$}
 vs.\ block-permutation $p=0.051$), and \textbf{none of the four variables survive
 Benjamini-Hochberg correction} (minimum $p_{\mathrm{BH}}=0.164$). The accurate summary is
 that PC1's ancestry association is \emph{suggestive but not formally significant}, not that
@@ -217,8 +234,8 @@ the same five quantities.
 \toprule
 Variable & $r$ with mitotype & $\Omega$-null $p$ & Block-perm.\ $p$ & Block-perm.\ $p_{\mathrm{BH}}$ \\
 \midrule
-ancestry & $+0.490$ & $0.037$ & $0.049$ & $0.243$ \\
-PC1      & $-0.299$ & -- & $0.255$ & $0.424$ \\
+ancestry & $+0.490$ & $0.050$ & $0.048$ & $0.242$ \\
+PC1      & $-0.299$ & -- & $0.254$ & $0.424$ \\
 PC2      & $+0.197$ & -- & $0.508$ & $0.508$ \\
 bio6     & $+0.291$ & -- & $0.250$ & $0.424$ \\
 bio11    & $+0.219$ & -- & $0.396$ & $0.494$ \\
@@ -230,8 +247,8 @@ across the 5 tests.}
 \end{table}
 
 \textbf{Finding.} Mitotype and genome-wide nuclear ancestry are nominally associated
-($p\approx0.037$--$0.049$ uncorrected) but \textbf{this does not survive correction for the
-5-comparison family} ($p_{\mathrm{BH}}=0.243$). No climate variable shows any evidence of a
+($p\approx0.048$--$0.050$ uncorrected) but \textbf{this does not survive correction for the
+5-comparison family} ($p_{\mathrm{BH}}=0.242$). No climate variable shows any evidence of a
 mitotype association. The most defensible description is an \emph{association between
 mitochondrial lineage and genome-wide nuclear ancestry, consistent with shared demographic
 history} -- language such as ``founder-history signal'' or ``populations founded by an
@@ -259,8 +276,8 @@ to ancestry rather than an independent signal. Tested via partial correlation on
 \toprule
  & $r$ (17 units) & Notes \\
 \midrule
-Raw cor(PC1, ancestry)                     & $-0.481$ & $\Omega$-null $p=0.044$; block-perm.\ $p=0.051$ \\
-Partial cor(PC1, ancestry $\mid$ mitotype) & $-0.402$ & $\Omega$-null $p=0.097$; block-perm.\ $p=0.124$ \\
+Raw cor(PC1, ancestry)                     & $-0.481$ & $\Omega$-null $p=0.074$; block-perm.\ $p=0.051$ \\
+Partial cor(PC1, ancestry $\mid$ mitotype) & $-0.402$ & $\Omega$-null $p=0.141$; block-perm.\ $p=0.124$ \\
 \bottomrule
 \end{tabular}
 \caption{PC1--ancestry correlation before/after controlling for mitotype, 17 units.}
@@ -268,7 +285,7 @@ Partial cor(PC1, ancestry $\mid$ mitotype) & $-0.402$ & $\Omega$-null $p=0.097$;
 
 \textbf{Finding.} Controlling for mitotype moderately attenuates the PC1--ancestry
 correlation ($-0.481\rightarrow-0.402$), and the remaining association is not
-distinguishable from the population-structure null under either test ($p=0.097$--$0.124$).
+distinguishable from the population-structure null under either test ($p=0.124$--$0.141$).
 This is consistent with two readings -- a genuinely independent, if weaker, climate signal;
 or partial confounding by mitotype-linked demographic history -- and \textbf{the data
 cannot distinguish between them}. With only 17 independent lineage units, this sample
@@ -297,8 +314,8 @@ together.
 alignment is not demonstrably stronger than expected by chance under that structure.} For
 PC1, the ancestry correlation is moderately large after excluding \AA land ($r\approx-0.48$
 on the corrected 17-unit dataset), but it is only suggestive under the $\Omega$-null
-($p=0.044$), nominal under the corrected lineage permutation ($p\approx0.051$), and
-non-significant after controlling for mitotype ($p=0.097$--$0.124$; Section~4). PC2 is
+($p=0.074$), nominal under the corrected lineage permutation ($p\approx0.051$), and
+non-significant after controlling for mitotype ($p=0.124$--$0.141$; Section~4). PC2 is
 weaker after \AA land exclusion and clearly non-significant under both structure-aware
 tests (Section~1).
 
@@ -317,26 +334,38 @@ counts were not exceptional against that null, under \emph{either} scan:
 \toprule
  & Stage-2 eMLG scan (32{,}854 clusters) & Stage-1-direct scan (18{,}361 units) & Expected by chance \\
 \midrule
-PC1 floor survivors & 0 & 3 & 1.84 (Stage-1) / 3.29 (Stage-2) \\
-PC2 floor survivors & 4 & 3 & 1.84 (Stage-1) / 3.29 (Stage-2) \\
-Set-level FDR & $\approx0.82$ (PC2) & $\approx0.61$ (both axes) & -- \\
+PC1 floor survivors & 0 & 1 & 1.84 (Stage-1) / 3.29 (Stage-2) \\
+PC2 floor survivors & 4 & 2 & 1.84 (Stage-1) / 3.29 (Stage-2) \\
+bio\_winter floor survivors & -- & 10 & 1.84 \\
+mitoC2 floor survivors & -- & 0 & 1.84 \\
+Set-level FDR & $\approx0.82$ (PC2) & $1.84$ (PC1) / $0.92$ (PC2) / $\mathbf{0.18}$ (bio\_winter) & -- \\
 \bottomrule
 \end{tabular}
-\caption{Floor-survivor candidate counts (BF(dB)$\geq$15 and beating all 10{,}000
-$\Omega$-structured null covariates) under both BayPass scans. ``Expected by chance'' is
-$N_{\mathrm{tested}}/(n_{\mathrm{sim}}+1)$.}
+\caption{Floor-survivor candidate counts (BF(dB)$\geq$15, or $-\log_{10}(p)\geq3$ for
+mitoC2, and beating all 10{,}000 $\Omega$-structured null covariates), AUDIT-CORRECTED
+2026-09-12 (covariate standardization fix -- see AUDIT\_FIXES.md, Issue 1). bio\_winter is
+the mean of standardized bio6/bio11 (Issue 7 decision: one combined winter-temperature axis,
+not two near-duplicate tests). ``Expected by chance'' is $N_{\mathrm{tested}}/(n_{\mathrm{sim}}+1)$.}
 \end{table}
 
-Both scans land at a high set-level FDR ($\geq0.6$) -- neither is a defensible discovery
-set. The one notable shift is that PC1, which had \emph{zero} floor survivors under the
-more heavily Stage-2-merged scan, has 3 under the less-diluted Stage-1-direct scan
-(BF(dB) = 53.7, 38.7, 31.1) -- consistent with, though not confirming, the population-level
-observation above that PC1 (not PC2) is the axis with the more suggestive ancestry link.
-PC2's candidate count is essentially unchanged (4 vs.\ 3) and remains similarly
-unremarkable relative to its own null expectation. The structured null is, in effect,
-saying: \emph{these apparent climate associations are approximately what is expected when a
-covariate happens to align with population history, regardless of how the markers were
-reduced to test units.}
+\textbf{These counts changed materially after an audit fix.} An earlier version of this
+comparison (before the observed PC1/PC2/bio6/bio11 covariates were corrected to match the
+null covariates' standardization) reported 3 PC1 and 3 PC2 floor survivors for the
+Stage-1-direct scan, read as a ``Goldilocks'' recovery of signal the Stage-2-merged scan had
+diluted. That reading does \emph{not} survive the correction: PC1 now has just 1 survivor
+(BF(dB)$=28.5$) -- \emph{fewer} than the null's own expectation (1.84), i.e.\ indistinguishable
+from, if anything below, chance -- and PC2's 2 survivors (FDR$\approx0.92$) remain similarly
+unremarkable. Neither scan, PC1 nor PC2, is a defensible discovery set.
+\textbf{bio\_winter is the exception:} 10 of 18{,}361 units survive the floor test, a
+substantially lower set-level FDR ($\approx0.18$) than either PC1 or PC2 achieve on either
+scan -- the one climate result in this document that looks like more than population
+structure alone would produce, and worth following up on its own terms (not explored further
+here). mitoC2 shows the opposite: 0 of 11 raw threshold crossings survive the floor test,
+consistent with Section~3's finding that mitotype has no detectable relationship with any
+measured climate variable. The structured null is, in effect, saying: \emph{these apparent
+PC1/PC2 climate associations are approximately what is expected when a covariate happens to
+align with population history, regardless of how the markers were reduced to test units --
+but bio\_winter's alignment is not.}
 
 \textbf{Confounding does not have to be statistically significant to influence
 locus-level results.} Statistical significance asks whether the observed alignment is
@@ -352,12 +381,15 @@ expectations under the population-covariance null. This moderate alignment never
 provides a plausible source of the raw locus-level BayPass signal: loci that differentiate
 the same population groups can appear climate-associated even without any locus-specific
 environmental effect. Consistent with this interpretation, neither the number nor the
-strength of cluster-level BayPass associations exceeded what was obtained under
+strength of PC1/PC2 cluster-level BayPass associations exceeded what was obtained under
 $\Omega$-structured null covariates, under \emph{either} the Stage-2 or the Stage-1-direct
-scan (set-level FDR $\geq0.6$ in both). The conclusion is \emph{not} that climate definitely
-has no relationship with ancestry -- it is that the data cannot separate a climate effect
-from population history, and the BayPass outliers provide no additional locus-specific
-evidence beyond that structure. Even a formally significant genome-wide PC1--ancestry
+scan (set-level FDR $\geq0.9$ in both, post audit fix). The one exception is bio\_winter
+(FDR$\approx0.18$), which is not explained by the ancestry-confound argument developed here
+and is left as an open, unexplored lead. The conclusion for PC1/PC2 is \emph{not} that
+climate definitely has no relationship with ancestry -- it is that the data cannot separate
+a climate effect from population history, and the BayPass outliers provide no additional
+locus-specific evidence beyond that structure. Even a formally significant genome-wide
+PC1--ancestry
 correlation would not, on its own, rescue the BayPass candidates: it would show that overall
 ancestry covaries with PC1, but evidence for particular climate-associated genomic regions
 would still require their Bayes factors to exceed the structured-null distribution, which
@@ -386,12 +418,12 @@ measures) are Benjamini-Hochberg corrected as one family.
 \toprule
 Test & Axis & Observed & Null median & Null 95\% & $p_{\mathrm{BH}}$ \\
 \midrule
-DI (Spearman $\rho$)            & PC1 & $+0.097$ & $+0.029$ & $[-0.018, 0.072]$ & $0.006$ \\
-DI (Spearman $\rho$)            & PC2 & $-0.137$ & $+0.029$ & $[-0.018, 0.072]$ & $<0.001$ \\
-Recombination (Spearman $\rho$) & PC1 & $-0.098$ & $+0.065$ & $[-0.013, 0.144]$ & $<0.001$ \\
-Recombination (Spearman $\rho$) & PC2 & $+0.022$ & $+0.065$ & $[-0.013, 0.144]$ & $0.294$ \\
-Sorting (differentiated only)   & PC1 & $+0.043$ & $+0.121$ & $[0.078, 0.165]$ & $0.001$ \\
-Sorting (differentiated only)   & PC2 & $+0.019$ & $+0.121$ & $[0.078, 0.165]$ & $<0.001$ \\
+DI (Spearman $\rho$)            & PC1 & $+0.100$ & $+0.029$ & $[-0.018, 0.072]$ & $0.004$ \\
+DI (Spearman $\rho$)            & PC2 & $-0.131$ & $+0.029$ & $[-0.018, 0.072]$ & $<0.001$ \\
+Recombination (Spearman $\rho$) & PC1 & $-0.099$ & $+0.065$ & $[-0.013, 0.144]$ & $<0.001$ \\
+Recombination (Spearman $\rho$) & PC2 & $+0.020$ & $+0.065$ & $[-0.013, 0.144]$ & $0.269$ \\
+Sorting (differentiated only)   & PC1 & $+0.036$ & $+0.123$ & $[0.078, 0.168]$ & $0.001$ \\
+Sorting (differentiated only)   & PC2 & $+0.019$ & $+0.123$ & $[0.078, 0.168]$ & $<0.001$ \\
 \bottomrule
 \end{tabular}
 \caption{Genome-wide architecture calibration, Stage-1-direct universe (18{,}361 units).
@@ -402,16 +434,16 @@ populations' covariance structure, with no climate information, would produce.}
 
 \textbf{Finding: five of the six tests survive FDR, but the directions do not tell a single
 clean story.} DI is significantly correlated with BF strength on \emph{both} axes, in
-\emph{opposite} directions ($+0.097$ on PC1, above the null range; $-0.137$ on PC2, below
+\emph{opposite} directions ($+0.100$ on PC1, above the null range; $-0.131$ on PC2, below
 it) -- consistent with PC1 and PC2 capturing different, partly opposing aspects of the same
 underlying ancestry structure (Section~1 already found opposite-signed raw
 ancestry--climate correlations for the two axes). Recombination shows a real effect only on
 PC1: BF is \emph{more} concentrated in low-recombination regions than an $\Omega$-structured
-covariate would produce by chance ($\rho=-0.098$, below the null), while PC2 is
-indistinguishable from the null ($p_{\mathrm{BH}}=0.294$). Directional sorting is where the
+covariate would produce by chance ($\rho=-0.099$, below the null), while PC2 is
+indistinguishable from the null ($p_{\mathrm{BH}}=0.269$). Directional sorting is where the
 result is least intuitive: on \emph{both} axes, real climate BF is \emph{less} elevated in
 directionally-sorted (vs.\ non-directional) differentiated units than the null baseline
-predicts ($0.043$ and $0.019$ vs.\ a null median of $0.121$) -- the \emph{opposite} of what a
+predicts ($0.036$ and $0.019$ vs.\ a null median of $0.123$) -- the \emph{opposite} of what a
 naive ``sorted regions are more differentiated, so they mechanically inflate any
 covariate's BF'' argument would predict.
 
@@ -448,8 +480,8 @@ confirmed result, for several reasons:
     inferring their relative roles from separate bivariate/partial tests as done here.
   \item With 17 independent lineage units and 4-5 tests per family, this analysis is
     underpowered to detect anything but a fairly strong effect, and $\Omega$-null and
-    block-permutation $p$-values disagree by up to $\sim$0.03--0.05 in places (e.g.\ PC1:
-    $0.044$ vs.\ $0.051$) -- a reminder that ``significant'' here would depend on which
+    block-permutation $p$-values disagree by up to $\sim$0.02--0.07 in places (e.g.\ PC2:
+    $0.190$ vs.\ $0.123$) -- a reminder that ``significant'' here would depend on which
     defensible null is treated as primary, not a settled question either null can resolve
     alone.
   \item \textbf{Section~6's genome-wide architecture calibration has mixed-direction results
@@ -466,11 +498,11 @@ Across the 19 \AA land-excluded populations (17 independent lineage units after 
 for shared origins), genome-wide ancestry showed a moderate negative correlation with
 climate PC1 ($r=-0.48$). This relationship was nominally suggestive under the
 shared-lineage permutation ($p=0.051$) but did not clear the $\Omega$-structured null
-($p=0.044$ is itself only marginal, and the two nulls disagree), and it did not survive
+($p=0.074$, and the two nulls disagree), and it did not survive
 correction for testing four climate variables ($p_{\mathrm{BH}}=0.16$). The association was
 further attenuated and statistically indistinguishable from the population-structure null
-after controlling for mitotype ($r=-0.40$, $p=0.10$--$0.12$). Mitotype was itself nominally
-associated with nuclear ancestry ($p\approx0.04$) but not with any measured climate
+after controlling for mitotype ($r=-0.40$, $p=0.12$--$0.14$). Mitotype was itself nominally
+associated with nuclear ancestry ($p\approx0.05$) but not with any measured climate
 variable, and that association also did not survive multiple-testing correction. These
 patterns suggest contributions from population history and possibly climate, but the
 limited number of independent populations does not permit their effects to be separated
@@ -484,7 +516,12 @@ shows the Stage-1-direct climate-BF landscape is not architecture-agnostic -- fi
 tests relating BF strength to Diagnostic Index, recombination, and directional sorting
 depart from the structured-null baseline -- but the directions differ across the two
 climate axes and, for sorting, run counter to a simple confounding story, so this result
-sharpens rather than resolves the population-level picture above. This document should be
+sharpens rather than resolves the population-level picture above. The one climate result
+that stands apart from this whole ancestry-confound narrative is bio\_winter (the combined,
+standardized bio6/bio11 axis): 10 of 18{,}361 Stage-1 units survive the floor test
+(FDR$\approx0.18$, Section~5), clearly stronger than PC1 or PC2 achieve on either scan and
+not something this document's ancestry-confound argument accounts for -- an open lead for
+future work, not explored further here. This document should be
 read as a supplementary, exploratory analysis, not a confirmed finding for the main text.
 
 \end{document}
