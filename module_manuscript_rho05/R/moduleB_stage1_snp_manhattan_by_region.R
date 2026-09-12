@@ -53,12 +53,16 @@ g2 <- as.data.table(s2$groups)
 marker2s2 <- g2[, .(marker = unlist(members)), by = .(s2_group = group_id)]
 setkey(marker2s2, marker)
 
-## genome-wide x-axis (chromosome offsets), same convention as the other Manhattan scripts
+## genome-wide x-axis (chromosome offsets) -- AESTHETIC UPDATE (2026-09-13):
+## much smaller inter-chromosome gap (3e6 -> 3e5) and alternating light/dark
+## background bands (classic Manhattan-plot convention) instead of a uniform
+## white background.
 chr_lens <- map_hyb_005[, .(len = max(Pos)), by = Chr]
 chr_lens[, chr_num := as.integer(sub("Chr", "", Chr))]
 setorder(chr_lens, chr_num)
-chr_lens[, offset := cumsum(shift(len, fill = 0)) + (seq_len(.N) - 1) * 3e6]
+chr_lens[, offset := cumsum(shift(len, fill = 0)) + (seq_len(.N) - 1) * 3e5]
 chr_lens[, mid := offset + len / 2]
+chr_lens[, band := chr_num %% 2 == 0]
 add_gpos <- function(dt) dt[chr_lens, on = "Chr", `:=`(gpos = Pos + i.offset)]
 
 ## AUDIT/USER CLARIFICATION (2026-09-13): "significant" for COLOURING purposes
@@ -112,7 +116,6 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   ## recycled colour for EVERY raw-crossing region; legend restricted to the
   ## floor-survivor subset via `breaks` (all regions still coloured in-plot)
   region_cols <- setNames(rep(PAL, length.out = length(all_regions)), all_regions)
-  legend_labs <- setNames(sprintf("%s (%d)", region_counts$s2_group, region_counts$N), region_counts$s2_group)
 
   ## every member SNP of ANY raw-crossing Stage-2 region, for colouring
   region_snps <- if (length(all_regions) > 0) g2[group_id %in% all_regions,
@@ -141,25 +144,41 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   message("[", tag, "] ", nrow(snp_dt), " SNPs plotted (", sum(snp_dt$is_region),
           " in ", n_region, " significant region(s))")
 
+  ## AESTHETIC UPDATE (2026-09-13): alternating chromosome background bands;
+  ## arrow LABEL text/border coloured to match its region (same manual scale
+  ## as the points, via the shared `s2_group` aesthetic) instead of black --
+  ## the colour match is what identifies a floor survivor now, so the legend
+  ## is dropped entirely (guide = "none"); the per-region Stage-1-cluster
+  ## count moves into the plot caption instead.
+  caption_txt <- if (n_region > 0)
+    sprintf("Floor-survivor regions (arrowed, label coloured to match): %s.",
+            paste(sprintf("%s = %d Stage-1 cluster%s", region_counts$s2_group, region_counts$N,
+                          ifelse(region_counts$N == 1, "", "s")), collapse = "; "))
+  else "No Stage-2 region contains a floor-survivor Stage-1 unit for this covariate."
+
   p <- ggplot() +
-    geom_point(data = snp_dt[is_region == FALSE], aes(gpos, stat), colour = "grey75", size = 0.4, alpha = 0.6) +
+    geom_rect(data = chr_lens[band == TRUE], aes(xmin = offset, xmax = offset + len, ymin = -Inf, ymax = Inf),
+              inherit.aes = FALSE, fill = "grey88") +
+    geom_point(data = snp_dt[is_region == FALSE], aes(gpos, stat), colour = "grey60", size = 0.4, alpha = 0.6) +
     geom_point(data = snp_dt[is_region == TRUE], aes(gpos, stat, colour = s2_group), size = 1.1) +
     { if (n_region > 0) geom_segment(
         data = arrows_dt, aes(x = gpos_mid, xend = gpos_mid, y = arrow_y_tail, yend = arrow_y_head),
         arrow = arrow(length = unit(0.18, "cm"), type = "closed"), linewidth = 0.6, colour = "black") } +
     { if (n_region > 0) geom_label(
-        data = arrows_dt, aes(x = gpos_mid, y = arrow_y_tail, label = s2_group),
-        vjust = 0, size = 3.2, fontface = "bold", label.padding = unit(0.15, "lines")) } +
+        data = arrows_dt, aes(x = gpos_mid, y = arrow_y_tail, label = s2_group, colour = s2_group),
+        vjust = 0, size = 3.2, fontface = "bold", fill = "white", label.padding = unit(0.15, "lines"),
+        show.legend = FALSE) } +
     geom_hline(yintercept = thresh, linetype = 2, colour = "black", linewidth = 0.3) +
-    scale_colour_manual(values = region_cols, labels = legend_labs, name = "Floor-survivor region\n(n Stage-1 floor survivors)",
-                        breaks = names(legend_labs), na.value = "grey75") +
-    scale_x_continuous(breaks = chr_lens$mid, labels = chr_lens$chr_num, expand = c(0.01, 0)) +
+    scale_colour_manual(values = region_cols, guide = "none") +
+    scale_x_continuous(breaks = chr_lens$mid, labels = chr_lens$chr_num, expand = c(0.005, 0)) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.45))) +
     labs(x = "Chromosome", y = title_stat,
          title = sprintf("Stage-1-direct %s: every SNP, coloured by Stage-2 (rho05) region containing a raw BF/C2 threshold crossing", tag),
          subtitle = sprintf("%d Stage-1 units tested; %d raw crossing(s) -> %d region(s) coloured; %d floor-survivor unit(s) -> %d region(s) arrowed; %d SNPs coloured",
-                            nrow(cl5s), nrow(raw), length(all_regions), nrow(floor_units), n_region, sum(snp_dt$is_region))) +
-    theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
+                            nrow(cl5s), nrow(raw), length(all_regions), nrow(floor_units), n_region, sum(snp_dt$is_region)),
+         caption = caption_txt) +
+    theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
+                                      plot.caption = element_text(hjust = 0, size = 8, colour = "grey30"))
   outpng <- file.path(FIGDIR, sprintf("moduleB_stage1_%s_snp_manhattan_by_region.png", tag))
   ggsave(outpng, p, width = 16, height = 5.5, dpi = 200, limitsize = FALSE)
   message("[", tag, "] wrote ", outpng)
