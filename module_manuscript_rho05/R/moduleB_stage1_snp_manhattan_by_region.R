@@ -91,7 +91,7 @@ PAL <- PAL_ALL[lum <= 0.75]
 
 process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
                         snp_stat_file, snp_stat_col, tag, title_stat,
-                        null_file, null_flag_col) {
+                        null_file = NULL, null_flag_col = NULL) {
   message("\n[", tag, "] loading Stage-1-unit scan: ", unit_stat_file)
   s <- fread(unit_stat_file)
   stopifnot(nrow(s) == nrow(cl5))
@@ -107,23 +107,35 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   message("[", tag, "] ", nrow(raw), " RAW threshold crossings (", thresh_label,
           ") -> ", length(all_regions), " Stage-2 (rho05) region(s) coloured")
 
-  nullobj <- readRDS(null_file)
-  stopifnot(null_flag_col %in% names(nullobj))
-  floor_ids <- nullobj$group_id[as.logical(nullobj[[null_flag_col]])]
-  floor_units <- cl5s[group_id %in% floor_ids]
-  message("[", tag, "] ", nrow(floor_units), " floor-survivor Stage-1 unit(s)")
+  ## no per-variable floor test available for this covariate (e.g. bio6/
+  ## bio11 individually -- only their combined bio_winter axis is calibrated,
+  ## Issue 7 decision) -- colour all raw-crossing regions, but no arrows/
+  ## floor-survivor subset, and say so explicitly in the caption.
+  no_floor_test <- is.null(null_file)
+  if (no_floor_test) {
+    floor_units <- cl5s[0]
+    region_counts <- data.table(s2_group = character(0), N = integer(0))
+    n_region <- 0L
+    message("[", tag, "] no per-variable floor test -- raw crossings coloured, no arrows")
+  } else {
+    nullobj <- readRDS(null_file)
+    stopifnot(null_flag_col %in% names(nullobj))
+    floor_ids <- nullobj$group_id[as.logical(nullobj[[null_flag_col]])]
+    floor_units <- cl5s[group_id %in% floor_ids]
+    message("[", tag, "] ", nrow(floor_units), " floor-survivor Stage-1 unit(s)")
 
-  ## floor-survivor Stage-1 units -> their Stage-2 (rho05) region(s), with a
-  ## per-region count of how many floor-survivor Stage-1 units map into it --
-  ## this subset drives the arrows + restricted legend, NOT the colouring
-  floor_units[marker2s2, on = .(core_snp = marker), s2_group := i.s2_group]
-  stopifnot("a floor-survivor core_snp is missing from the Stage-2 (rho05) clustering" =
-              nrow(floor_units) == 0 || all(!is.na(floor_units$s2_group)))
-  region_counts <- floor_units[, .N, by = s2_group]
-  setorder(region_counts, -N)
-  n_region <- nrow(region_counts)
-  message("[", tag, "] -> ", n_region, " of those are floor-survivor region(s): ",
-          paste(sprintf("%s(n=%d)", region_counts$s2_group, region_counts$N), collapse = ", "))
+    ## floor-survivor Stage-1 units -> their Stage-2 (rho05) region(s), with a
+    ## per-region count of how many floor-survivor Stage-1 units map into it --
+    ## this subset drives the arrows + restricted legend, NOT the colouring
+    floor_units[marker2s2, on = .(core_snp = marker), s2_group := i.s2_group]
+    stopifnot("a floor-survivor core_snp is missing from the Stage-2 (rho05) clustering" =
+                nrow(floor_units) == 0 || all(!is.na(floor_units$s2_group)))
+    region_counts <- floor_units[, .N, by = s2_group]
+    setorder(region_counts, -N)
+    n_region <- nrow(region_counts)
+    message("[", tag, "] -> ", n_region, " of those are floor-survivor region(s): ",
+            paste(sprintf("%s(n=%d)", region_counts$s2_group, region_counts$N), collapse = ", "))
+  }
 
   ## recycled colour for EVERY raw-crossing region; legend restricted to the
   ## floor-survivor subset via `breaks` (all regions still coloured in-plot)
@@ -165,7 +177,9 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   ## identifies a floor survivor now, so the legend is dropped entirely
   ## (guide = "none"); the per-region Stage-1-cluster count moves into the
   ## plot caption instead.
-  caption_txt <- if (n_region > 0)
+  caption_txt <- if (no_floor_test)
+    "No per-variable null-calibrated floor test exists for this covariate (only its combined bio_winter axis is calibrated) -- coloured regions are RAW threshold crossings only, not validated candidates."
+  else if (n_region > 0)
     sprintf("Floor-survivor regions (arrowed, label coloured to match): %s.",
             paste(sprintf("%s = %d Stage-1 cluster%s", region_counts$s2_group, region_counts$N,
                           ifelse(region_counts$N == 1, "", "s")), collapse = "; "))
@@ -212,7 +226,11 @@ process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"), "log10(
            "mitoC2", "C2 -log10(p)",
            file.path(DATA_DIR, "moduleB_stage1_mitoC2_null.rds"), "floor3")
 
-## bio6/bio11 full-SNP scans still queued on mini2 (Issue 1 audit fix rerun)
-## -- add once available (no per-variable floor test either -- see bio_winter).
+process_one(file.path(UNIT_DIR, "bio6_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
+           file.path(SNP_DIR, "bio6_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
+           "bio6", "BF(dB)")   # no per-variable floor test -- see bio_winter
+
+## bio11 full-SNP scan still running on mini2 (Issue 1 audit fix rerun) --
+## add once available (no per-variable floor test either -- see bio_winter).
 
 message("\n[moduleB-stage1-snp-manhattan-by-region] done")
