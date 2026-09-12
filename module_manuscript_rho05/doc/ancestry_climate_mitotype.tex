@@ -354,6 +354,70 @@ would still require their Bayes factors to exceed the structured-null distributi
 they did not.
 
 \clearpage
+\section*{\color{Accent}6. Genome-wide architecture of the Stage-1-direct climate-association landscape}
+
+Section~5 asked whether any \emph{individual} Stage-1 unit's climate Bayes factor is
+exceptional against the $\Omega$-structured null (the floor-survivor test). A second,
+complementary calibration asks a different, genome-wide question: across all 18{,}361
+Stage-1-direct units, is the \emph{strength} of a unit's climate association --
+its BF(dB) on PC1/PC2 -- itself predictable from genomic architecture (ancestry
+differentiation, recombination rate, unidirectional ancestry sorting) any more or less
+than an $\Omega$-structured pseudo-covariate with no causal link to climate would show by
+chance? For each of PC1, PC2, and 10{,}000 null covariates, the genome-wide BF vector is
+reduced to three statistics -- Spearman correlation with the per-unit Diagnostic Index
+(DI), Spearman correlation with recombination rate, and a directional-sorting contrast
+(mean BF percentile of unidirectionally-sorted vs.\ non-directional units, among
+differentiated units only) -- and each observed statistic is compared to its own
+10{,}000-value null distribution. The six resulting tests (2 axes $\times$ 3 architecture
+measures) are Benjamini-Hochberg corrected as one family.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{llrrrr}
+\toprule
+Test & Axis & Observed & Null median & Null 95\% & $p_{\mathrm{BH}}$ \\
+\midrule
+DI (Spearman $\rho$)            & PC1 & $+0.097$ & $+0.029$ & $[-0.018, 0.072]$ & $0.006$ \\
+DI (Spearman $\rho$)            & PC2 & $-0.137$ & $+0.029$ & $[-0.018, 0.072]$ & $<0.001$ \\
+Recombination (Spearman $\rho$) & PC1 & $-0.098$ & $+0.065$ & $[-0.013, 0.144]$ & $<0.001$ \\
+Recombination (Spearman $\rho$) & PC2 & $+0.022$ & $+0.065$ & $[-0.013, 0.144]$ & $0.294$ \\
+Sorting (differentiated only)   & PC1 & $+0.043$ & $+0.121$ & $[0.078, 0.165]$ & $0.001$ \\
+Sorting (differentiated only)   & PC2 & $+0.019$ & $+0.121$ & $[0.078, 0.165]$ & $<0.001$ \\
+\bottomrule
+\end{tabular}
+\caption{Genome-wide architecture calibration, Stage-1-direct universe (18{,}361 units).
+``Null median''/``Null 95\%'' describe the same statistic computed on 10{,}000
+$\Omega$-structured pseudo-covariates -- i.e.\ what a typical covariate sharing only the
+populations' covariance structure, with no climate information, would produce.}
+\end{table}
+
+\textbf{Finding: five of the six tests survive FDR, but the directions do not tell a single
+clean story.} DI is significantly correlated with BF strength on \emph{both} axes, in
+\emph{opposite} directions ($+0.097$ on PC1, above the null range; $-0.137$ on PC2, below
+it) -- consistent with PC1 and PC2 capturing different, partly opposing aspects of the same
+underlying ancestry structure (Section~1 already found opposite-signed raw
+ancestry--climate correlations for the two axes). Recombination shows a real effect only on
+PC1: BF is \emph{more} concentrated in low-recombination regions than an $\Omega$-structured
+covariate would produce by chance ($\rho=-0.098$, below the null), while PC2 is
+indistinguishable from the null ($p_{\mathrm{BH}}=0.294$). Directional sorting is where the
+result is least intuitive: on \emph{both} axes, real climate BF is \emph{less} elevated in
+directionally-sorted (vs.\ non-directional) differentiated units than the null baseline
+predicts ($0.043$ and $0.019$ vs.\ a null median of $0.121$) -- the \emph{opposite} of what a
+naive ``sorted regions are more differentiated, so they mechanically inflate any
+covariate's BF'' argument would predict.
+
+This genome-wide result should not be over-read as either confirming or contradicting
+Section~5's conclusion. It does not identify individual climate-adaptive loci -- that
+remains the floor-survivor test's job, and it still returns a high set-level FDR ($\geq0.6$)
+under both scans. What it adds is a more granular picture: the Stage-1-direct climate-BF
+landscape is \emph{not} architecture-agnostic (5 of 6 tests depart from the structured-null
+baseline), but the departures point in different, and for sorting an unexpected, direction
+on the two climate axes -- so \emph{which} architectural feature aligns with which axis, and
+whether that alignment reflects the same ancestry confound discussed in Sections~1--4 or a
+distinct mechanism, is not resolved here and would need its own follow-up (e.g.\ relating
+each axis's DI/recombination/sorting correlation directly to that axis's own
+ancestry-confound coefficient from \texttt{moduleB\_ancestry\_confound.R}).
+
+\clearpage
 \section*{\color{Accent}Limitations and recommended follow-up}\label{sec:limitations}
 This analysis should be treated as \textbf{supplementary and explicitly exploratory}, not a
 confirmed result, for several reasons:
@@ -378,6 +442,13 @@ confirmed result, for several reasons:
     $0.044$ vs.\ $0.051$) -- a reminder that ``significant'' here would depend on which
     defensible null is treated as primary, not a settled question either null can resolve
     alone.
+  \item \textbf{Section~6's genome-wide architecture calibration has mixed-direction results
+    that were not chased down.} DI, recombination, and sorting depart from the
+    $\Omega$-structured null on different axes and, for sorting, in the opposite direction
+    from a naive confounding argument. Relating each axis's departure directly to that
+    axis's own ancestry-confound coefficient (rather than to the coarser population-level
+    ancestry summary used in Sections~1--4) would be needed before drawing a mechanistic
+    conclusion from it.
 \end{itemize}
 
 \section*{\color{Accent}Summary}
@@ -398,7 +469,12 @@ sufficient to explain the raw candidate counts in the original BayPass climate s
 invoking any locus-specific climate effect (Section~5): no PC1 cluster and only a
 null-expected number of PC2 clusters exceeded the $\Omega$-structured null. The BayPass
 scan therefore provides no locus-specific evidence for climate adaptation beyond what
-population structure already predicts. This document should be read as a supplementary,
-exploratory analysis, not a confirmed finding for the main text.
+population structure already predicts. A separate, genome-wide calibration (Section~6)
+shows the Stage-1-direct climate-BF landscape is not architecture-agnostic -- five of six
+tests relating BF strength to Diagnostic Index, recombination, and directional sorting
+depart from the structured-null baseline -- but the directions differ across the two
+climate axes and, for sorting, run counter to a simple confounding story, so this result
+sharpens rather than resolves the population-level picture above. This document should be
+read as a supplementary, exploratory analysis, not a confirmed finding for the main text.
 
 \end{document}
