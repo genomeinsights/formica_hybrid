@@ -61,8 +61,17 @@ chr_lens[, offset := cumsum(shift(len, fill = 0)) + (seq_len(.N) - 1) * 3e6]
 chr_lens[, mid := offset + len / 2]
 add_gpos <- function(dt) dt[chr_lens, on = "Chr", `:=`(gpos = Pos + i.offset)]
 
-REGION_COLS <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E",
-                 "#E6AB02", "#A6761D", "#377EB8", "#984EA3", "#FF7F00")
+## AUDIT/USER CLARIFICATION (2026-09-13): "significant" for COLOURING purposes
+## means every Stage-2 region touched by ANY raw BF>=15 (or C2 threshold)
+## Stage-1 crossing -- not just floor survivors. There can be many such
+## regions, so they are coloured with the recycled LDscnR default palette
+## (not unique per region, no legend entry per region -- matching the
+## convention used elsewhere in this pipeline). The floor-survivor subset is
+## then called out ON TOP via arrows (region name) and a legend restricted to
+## just those regions (name + count of contributing Stage-1 floor survivors),
+## using scale_colour_manual's `breaks` to show only a subset of an
+## otherwise-recycled discrete colour scale in the legend.
+PAL <- default_cluster_colours()
 
 process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
                         snp_stat_file, snp_stat_col, tag, title_stat,
@@ -73,6 +82,15 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   cl5s <- copy(cl5)
   cl5s[, stat := s[[unit_stat_col]][match(seq_len(.N), s$MRK)]]
 
+  ## ALL raw threshold crossings (BF>=15 / C2 threshold) -> ALL touched Stage-2 regions
+  raw <- cl5s[stat >= thresh]
+  raw[marker2s2, on = .(core_snp = marker), s2_group := i.s2_group]
+  stopifnot("a raw-crossing core_snp is missing from the Stage-2 (rho05) clustering" =
+              nrow(raw) == 0 || all(!is.na(raw$s2_group)))
+  all_regions <- sort(unique(raw$s2_group))
+  message("[", tag, "] ", nrow(raw), " RAW threshold crossings (", thresh_label,
+          ") -> ", length(all_regions), " Stage-2 (rho05) region(s) coloured")
+
   nullobj <- readRDS(null_file)
   stopifnot(null_flag_col %in% names(nullobj))
   floor_ids <- nullobj$group_id[as.logical(nullobj[[null_flag_col]])]
@@ -80,24 +98,24 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   message("[", tag, "] ", nrow(floor_units), " floor-survivor Stage-1 unit(s)")
 
   ## floor-survivor Stage-1 units -> their Stage-2 (rho05) region(s), with a
-  ## per-region count of how many floor-survivor Stage-1 units map into it
+  ## per-region count of how many floor-survivor Stage-1 units map into it --
+  ## this subset drives the arrows + restricted legend, NOT the colouring
   floor_units[marker2s2, on = .(core_snp = marker), s2_group := i.s2_group]
   stopifnot("a floor-survivor core_snp is missing from the Stage-2 (rho05) clustering" =
               nrow(floor_units) == 0 || all(!is.na(floor_units$s2_group)))
   region_counts <- floor_units[, .N, by = s2_group]
   setorder(region_counts, -N)
   n_region <- nrow(region_counts)
-  message("[", tag, "] -> ", n_region, " significant Stage-2 (rho05) region(s): ",
+  message("[", tag, "] -> ", n_region, " of those are floor-survivor region(s): ",
           paste(sprintf("%s(n=%d)", region_counts$s2_group, region_counts$N), collapse = ", "))
 
-  if (n_region > length(REGION_COLS))
-    stop(sprintf("[%s] %d significant regions exceeds the %d-colour manual palette -- extend REGION_COLS",
-                 tag, n_region, length(REGION_COLS)))
-  region_cols <- setNames(REGION_COLS[seq_len(max(n_region, 1))][seq_len(n_region)], region_counts$s2_group)
+  ## recycled colour for EVERY raw-crossing region; legend restricted to the
+  ## floor-survivor subset via `breaks` (all regions still coloured in-plot)
+  region_cols <- setNames(rep(PAL, length.out = length(all_regions)), all_regions)
   legend_labs <- setNames(sprintf("%s (%d)", region_counts$s2_group, region_counts$N), region_counts$s2_group)
 
-  ## every member SNP of a significant Stage-2 region, for colouring + arrow placement
-  region_snps <- if (n_region > 0) g2[group_id %in% region_counts$s2_group,
+  ## every member SNP of ANY raw-crossing Stage-2 region, for colouring
+  region_snps <- if (length(all_regions) > 0) g2[group_id %in% all_regions,
                                       .(marker = unlist(members)), by = .(s2_group = group_id)] else
                                       data.table(marker = character(0), s2_group = character(0))
 
@@ -116,7 +134,8 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   y_top <- max(snp_dt$stat, na.rm = TRUE)
   arrow_y_head <- y_top * 1.35
   arrow_y_tail <- y_top * 1.55
-  arrows_dt <- if (n_region > 0) snp_dt[is_region == TRUE, .(gpos_mid = mean(range(gpos))), by = s2_group] else
+  arrows_dt <- if (n_region > 0) snp_dt[is_region == TRUE & s2_group %in% region_counts$s2_group,
+                                        .(gpos_mid = mean(range(gpos))), by = s2_group] else
     data.table(s2_group = character(0), gpos_mid = numeric(0))
 
   message("[", tag, "] ", nrow(snp_dt), " SNPs plotted (", sum(snp_dt$is_region),
@@ -132,14 +151,14 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
         data = arrows_dt, aes(x = gpos_mid, y = arrow_y_tail, label = s2_group),
         vjust = 0, size = 3.2, fontface = "bold", label.padding = unit(0.15, "lines")) } +
     geom_hline(yintercept = thresh, linetype = 2, colour = "black", linewidth = 0.3) +
-    scale_colour_manual(values = region_cols, labels = legend_labs, name = "Stage-2 region\n(n Stage-1 floor survivors)",
-                        breaks = names(region_cols)) +
+    scale_colour_manual(values = region_cols, labels = legend_labs, name = "Floor-survivor region\n(n Stage-1 floor survivors)",
+                        breaks = names(legend_labs), na.value = "grey75") +
     scale_x_continuous(breaks = chr_lens$mid, labels = chr_lens$chr_num, expand = c(0.01, 0)) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.45))) +
     labs(x = "Chromosome", y = title_stat,
-         title = sprintf("Stage-1-direct %s: every SNP, coloured by Stage-2 (rho05) region containing a floor-survivor Stage-1 unit", tag),
-         subtitle = sprintf("%d Stage-1 units tested; %d floor-survivor unit(s) -> %d significant Stage-2 region(s), %d SNPs coloured",
-                            nrow(cl5s), nrow(floor_units), n_region, sum(snp_dt$is_region))) +
+         title = sprintf("Stage-1-direct %s: every SNP, coloured by Stage-2 (rho05) region containing a raw BF/C2 threshold crossing", tag),
+         subtitle = sprintf("%d Stage-1 units tested; %d raw crossing(s) -> %d region(s) coloured; %d floor-survivor unit(s) -> %d region(s) arrowed; %d SNPs coloured",
+                            nrow(cl5s), nrow(raw), length(all_regions), nrow(floor_units), n_region, sum(snp_dt$is_region))) +
     theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
   outpng <- file.path(FIGDIR, sprintf("moduleB_stage1_%s_snp_manhattan_by_region.png", tag))
   ggsave(outpng, p, width = 16, height = 5.5, dpi = 200, limitsize = FALSE)
