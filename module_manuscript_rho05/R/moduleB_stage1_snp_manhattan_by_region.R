@@ -79,7 +79,15 @@ add_gpos <- function(dt) dt[chr_lens, on = "Chr", `:=`(gpos = Pos + i.offset)]
 ## just those regions (name + count of contributing Stage-1 floor survivors),
 ## using scale_colour_manual's `breaks` to show only a subset of an
 ## otherwise-recycled discrete colour scale in the legend.
-PAL <- default_cluster_colours()
+## USER FIX (2026-09-13): drop near-white/pale palette entries -- as labels
+## (arrow text/border, coloured to match a floor-survivor region), these are
+## hard to read against the plot's white background. Perceived luminance
+## (0.299R+0.587G+0.114B) > 0.75 excludes the palest ~10 of 41 default
+## colours (e.g. #B3E2CD, a pale mint that was flagged as unreadable);
+## still 31 colours to recycle across regions.
+PAL_ALL <- default_cluster_colours()
+lum <- { rgb <- t(col2rgb(PAL_ALL)) / 255; 0.299 * rgb[, 1] + 0.587 * rgb[, 2] + 0.114 * rgb[, 3] }
+PAL <- PAL_ALL[lum <= 0.75]
 
 process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
                         snp_stat_file, snp_stat_col, tag, title_stat,
