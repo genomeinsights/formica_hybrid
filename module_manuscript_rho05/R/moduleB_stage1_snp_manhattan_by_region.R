@@ -62,7 +62,11 @@ chr_lens[, chr_num := as.integer(sub("Chr", "", Chr))]
 setorder(chr_lens, chr_num)
 chr_lens[, offset := cumsum(shift(len, fill = 0)) + (seq_len(.N) - 1) * 3e5]
 chr_lens[, mid := offset + len / 2]
-chr_lens[, band := chr_num %% 2 == 0]
+## USER FIX (2026-09-13): alternate by POSITIONAL order (chr_lens' row order,
+## after setorder above), not chr_num's own parity -- chr_num skips 23
+## (22 -> 24), so `chr_num %% 2 == 0` put two "even" chromosomes in a row and
+## broke the alternating pattern at that point.
+chr_lens[, band := seq_len(.N) %% 2 == 0]
 add_gpos <- function(dt) dt[chr_lens, on = "Chr", `:=`(gpos = Pos + i.offset)]
 
 ## AUDIT/USER CLARIFICATION (2026-09-13): "significant" for COLOURING purposes
@@ -129,6 +133,7 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   snp_dt <- map_hyb_005[, .(marker, Chr, Pos)]
   snp_dt[, stat := snp_s[[snp_stat_col]][match(seq_len(.N), snp_s$MRK)]]
   add_gpos(snp_dt)
+  snp_dt[chr_lens, on = "Chr", band := i.band]
   snp_dt[region_snps, on = "marker", s2_group := i.s2_group]
   snp_dt[, is_region := !is.na(s2_group)]
 
@@ -144,12 +149,14 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   message("[", tag, "] ", nrow(snp_dt), " SNPs plotted (", sum(snp_dt$is_region),
           " in ", n_region, " significant region(s))")
 
-  ## AESTHETIC UPDATE (2026-09-13): alternating chromosome background bands;
-  ## arrow LABEL text/border coloured to match its region (same manual scale
-  ## as the points, via the shared `s2_group` aesthetic) instead of black --
-  ## the colour match is what identifies a floor survivor now, so the legend
-  ## is dropped entirely (guide = "none"); the per-region Stage-1-cluster
-  ## count moves into the plot caption instead.
+  ## AESTHETIC UPDATE (2026-09-13): alternating chromosomes distinguished via
+  ## TWO GREY SHADES on the background (non-significant) points themselves,
+  ## not a rectangle band behind them. Arrow LABEL text/border coloured to
+  ## match its region (same manual scale as the points, via the shared
+  ## `s2_group` aesthetic) instead of black -- the colour match is what
+  ## identifies a floor survivor now, so the legend is dropped entirely
+  ## (guide = "none"); the per-region Stage-1-cluster count moves into the
+  ## plot caption instead.
   caption_txt <- if (n_region > 0)
     sprintf("Floor-survivor regions (arrowed, label coloured to match): %s.",
             paste(sprintf("%s = %d Stage-1 cluster%s", region_counts$s2_group, region_counts$N,
@@ -157,9 +164,8 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   else "No Stage-2 region contains a floor-survivor Stage-1 unit for this covariate."
 
   p <- ggplot() +
-    geom_rect(data = chr_lens[band == TRUE], aes(xmin = offset, xmax = offset + len, ymin = -Inf, ymax = Inf),
-              inherit.aes = FALSE, fill = "grey88") +
-    geom_point(data = snp_dt[is_region == FALSE], aes(gpos, stat), colour = "grey60", size = 0.4, alpha = 0.6) +
+    geom_point(data = snp_dt[is_region == FALSE & band == FALSE], aes(gpos, stat), colour = "grey75", size = 0.4, alpha = 0.6) +
+    geom_point(data = snp_dt[is_region == FALSE & band == TRUE], aes(gpos, stat), colour = "grey50", size = 0.4, alpha = 0.6) +
     geom_point(data = snp_dt[is_region == TRUE], aes(gpos, stat, colour = s2_group), size = 1.1) +
     { if (n_region > 0) geom_segment(
         data = arrows_dt, aes(x = gpos_mid, xend = gpos_mid, y = arrow_y_tail, yend = arrow_y_head),
@@ -189,16 +195,16 @@ process_one(file.path(UNIT_DIR, "PC1_S1units_withOmega_summary_betai_reg.out"), 
            file.path(SNP_DIR, "PC1_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
            "PC1", "BF(dB)",
            file.path(DATA_DIR, "moduleB_stage1_S1units_null.rds"), "floor1")
+process_one(file.path(UNIT_DIR, "PC2_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
+           file.path(SNP_DIR, "PC2_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
+           "PC2", "BF(dB)",
+           file.path(DATA_DIR, "moduleB_stage1_S1units_null.rds"), "floor2")
 process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"), "log10(1/pval)", 3, "-log10(p)>=3",
            file.path(SNP_DIR, "mito_C2_fullSNP_stage1Omega_summary_contrast.out"), "log10(1/pval)",
            "mitoC2", "C2 -log10(p)",
            file.path(DATA_DIR, "moduleB_stage1_mitoC2_null.rds"), "floor3")
 
-## PC2/bio6/bio11 full-SNP scans still running/queued on mini2 (Issue 1 audit
-## fix rerun) -- add these calls once available:
-# process_one(file.path(UNIT_DIR, "PC2_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
-#            file.path(SNP_DIR, "PC2_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
-#            "PC2", "BF(dB)",
-#            file.path(DATA_DIR, "moduleB_stage1_S1units_null.rds"), "floor2")
+## bio6/bio11 full-SNP scans still queued on mini2 (Issue 1 audit fix rerun)
+## -- add once available (no per-variable floor test either -- see bio_winter).
 
 message("\n[moduleB-stage1-snp-manhattan-by-region] done")
