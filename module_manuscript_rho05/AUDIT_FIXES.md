@@ -409,17 +409,28 @@ Same location holds the mitoC2 null's persisted matrices and logs.
 
 ## Unfinished work / how to resume
 
-**Full-SNP BayPass reruns (PC1, PC2, bio6, bio11; ~1h each observed so far)**
-running on `mini2` in `~/formica_hybrid/baypass_stage1_fullsnp/`, launched via
-`nohup ./run_fullsnp_mini2.sh > run_fullsnp.log 2>&1 &`. To check status:
-`ssh mini2 "tail -20 ~/formica_hybrid/baypass_stage1_fullsnp/run_fullsnp.log"`.
-Once complete, copy the 4 `*_fullSNP_stage1Omega_summary_*.out` files back to
-`module_manuscript_rho05/baypass_stage1/aland_excluded/`, then:
+**Full-SNP BayPass reruns (PC1 DONE; PC2 in progress; bio6, bio11 queued;
+~1h each)** running on `mini2` in `~/formica_hybrid/baypass_stage1_fullsnp/`,
+launched via `nohup ./run_fullsnp_mini2.sh > run_fullsnp.log 2>&1 &`. To
+check status: `ssh mini2 "tail -20 ~/formica_hybrid/baypass_stage1_fullsnp/run_fullsnp.log"`.
+PC1's corrected output has already been pulled back and used (see below);
+copy PC2/bio6/bio11's `*_fullSNP_stage1Omega_summary_*.out` files back to
+`module_manuscript_rho05/baypass_stage1/aland_excluded/` as each finishes
+(quarantining the stale pre-fix copies first), then rerun:
 ```
 Rscript module_manuscript_rho05/R/moduleB_stage1_snp_manhattan_ldmanhattan.R
 ```
-to regenerate the 5 SNP-level Manhattan panels with corrected data (code
+to regenerate all 5 SNP-level Manhattan panels with corrected data (code
 already fixed for Issue 6's floor-survivor terminology).
+
+**Partial reporting already done (2026-09-12):** PC1 (using the freshly
+pulled corrected full-SNP scan) and mitoC2 (never affected by the covariate-
+scaling bug, so its existing full-SNP data was already valid) were
+regenerated via a temporary scratch copy of the script with the PC2/bio6/bio11
+calls commented out -- NOT committed to the repo (the committed script still
+processes all 5 panels; rerun it as-is once PC2/bio6/bio11 are ready). PC1:
+1 of 45 raw crossings survives the floor test (matches the region-Manhattan
+result). mitoC2: 0 of 11 survives (also matches).
 
 **Out-of-scope / flagged, not fixed in this pass:**
 - The canonical (Stage-2) `moduleB_climate_GEA` eMLG climate scan likely has
