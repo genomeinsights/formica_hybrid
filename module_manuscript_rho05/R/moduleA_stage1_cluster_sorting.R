@@ -57,7 +57,18 @@ groups <- obj$groups   # group_id, Chr, representative, n_loci, score, has_eMLG,
 best   <- obj$best     # stats (group_id, best_marker, ...), geno (individuals x units)
 DI_vec <- setNames(map$DiagnosticIndex, map$marker)
 aqu_pops <- "aquilonia_parent"; pol_pops <- "polyctena_parent"
+
+## AUDIT FIX (Issue 5): BayPass/Omega exclude Aland (19 hybrid populations),
+## but this script previously computed sorting across all 20 -- a population-
+## universe mismatch with the Module C annotations it feeds. Excluded here
+## for the Stage-1-direct/Module C pipeline specifically; the separate DI25
+## sorting analyses (module_di25/) are NOT touched by this fix and remain on
+## the full 20-population universe as before.
 hybrid_pops <- setdiff(unique(sample_data$Population), c(aqu_pops, pol_pops))
+n_hybrid_pops_pre_fix <- length(hybrid_pops)
+hybrid_pops <- setdiff(hybrid_pops, "Aland")
+message(sprintf("[A-stage1 cluster-sorting] AUDIT FIX: excluding Aland -- %d hybrid population(s) (was %d)",
+                length(hybrid_pops), n_hybrid_pops_pre_fix))
 parent_ids  <- sample_data[grepl("_parent$", Population), Sample_ID]
 GTs_parents <- GTs_wp[parent_ids, , drop = FALSE]
 
@@ -69,10 +80,19 @@ stopifnot(!anyNA(bm), all(bm %in% colnames(GTs_parents)),
             all(rownames(best$geno) %in% rownames(GTs_wp)))
 message("[A-stage1 cluster-sorting] classifying ", length(has_ids), " Stage-1 units (best-SNP) ...")
 t0 <- Sys.time()
-hyb_units <- best$geno[, has_ids, drop = FALSE]
+## AUDIT FIX (Issue 5): drop Aland INDIVIDUALS from the hybrid genotype rows
+## (not just from the hybrid_pops list passed to parallelism_stats), so Aland
+## never enters ohta_fast_prepare()'s per-population statistics at all.
+aland_ids <- sample_data[match(rownames(best$geno), Sample_ID), Population] == "Aland"
+message(sprintf("[A-stage1 cluster-sorting] excluding %d Aland individual(s) of %d hybrids",
+                sum(aland_ids), length(aland_ids)))
+best_geno_ex <- best$geno[!aland_ids, , drop = FALSE]
+hyb_units <- best_geno_ex[, has_ids, drop = FALSE]
 par_units <- GTs_parents[, bm, drop = FALSE]; colnames(par_units) <- has_ids
 GTs_units  <- rbind(hyb_units, par_units)
 pops_units <- sample_data[match(rownames(GTs_units), Sample_ID), Population]
+stopifnot("Aland fix failed: Aland still present in the sorting population universe" =
+            !("Aland" %in% pops_units))
 DI_units   <- setNames(DI_vec[bm], has_ids)
 maf_units  <- { pf <- colMeans(par_units, na.rm = TRUE) / 2; pmin(pf, 1 - pf) }
 prep_units <- ohta_fast_prepare(GTs_units, pops = pops_units)
@@ -86,6 +106,10 @@ message(sprintf("      done | %.0fs", as.numeric(difftime(Sys.time(), t0, units 
 base <- groups[group_id %in% has_ids, .(group_id, n_loci)][
   ps[, .(group_id, differentiated, n_aqu, n_pol, n_obs, prop_fixed, uni_score, p_binom, DI)],
   on = "group_id"]
+## AUDIT FIX (Issue 5): record the exact population list every sorting object
+## used, so a stale (pre-fix, 20-pop) object can never be silently reused.
+attr(base, "meta") <- list(hybrid_pops = sort(hybrid_pops), n_hybrid_pops = length(hybrid_pops),
+                           aland_excluded = TRUE, built = as.character(Sys.time()))
 saveRDS(base, file.path(OUTDIR, "moduleA_stage1_cluster_sorting_counts.rds"))
 
 emit <- function(tau) {
@@ -97,6 +121,8 @@ emit <- function(tau) {
             sorted      = as.integer(sort_class %in% c(uni_cls, "unresolved")))]
   out <- cl[, .(group_id, n_loci, differentiated, sort_class, DI, prop_fixed, uni_score,
                 directional, sorted)]
+  attr(out, "meta") <- list(hybrid_pops = sort(hybrid_pops), n_hybrid_pops = length(hybrid_pops),
+                            aland_excluded = TRUE, tau = tau, built = as.character(Sys.time()))
   saveRDS(out, file.path(OUTDIR, sprintf("moduleA_stage1_cluster_sorting_%s.rds", tau_stamp(tau))))
   if (isTRUE(all.equal(tau, MODULEA_TAU_PRIMARY))) saveRDS(out, OUT)
   cat(sprintf("  %s | %5d directional | %4d unresolved | %5d differentiated\n",

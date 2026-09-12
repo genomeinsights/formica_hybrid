@@ -59,17 +59,28 @@ render_level <- function(a_units, chr_num, level, n_lab) {
 }
 
 ## =========================================================================
-## per-eMLG (5 cM, min_r2_rho = 0.5)
+## per-LD-reduced-unit (5 cM, min_r2_rho = 0.5)
 ## =========================================================================
+## AUDIT FIX (Issue 8): previously used consensus_dosage() (averaged across
+## all cluster members) for clusters with >2 markers -- a DIFFERENT genotype
+## representation from the rho05 DI25 sorting analysis itself, which analyses
+## a single selected marker per unit (`unit_marker`, di25_sorting_emlg_rho05.rds).
+## Replaced with that SAME best-SNP/representative-SNP marker's raw observed
+## genotype (fill=FALSE: no filling of missing calls from a consensus -- NA
+## stays NA, exactly the marker's own missingness). Renamed labels from "eMLG
+## consensus" to "LD-reduced best-SNP/representative-SNP units" accordingly.
 g <- readRDS("module_di25_rho05/data/di25_clustering_cM5_rho05.rds")$groups
-is_emlg <- g$n_loci > 2
-D <- vapply(seq_len(nrow(g)), function(i) {
-  if (is_emlg[i]) consensus_dosage(GTs_all, g$members[[i]]) else GTs_all[, g$representative[i]]
-}, numeric(nrow(GTs_all)))
-D <- t(D)
+e_sort <- as.data.table(readRDS("module_di25_rho05/data/di25_sorting_emlg_rho05.rds"))
+stopifnot("group_id sets differ between clustering and sorting objects" =
+            setequal(g$group_id, e_sort$group_id),
+          "di25_sorting_emlg_rho05.rds missing unit_marker" = "unit_marker" %in% names(e_sort))
+unit_marker <- e_sort$unit_marker[match(g$group_id, e_sort$group_id)]
+stopifnot("some unit_marker missing after group_id join" = !anyNA(unit_marker),
+          "some unit_marker not found in GTs_all" = all(unit_marker %in% colnames(GTs_all)))
+D <- t(GTs_all[, unit_marker, drop = FALSE])   # raw observed genotype at the analysed marker, fill=FALSE
 rep_chr <- as.integer(sub("Chr", "", sub(":.*", "", g$representative)))
 rep_pos <- as.integer(sub(".*:", "", g$representative))
 ord_u <- order(rep_chr, rep_pos)
-render_level(orient_aqu(D[ord_u, ], faqu, fpol), rep_chr[ord_u], "eMLG_rho05", "LD-reduced units")
+render_level(orient_aqu(D[ord_u, ], faqu, fpol), rep_chr[ord_u], "eMLG_rho05", "LD-reduced best-SNP/representative-SNP units")
 
 message("[popfix-rho05] done (SNP panel unaffected -- see module_di25/Figures/di25_popfix_snp.png)")

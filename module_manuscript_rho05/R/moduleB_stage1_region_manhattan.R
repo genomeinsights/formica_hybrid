@@ -20,11 +20,18 @@
 ## shown as flat/zero. Colour = which assembled Stage-2 region a SNP's
 ## cluster belongs to (grey = tested, not in any significant region).
 ##
-## Descriptive thresholds (NOT calibrated against a structured null -- that
-## step doesn't exist yet for this Stage-1 scan): BF(dB) >= 15 for PC1/PC2
-## (matches the manuscript's own established "descriptive outlier
-## threshold"); p < 0.001 (-log10(pval) >= 3) for mito C2, the closest
-## analogue.
+## AUDIT FIX (Issue 6, 2026-09-12): a structured-null floor-survivor test now
+## EXISTS for all three covariates (moduleB_stage1_S1units_null.rds for
+## PC1/PC2, moduleB_stage1_mitoC2_null.rds for mitoC2) -- the previous
+## "that step doesn't exist yet" comment is obsolete and has been removed.
+## BF(dB)>=15 / -log10(p)>=3 are RAW THRESHOLD CROSSINGS, not significant
+## loci; region assembly and highlighting now use the floor-survivor set
+## (raw crossing AND beats all 10,000 null draws) as the primary candidate
+## set. Raw-only crossings (cross the threshold but don't survive the floor
+## test) are shown in a subdued secondary style, not merged into regions or
+## implied to be validated. Where zero units survive the floor test (mitoC2:
+## 0 of 11 raw crossings), this is stated explicitly and no region is built
+## from the raw crossings alone.
 ##
 ## Region assembly: min_r2_rho = 0.5 (today's Stage-2 default for
 ## LD-reduced-units use), score_threshold = 0.80, genetic_map + cM_threshold
@@ -66,17 +73,37 @@ add_gpos <- function(dt) {
 }
 
 ## ---- one covariate: threshold, assemble Stage-2 regions, plot -------------
-process_one <- function(stat_file, stat_col, thresh, thresh_label, tag, title_stat) {
+process_one <- function(stat_file, stat_col, thresh, thresh_label, tag, title_stat,
+                        null_file = NULL, null_group_col = "group_id", null_flag_col = NULL) {
   message("[", tag, "] loading ", stat_file)
   s <- fread(stat_file)
   stopifnot(nrow(s) == nrow(cl5))
   cl5s <- copy(cl5)
   cl5s[, stat := s[[stat_col]][match(seq_len(.N), s$MRK)]]   # MRK is a 1..n row index matching cl5's order
 
-  sig_ids <- cl5s[stat >= thresh, CL_id]
-  message("[", tag, "] ", length(sig_ids), " significant Stage-1 units (", thresh_label, ")")
+  raw_ids <- cl5s[stat >= thresh, CL_id]
+  message("[", tag, "] ", length(raw_ids), " RAW threshold crossings (", thresh_label, ") -- not yet floor-survivors")
 
-  ## ---- assemble significant clusters into Stage-2 regions ------------------
+  ## AUDIT FIX (Issue 6): floor-survivor set is the PRIMARY candidate set for
+  ## region assembly and highlighting; raw crossings that don't survive the
+  ## floor test are tracked separately (subdued style, no region assembly).
+  floor_ids <- raw_ids
+  if (!is.null(null_file)) {
+    nullobj <- readRDS(null_file)
+    stopifnot(null_group_col %in% names(nullobj), null_flag_col %in% names(nullobj))
+    cl5s[, S1_group_id := paste0("S1_", CL_id)]
+    surv <- nullobj[[null_group_col]][as.logical(nullobj[[null_flag_col]])]
+    floor_ids <- cl5s[S1_group_id %in% surv, CL_id]
+    message("[", tag, "] ", length(floor_ids), " of those ", length(raw_ids),
+            " RAW crossings survive the null-calibrated floor test (beat all 10,000 null draws)")
+    if (length(floor_ids) == 0)
+      message("[", tag, "] NO unit survives the floor test -- no region will be assembled from raw crossings alone")
+  } else {
+    message("[", tag, "] WARNING: no null_file given -- treating raw crossings as the candidate set (not recommended)")
+  }
+  sig_ids <- floor_ids   # region assembly below operates on the floor-survivor set
+
+  ## ---- assemble FLOOR-SURVIVOR clusters into Stage-2 regions ---------------
   regions <- NULL
   if (length(sig_ids) >= 1) {
     sub_stage1 <- list(map_snp = stage1$map_snp[CL_id %in% sig_ids],
@@ -113,26 +140,41 @@ process_one <- function(stat_file, stat_col, thresh, thresh_label, tag, title_st
   }
 
   ## ---- every SNP in a TESTED cluster, inheriting its cluster's stat --------
+  ## AUDIT FIX (Issue 6): three tiers now, not two -- floor-survivor (primary,
+  ## coloured by assembled region), raw-crossing-only (subdued secondary
+  ## style, no region), and non-crossing (plain grey).
   snp_dt <- cl5s[, .(marker = unlist(members)), by = .(CL_id, stat)]
   snp_dt <- map_hyb_005[, .(marker, Chr, Pos)][snp_dt, on = "marker"]
   snp_dt <- add_gpos(snp_dt)
   snp_dt[snp2region, on = "marker", region_id := i.region_id]
-  snp_dt[, is_sig := !is.na(region_id)]
+  snp_dt[, is_floor_survivor := !is.na(region_id)]
+  snp_dt[, is_raw_only := !is_floor_survivor & CL_id %in% raw_ids]
 
   n_region <- if (!is.null(regions)) nrow(regions) else 0L
-  message("[", tag, "] ", nrow(snp_dt), " member SNPs plotted (", sum(snp_dt$is_sig),
-          " in ", n_region, " assembled region(s))")
+  message("[", tag, "] ", nrow(snp_dt), " member SNPs plotted (", sum(snp_dt$is_floor_survivor),
+          " in ", n_region, " floor-survivor-assembled region(s); ", sum(snp_dt$is_raw_only),
+          " raw-crossing-only, not shown as a region)")
+
+  subtitle_txt <- if (length(raw_ids) == 0) {
+    sprintf("%d Stage-1 units tested; 0 raw threshold crossings (%s)", nrow(cl5s), thresh_label)
+  } else if (length(floor_ids) == 0) {
+    sprintf("%d Stage-1 units tested; %d RAW threshold crossings (%s), but NONE survive the null-calibrated floor test (10,000 Omega-structured draws) -- no region assembled",
+            nrow(cl5s), length(raw_ids), thresh_label)
+  } else {
+    sprintf("%d Stage-1 units tested; %d RAW threshold crossings (%s), %d survive the null-calibrated floor test -> %d assembled region(s) from floor survivors only",
+            nrow(cl5s), length(raw_ids), thresh_label, length(floor_ids), n_region)
+  }
 
   p <- ggplot() +
-    geom_point(data = snp_dt[is_sig == FALSE], aes(gpos, stat), colour = "grey75", size = 0.4, alpha = 0.6) +
-    geom_point(data = snp_dt[is_sig == TRUE], aes(gpos, stat, colour = region_id), size = 1.1) +
+    geom_point(data = snp_dt[!is_floor_survivor & !is_raw_only], aes(gpos, stat), colour = "grey80", size = 0.4, alpha = 0.6) +
+    geom_point(data = snp_dt[is_raw_only == TRUE], aes(gpos, stat), colour = "#D6336C", size = 0.7, alpha = 0.7) +
+    geom_point(data = snp_dt[is_floor_survivor == TRUE], aes(gpos, stat, colour = region_id), size = 1.1) +
     geom_hline(yintercept = thresh, linetype = 2, colour = "black", linewidth = 0.3) +
     scale_x_continuous(breaks = chr_lens$mid, labels = chr_lens$chr_num, expand = c(0.01, 0)) +
-    scale_colour_viridis_d(guide = if (n_region > 15) "none" else "legend") +
+    scale_colour_viridis_d(guide = if (n_region > 15) "none" else "legend", name = "floor-survivor region") +
     labs(x = "Chromosome", y = title_stat,
-         title = sprintf("Stage-1-direct %s: every SNP in a tested cluster (n_snps>=5), coloured by Stage-2-assembled region", tag),
-         subtitle = sprintf("%d Stage-1 units tested; %d significant (%s) -> %d assembled region(s); descriptive threshold, not null-calibrated",
-                            nrow(cl5s), length(sig_ids), thresh_label, n_region)) +
+         title = sprintf("Stage-1-direct %s: every SNP in a tested cluster (n_snps>=5); colour = null-calibrated floor-survivor region (pink/magenta = raw threshold crossing only, not floor-calibrated)", tag),
+         subtitle = subtitle_txt) +
     theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
   outpng <- file.path(FIGDIR, sprintf("moduleB_stage1_%s_region_manhattan.png", tag))
   ggsave(outpng, p, width = 14, height = 5, dpi = 200)
@@ -140,11 +182,16 @@ process_one <- function(stat_file, stat_col, thresh, thresh_label, tag, title_st
   invisible(list(snp_dt = snp_dt, regions = regions))
 }
 
+NULL_S1  <- "module_manuscript_rho05/data/moduleB_stage1_S1units_null.rds"
+NULL_C2  <- "module_manuscript_rho05/data/moduleB_stage1_mitoC2_null.rds"
 r_pc1 <- process_one(file.path(UNIT_DIR, "PC1_S1units_withOmega_summary_betai_reg.out"),
-                     "BF(dB)", 15, "BF(dB)>=15", "PC1", "BF(dB)")
+                     "BF(dB)", 15, "BF(dB)>=15", "PC1", "BF(dB)",
+                     null_file = NULL_S1, null_flag_col = "floor1")
 r_pc2 <- process_one(file.path(UNIT_DIR, "PC2_S1units_withOmega_summary_betai_reg.out"),
-                     "BF(dB)", 15, "BF(dB)>=15", "PC2", "BF(dB)")
+                     "BF(dB)", 15, "BF(dB)>=15", "PC2", "BF(dB)",
+                     null_file = NULL_S1, null_flag_col = "floor2")
 r_c2  <- process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"),
-                     "log10(1/pval)", 3, "-log10(p)>=3", "mitoC2", "C2 -log10(p)")
+                     "log10(1/pval)", 3, "-log10(p)>=3", "mitoC2", "C2 -log10(p)",
+                     null_file = NULL_C2, null_flag_col = "floor3")
 
 message("[moduleB-stage1-region-manhattan] done")

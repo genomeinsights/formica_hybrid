@@ -1,0 +1,1 @@
+AUDIT FIX (Issue 6): this script produced *_PREVIEW.* figures using an EARLY, uncalibrated draft of the bio6/bio11 Manhattan plots, superseded by moduleB_stage1_snp_manhattan_ldmanhattan.R. Quarantined 2026-09-12; do not run this script or treat its output as current.

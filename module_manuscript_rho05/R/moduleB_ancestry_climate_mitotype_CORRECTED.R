@@ -37,6 +37,17 @@
 ## p-values as primary (consistent across all tests, unlike Omega-null which
 ## isn't well-motivated for every comparison).
 ##
+## AUDIT FIX (2026-09-12, Issue 3): Omega17 was built in `units`
+## (first-appearance) order but dt17 is sorted alphabetically
+## (setorder(dt17, unit_id)) -- genuinely different orderings, verified. The
+## Omega-null (NullMat17, from Omega17's own eigendecomposition) was compared
+## directly against dt17's columns with no name-based alignment, silently
+## misaligning which null draw stood in for which lineage unit. Fixed by
+## explicitly reordering Omega17 to dt17$unit_id via match(), with a hard
+## rownames/colnames assertion. Raw correlations and block-permutation
+## results do NOT depend on Omega17's row order and are unaffected (asserted
+## below); only the Omega-null p-values change.
+##
 ## Run from the repo root: Rscript module_manuscript_rho05/R/moduleB_ancestry_climate_mitotype_CORRECTED.R
 ## =========================================================
 
@@ -82,6 +93,28 @@ for (u in units) {
 }
 Omega17 <- M %*% Omega19 %*% t(M)
 Omega17 <- (Omega17 + t(Omega17)) / 2
+dimnames(Omega17) <- list(units, units)   # explicit, don't rely on %*% propagation
+
+## AUDIT FIX (Issue 3): Omega17's row/col order here is `units` -- unique()'s
+## FIRST-APPEARANCE order in dt19$Population -- while dt17 was built via
+## setorder(dt17, unit_id), i.e. ALPHABETICAL order. These are genuinely
+## different orderings (verified: identical(units, sort(units)) is FALSE),
+## so every downstream Omega-null draw (NullMat17, built from Omega17's own
+## eigendecomposition) was being compared directly against dt17's columns
+## with NO name-based alignment -- silently misaligning which null value
+## stood in for which lineage unit's ancestry. Fixed by explicitly reordering
+## Omega17 to dt17's exact row order before building the null, with a hard
+## assertion that the names now agree exactly.
+ord17 <- match(dt17$unit_id, rownames(Omega17))
+stopifnot("AUDIT FIX (Issue 3): some dt17$unit_id not found in Omega17 rownames" = !anyNA(ord17))
+Omega17 <- Omega17[ord17, ord17]
+stopifnot("AUDIT FIX (Issue 3): Omega17 rownames != dt17$unit_id after reorder" =
+            identical(rownames(Omega17), dt17$unit_id),
+          "AUDIT FIX (Issue 3): Omega17 colnames != dt17$unit_id after reorder" =
+            identical(colnames(Omega17), dt17$unit_id))
+message("[AUDIT FIX Issue 3] Omega17 reordered to match dt17$unit_id exactly (was: ",
+        paste(units, collapse = ", "), ")")
+
 eg17 <- eigen(Omega17, symmetric = TRUE); vals17 <- pmax(eg17$values, 0); P17 <- nrow(Omega17)
 stopifnot(P17 == nrow(dt17))
 set.seed(SEED_SIM)

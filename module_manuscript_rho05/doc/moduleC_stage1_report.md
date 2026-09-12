@@ -1,6 +1,6 @@
 # Module C, Stage-1-direct: genome-wide, unit-level climate calibration
 
-*Generated 2026-09-11. NSIM = 10000 Omega-structured null covariates; Stage-1-direct unit universe = 18361 clusters (n_snps>=5, Aland excluded, 19 pops, Stage-1-derived Omega). Single universe -- unlike the canonical eMLG Module C, there is no second min-cluster-size level to sweep.*
+*Generated 2026-09-12. NSIM = 10000 Omega-structured null covariates; Stage-1-direct unit universe = 18361 clusters (n_snps>=5, Aland excluded, 19 pops, Stage-1-derived Omega). Single universe -- unlike the canonical eMLG Module C, there is no second min-cluster-size level to sweep.*
 
 ## Data provenance
 
@@ -11,7 +11,7 @@
 ## Validation checks
 
 - Stage-1 unit count and order identical across observed / null / annotation objects (N = 18361), all joins by explicit `group_id`.
-- **Faithful regeneration (Monte-Carlo equivalence gate passed):** BayPass is not bit-reproducible (a fresh MCMC realization each run), so the regenerated per-unit exceedance counts match the moduleB_stage1_S1units_null.R run within MCMC tolerance rather than exactly: PC1 Pearson r = 1.0000, sum ratio-1 = -0.0000; PC2 r = 1.0000, sum ratio-1 = -0.0000 (thresholds r > 0.99, |ratio-1| < 0.03; max|dk1| = 258, max|dk2| = 312 reported as diagnostics only).
+- **Faithful regeneration (Monte-Carlo equivalence gate passed):** BayPass is not bit-reproducible (a fresh MCMC realization each run), so the regenerated per-unit exceedance counts match the moduleB_stage1_S1units_null.R run within MCMC tolerance rather than exactly: PC1 Pearson r = 1.0000, sum ratio-1 = +0.0000; PC2 r = 1.0000, sum ratio-1 = +0.0000 (thresholds r > 0.99, |ratio-1| < 0.03; max|dk1| = 0, max|dk2| = 0 reported as diagnostics only).
 - Input identity (the 50 `.env` covariates, geno, Omega, poolsize, params, statistic code) is guaranteed EXACTLY by md5 fingerprints. Observed BF vectors equal `eBF1`/`eBF2` (max|d| = 0); observed and null reduced by identical code (`moduleC_stat_functions.R`, shared unmodified with the canonical eMLG Module C).
 - The `*_pdir_diff` threshold-sensitivity statistics (proportion directional among differentiated units, within the top BF fraction) are undefined (0/0) whenever a null draw's top fraction contains zero differentiated units -- expected for the smallest fraction (top 0.1%, ~18 units) given this smaller 18,361-unit universe. Those draws are excluded from the corresponding p-value/quantile calculation rather than imputed; NA counts (of 10,000 nulls): top0001_pdir_diff=11, top0005_pdir_diff=0, top0010_pdir_diff=0. No other statistic -- including the primary FDR family -- is ever NA.
 
@@ -23,33 +23,33 @@ For every covariate (observed PC1/PC2 and each of the 10,000 nulls) the genome-w
 
 | test | axis | observed | null median | null 95% | p_emp | p_adj |
 |---|---|---|---|---|---|---|
-| DI (Spearman rho) | PC1 | 0.097 | 0.029 | [-0.018, 0.072] | 0.0053 | 0.00636 |
-| DI (Spearman rho) | PC2 | -0.137 | 0.029 | [-0.018, 0.072] | 1e-04 | 3e-04 |
-| recombination (Spearman rho) | PC1 | -0.098 | 0.065 | [-0.013, 0.144] | 2e-04 | 4e-04 |
-| recombination (Spearman rho) | PC2 | 0.022 | 0.065 | [-0.013, 0.144] | 0.294 | 0.294 |
-| sorting, differentiated only (BF percentile gap) | PC1 | 0.043 | 0.121 | [0.078, 0.165] | 7e-04 | 0.00105 |
-| sorting, differentiated only (BF percentile gap) | PC2 | 0.019 | 0.121 | [0.078, 0.165] | 1e-04 | 3e-04 |
+| DI (Spearman rho) | PC1 | 0.100 | 0.029 | [-0.018, 0.072] | 0.0036 | 0.00432 |
+| DI (Spearman rho) | PC2 | -0.131 | 0.029 | [-0.018, 0.072] | 1e-04 | 3e-04 |
+| recombination (Spearman rho) | PC1 | -0.099 | 0.065 | [-0.013, 0.144] | 1e-04 | 3e-04 |
+| recombination (Spearman rho) | PC2 | 0.020 | 0.065 | [-0.013, 0.144] | 0.269 | 0.269 |
+| sorting, differentiated only (BF percentile gap) | PC1 | 0.036 | 0.123 | [0.078, 0.168] | 5e-04 | 0.00075 |
+| sorting, differentiated only (BF percentile gap) | PC2 | 0.019 | 0.123 | [0.078, 0.168] | 2e-04 | 4e-04 |
 
 ### Supplementary statistics (not in the FDR family)
 
 | test | axis | observed | null median | null 95% | p_emp |
 |---|---|---|---|---|---|
-| sorting, all units (raw-BF gap) | PC1 | 0.871 | 0.354 | [-0.115, 0.933] | 0.0523 |
-| sorting, all units (raw-BF gap) | PC2 | -0.353 | 0.354 | [-0.115, 0.933] | 0.0115 |
-| sorting, differentiated (raw-BF gap) | PC1 | 0.730 | 0.822 | [0.368, 1.385] | 0.695 |
-| sorting, differentiated (raw-BF gap) | PC2 | 0.623 | 0.822 | [0.368, 1.385] | 0.406 |
-| DI (raw-BF Pearson) | PC1 | 0.098 | 0.038 | [0.001, 0.083] | 0.0067 |
+| sorting, all units (raw-BF gap) | PC1 | 0.761 | 0.372 | [-0.097, 0.993] | 0.144 |
+| sorting, all units (raw-BF gap) | PC2 | -0.418 | 0.372 | [-0.097, 0.993] | 0.0085 |
+| sorting, differentiated (raw-BF gap) | PC1 | 0.640 | 0.826 | [0.364, 1.432] | 0.452 |
+| sorting, differentiated (raw-BF gap) | PC2 | 0.588 | 0.826 | [0.364, 1.432] | 0.342 |
+| DI (raw-BF Pearson) | PC1 | 0.102 | 0.038 | [0.001, 0.083] | 0.0042 |
 | DI (raw-BF Pearson) | PC2 | -0.104 | 0.038 | [0.001, 0.083] | 1e-04 |
-| recombination (raw-BF Pearson) | PC1 | -0.078 | 0.032 | [-0.047, 0.112] | 0.0066 |
-| recombination (raw-BF Pearson) | PC2 | -0.027 | 0.032 | [-0.047, 0.112] | 0.147 |
-| sorting magnitude (raw-BF Pearson) | PC1 | 0.064 | 0.191 | [0.124, 0.271] | 0.0018 |
-| sorting magnitude (raw-BF Pearson) | PC2 | 0.107 | 0.191 | [0.124, 0.271] | 0.0293 |
-| sorting magnitude / prop_fixed (Spearman rho) | PC1 | 0.045 | 0.306 | [0.234, 0.374] | 1e-04 |
-| sorting magnitude / prop_fixed (Spearman rho) | PC2 | 0.110 | 0.306 | [0.234, 0.374] | 1e-04 |
-| sorting orientation / uni_score (Spearman rho) | PC1 | 0.096 | -0.018 | [-0.060, 0.024] | 1e-04 |
-| sorting orientation / uni_score (Spearman rho) | PC2 | -0.211 | -0.018 | [-0.060, 0.024] | 1e-04 |
-| sorting, all units (BF percentile gap) | PC1 | 0.058 | 0.048 | [0.013, 0.086] | 0.567 |
-| sorting, all units (BF percentile gap) | PC2 | -0.055 | 0.048 | [0.013, 0.086] | 1e-04 |
+| recombination (raw-BF Pearson) | PC1 | -0.079 | 0.032 | [-0.047, 0.112] | 0.0062 |
+| recombination (raw-BF Pearson) | PC2 | -0.027 | 0.032 | [-0.047, 0.112] | 0.146 |
+| sorting magnitude (raw-BF Pearson) | PC1 | 0.070 | 0.193 | [0.123, 0.272] | 0.0025 |
+| sorting magnitude (raw-BF Pearson) | PC2 | 0.115 | 0.193 | [0.123, 0.272] | 0.0433 |
+| sorting magnitude / prop_fixed (Spearman rho) | PC1 | 0.051 | 0.307 | [0.231, 0.375] | 1e-04 |
+| sorting magnitude / prop_fixed (Spearman rho) | PC2 | 0.119 | 0.307 | [0.231, 0.375] | 1e-04 |
+| sorting orientation / uni_score (Spearman rho) | PC1 | 0.108 | -0.018 | [-0.059, 0.024] | 1e-04 |
+| sorting orientation / uni_score (Spearman rho) | PC2 | -0.201 | -0.018 | [-0.059, 0.024] | 1e-04 |
+| sorting, all units (BF percentile gap) | PC1 | 0.050 | 0.052 | [0.015, 0.092] | 0.904 |
+| sorting, all units (BF percentile gap) | PC2 | -0.059 | 0.052 | [0.015, 0.092] | 1e-04 |
 
 ### Sensitivity to the fixation threshold (tau)
 
@@ -59,19 +59,19 @@ The calibration is reported over the fixation-threshold tau in {0.5, 0.6, 0.8} (
 
 | tau | axis | observed | null 95% | p_emp |
 |---|---|---|---|---|
-| 0.5 | PC1 | 0.048 | [0.070, 0.154] | 0.0027 |
-| 0.5 | PC2 | 0.019 | [0.070, 0.154] | 1e-04 |
-| 0.6 | PC1 | 0.043 | [0.078, 0.165] | 7e-04 |
-| 0.6 | PC2 | 0.019 | [0.078, 0.165] | 1e-04 |
-| 0.8 | PC1 | -0.007 | [0.108, 0.221] | 1e-04 |
-| 0.8 | PC2 | 0.051 | [0.108, 0.221] | 9e-04 |
+| 0.5 | PC1 | 0.050 | [0.071, 0.155] | 0.0033 |
+| 0.5 | PC2 | 0.015 | [0.071, 0.155] | 1e-04 |
+| 0.6 | PC1 | 0.036 | [0.078, 0.168] | 5e-04 |
+| 0.6 | PC2 | 0.019 | [0.078, 0.168] | 2e-04 |
+| 0.8 | PC1 | -0.007 | [0.112, 0.242] | 1e-04 |
+| 0.8 | PC2 | 0.048 | [0.112, 0.242] | 7e-04 |
 
 ## Interpretation
 
-**Directional sorting (primary, differentiated-only): a climate association survives FDR on both PC1 and PC2.** PC1 observed 0.043 (FDR 0.001, below the null); PC2 observed 0.019 (FDR 0.000, below the null).
-**Recombination: a climate association survives FDR on PC1 only.** PC2 is within the null (observed 0.022, FDR 0.294); on PC1 the association is beyond the structured null (observed -0.098, FDR 0.000, below the null).
-**Diagnostic Index: a climate association survives FDR on both PC1 and PC2.** PC1 observed 0.097 (FDR 0.006, above the null), corroborated by the raw-BF analysis (Pearson 0.098, p 0.0067); PC2 observed -0.137 (FDR 0.000, below the null), corroborated by the raw-BF analysis (Pearson -0.104, p 0.0001). (DI is a signed index; the sign is reported as-is and should not be read as locus-level adaptation in diagnostic regions.)
-**Overall:** of the six primary tests, 5 survives FDR (DI (Spearman rho) x PC2; sorting, differentiated only (BF percentile gap) x PC2; recombination (Spearman rho) x PC1; sorting, differentiated only (BF percentile gap) x PC1; DI (Spearman rho) x PC1).
+**Directional sorting (primary, differentiated-only): a climate association survives FDR on both PC1 and PC2.** PC1 observed 0.036 (FDR 0.001, below the null); PC2 observed 0.019 (FDR 0.000, below the null).
+**Recombination: a climate association survives FDR on PC1 only.** PC2 is within the null (observed 0.020, FDR 0.269); on PC1 the association is beyond the structured null (observed -0.099, FDR 0.000, below the null).
+**Diagnostic Index: a climate association survives FDR on both PC1 and PC2.** PC1 observed 0.100 (FDR 0.004, above the null), corroborated by the raw-BF analysis (Pearson 0.102, p 0.0042); PC2 observed -0.131 (FDR 0.000, below the null), corroborated by the raw-BF analysis (Pearson -0.104, p 0.0001). (DI is a signed index; the sign is reported as-is and should not be read as locus-level adaptation in diagnostic regions.)
+**Overall:** of the six primary tests, 5 survives FDR (DI (Spearman rho) x PC2; recombination (Spearman rho) x PC1; sorting, differentiated only (BF percentile gap) x PC2; sorting, differentiated only (BF percentile gap) x PC1; DI (Spearman rho) x PC1).
 
 ## What this analysis can and cannot establish
 

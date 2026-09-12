@@ -22,12 +22,17 @@ CORES=10
 OMEGA_DIR=aland_excluded
 UNIT_DIR=aland_excluded_S1units
 
-echo "=== 1. Estimating Omega (Stage-1 pruned, all 698,251 core_snp) ==="
+## AUDIT FIX (Issue 9): this Omega estimation is FROZEN as of 2026-09-12 --
+## the Omega on disk was NOT re-estimated by the covariate-scaling fix
+## (Issue 1) or any other audit change; checksum recorded in AUDIT_FIXES.md.
+## -seed added below for reproducibility of any FUTURE re-estimation only --
+## it does not apply retroactively to the frozen Omega already on disk.
+echo "=== 1. Estimating Omega (Stage-1 pruned, all 698,251 core_snp) [DO NOT RUN -- Omega is frozen; see AUDIT_FIXES.md] ==="
 "${PATH_TO_BAYPASS}" \
   -countdatafile "${OMEGA_DIR}/u_DIEM.geno_pruned" \
   -poolsizefile  "${OMEGA_DIR}/u_DIEM.size" \
   -nthreads "${CORES}" \
-  -nval 500 -burnin 5000 -thin 10 \
+  -nval 500 -burnin 5000 -thin 10 -seed 74 \
   -outprefix "${OMEGA_DIR}/omega"
 
 cp "${OMEGA_DIR}/omega_mat_omega.out" "${UNIT_DIR}/omega_mat_omega.out"

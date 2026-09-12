@@ -71,21 +71,32 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   cl5s <- copy(cl5)
   cl5s[, stat := s[[unit_stat_col]][match(seq_len(.N), s$MRK)]]
 
-  sig <- cl5s[stat >= thresh]
-  message("[", tag, "] ", nrow(sig), " significant Stage-1 units (", thresh_label, ")")
+  raw <- cl5s[stat >= thresh]
+  message("[", tag, "] ", nrow(raw), " RAW threshold crossings (", thresh_label, ") -- not yet floor-survivors")
 
-  ## optional: report how many of the threshold-significant units also
-  ## survive an Omega-structured null floor test (moduleB_stage1_*_null.R),
-  ## so the subtitle doesn't imply the raw threshold alone is calibrated.
+  ## AUDIT FIX (Issue 6): colouring/region-flagging now uses the FLOOR-
+  ## SURVIVOR set (raw crossing AND beats all 10,000 Omega-structured null
+  ## draws) as the primary candidate set, not raw threshold crossings alone.
+  ## Where no null_file is available for this covariate (bio6/bio11
+  ## individually -- only their COMBINED bio_winter axis has a floor test,
+  ## per the Issue 7 decision), raw crossings are shown but explicitly
+  ## labelled as uncalibrated, not implied to be validated.
   calib_note <- ""
   if (!is.null(null_file)) {
     nullobj <- readRDS(null_file)
     stopifnot(null_flag_col %in% names(nullobj))
-    n_floor <- sum(nullobj[[null_flag_col]][match(sig$group_id, nullobj$group_id)], na.rm = TRUE)
-    calib_note <- sprintf(" Null-calibrated (10,000 Omega-structured draws): %d of those %d survive the floor test (beat every null draw)%s.",
-                          n_floor, nrow(sig),
-                          if (n_floor == 0) " -- none are distinguishable from the structured null" else "")
-    message("[", tag, "] null-calibrated floor survivors: ", n_floor, " of ", nrow(sig))
+    floor_ids <- nullobj$group_id[as.logical(nullobj[[null_flag_col]])]
+    sig <- raw[group_id %in% floor_ids]
+    n_floor <- nrow(sig)
+    calib_note <- if (n_floor == 0)
+      sprintf(" Null-calibrated (10,000 Omega-structured draws): 0 of %d RAW threshold crossings survive the floor test -- none are distinguishable from the structured null; no region is coloured as a validated candidate.", nrow(raw))
+    else
+      sprintf(" Null-calibrated (10,000 Omega-structured draws): %d of %d RAW threshold crossings survive the floor test (beat every null draw); ONLY these are coloured below.", n_floor, nrow(raw))
+    message("[", tag, "] null-calibrated floor survivors: ", n_floor, " of ", nrow(raw), " raw crossings")
+  } else {
+    sig <- raw
+    calib_note <- " No per-variable floor test exists for this covariate (see bio_winter for the calibrated combined winter-temperature result) -- coloured units below are RAW THRESHOLD CROSSINGS ONLY, not validated candidates."
+    message("[", tag, "] WARNING: no null_file -- colouring raw crossings only (uncalibrated)")
   }
 
   sig_s2 <- unique(marker2s2[.(sig$core_snp), on = "marker", nomatch = NULL]$s2_group)
@@ -104,11 +115,11 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   p <- ld_manhattan(
     map = map_hyb_005, value = y, value_label = title_stat,
     regions = regions, hline = thresh,
-    title = sprintf("%s: every SNP (own full-SNP BF/C2), coloured by Stage-2 (rho05) cluster containing a significant Stage-1 unit", tag),
+    title = sprintf("%s: every SNP (own full-SNP BF/C2), coloured by Stage-2 (rho05) cluster containing a floor-survivor Stage-1 unit", tag),
     point_size = 0.6
   ) + labs(subtitle = sprintf(
-    "Significance decided at Stage-1-unit resolution (%d tested, %d significant, %s); Stage-2 used only to describe physical extent -> %d group(s), %d SNPs coloured; y-axis is the full per-SNP scan.%s",
-    nrow(cl5s), nrow(sig), thresh_label, length(sig_s2), n_region_snps, calib_note))
+    "Candidate set decided at Stage-1-unit resolution (%d tested, %d RAW threshold crossings, %s); Stage-2 used only to describe physical extent -> %d group(s), %d SNPs coloured; y-axis is the full per-SNP scan.%s",
+    nrow(cl5s), nrow(raw), thresh_label, length(sig_s2), n_region_snps, calib_note))
 
   outpng <- file.path(FIGDIR, sprintf("moduleB_stage1_%s_snp_manhattan.png", tag))
   ggsave(outpng, p, width = 22, height = 4.5, dpi = 200, limitsize = FALSE)
@@ -116,16 +127,22 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
   invisible(p)
 }
 
+NULL_S1 <- "module_manuscript_rho05/data/moduleB_stage1_S1units_null.rds"
 process_one(file.path(UNIT_DIR, "PC1_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
            file.path(SNP_DIR, "PC1_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
-           "PC1", "BF(dB)")
+           "PC1", "BF(dB)", null_file = NULL_S1, null_flag_col = "floor1")
 process_one(file.path(UNIT_DIR, "PC2_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
            file.path(SNP_DIR, "PC2_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
-           "PC2", "BF(dB)")
+           "PC2", "BF(dB)", null_file = NULL_S1, null_flag_col = "floor2")
 process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"), "log10(1/pval)", 3, "-log10(p)>=3",
            file.path(SNP_DIR, "mito_C2_fullSNP_stage1Omega_summary_contrast.out"), "log10(1/pval)",
            "mitoC2", "C2 -log10(p)",
            null_file = "module_manuscript_rho05/data/moduleB_stage1_mitoC2_null.rds", null_flag_col = "floor3")
+## bio6/bio11: no PER-VARIABLE floor test (Issue 7 decision -- they're
+## reduced to one combined bio_winter axis for calibration, which DOES have
+## a floor test: 10 of 18,361 Stage-1 units survive, set FDR ~=0.18 --
+## moduleB_stage1_bio_winter_null.rds). These two panels remain raw-
+## threshold-only, explicitly labelled as such by the `else` branch above.
 process_one(file.path(UNIT_DIR, "bio6_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
            file.path(SNP_DIR, "bio6_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
            "bio6", "BF(dB)")

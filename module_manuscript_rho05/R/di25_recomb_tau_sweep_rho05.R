@@ -32,9 +32,14 @@ rc <- function(ch, pos) { o <- rep(NA_real_, length(pos))
     i <- which(ch == cc); o[i] <- approx(r$p, r$cMMb, xout = pos[i], rule = 2)$y }; o }
 
 ## ---- load counts + positions (tau-independent) --------------------------
+## AUDIT FIX (Issue 8): recombination MUST be assigned at the marker whose
+## genotype was actually analysed for sorting (`unit_marker`, saved directly
+## in di25_sorting_emlg_rho05.rds), not the clustering's centrality
+## `representative` -- these differ for 689 of 20,807 units (3.3%), verified
+## before writing this fix.
 e <- as.data.table(readRDS("module_di25_rho05/data/di25_sorting_emlg_rho05.rds"))
-g <- readRDS("module_di25_rho05/data/di25_clustering_cM5_rho05.rds")$groups
-e[, rmk := g$representative[match(group_id, g$group_id)]]
+stopifnot("di25_sorting_emlg_rho05.rds missing unit_marker" = "unit_marker" %in% names(e))
+rmk <- e$unit_marker
 e[, `:=`(chr = as.integer(sub("Chr","",sub(":.*","",rmk))), pos = as.integer(sub(".*:","",rmk)))]
 e[, recomb := rc(chr, pos)]; e <- e[differentiated == TRUE & n_obs > 0 & is.finite(uni_score) & is.finite(recomb)]
 e[, lr := log10(recomb + 0.1)]
