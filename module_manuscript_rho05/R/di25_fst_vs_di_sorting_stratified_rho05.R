@@ -18,6 +18,19 @@
 ##
 ## High-DI cutoff: DI > -25 (the established DI25 convention).
 ##
+## CROSS-MODULE NOTE (2026-09-13, via another session working on
+## module_population_partitioning): DI here comes solely from
+## map_hyb_005$DiagnosticIndex, for the full genome, never pre-gated -- this
+## script's DI>-25 filter is a fresh cut on that never-restricted table, NOT
+## a re-gating of an already DI>-25-restricted DI25 object (module_di25's own
+## datasets ARE pre-gated that way, and per established convention must never
+## be re-gated on map_hyb_005 DI -- an unfixed DIEM seed mismatch drops ~7k
+## markers there). No collision internally, but a naive side-by-side
+## comparison of "high-DI" results between this script and
+## module_population_partitioning (which uses DI25's own vintage/gating)
+## could show a spurious difference from DI-vintage mismatch rather than a
+## real one -- keep that in mind before comparing the two directly.
+##
 ## Run from the repo root:
 ##   Rscript module_manuscript_rho05/R/di25_fst_vs_di_sorting_stratified_rho05.R
 ## =============================================================================
