@@ -23,10 +23,11 @@
 ## Run from the repo root:
 ##   Rscript module_manuscript_rho05/R/di25_fst_vs_di_violin_rho05.R
 ## =============================================================================
-suppressMessages({ library(data.table); library(ggplot2) })
+suppressMessages({ library(data.table); library(ggplot2); library(parallel); library(digest) })
 
 FST_RDS   <- "module_manuscript_rho05/data/di25_fst_vs_di_rho05.rds"
-SIM_CACHE <- "module_manuscript_rho05/data/fst_sim_cache_full_rho05_v2"
+BEDFMT    <- "data/diem_outs_demo/diem_boot%d_output.bed"
+SIM_LOCUS_CACHE <- "module_manuscript_rho05/data/fst_sim_locus_cache_rho05"
 OUTRDS    <- "module_manuscript_rho05/data/di25_fst_vs_di_violin_rho05.rds"
 FIGDIR    <- "module_manuscript_rho05/Figures"
 OUTPNG    <- file.path(FIGDIR, "di25_fst_vs_di_violin_rho05.png")
@@ -34,27 +35,27 @@ OUTPDF    <- sub("\\.png$", ".pdf", OUTPNG)
 DI_BREAKS <- c(-Inf, -90, -75, -60, -50, -40, -30, -25, -20, -15, Inf)
 BIN_LAB   <- levels(cut(0, DI_BREAKS)); N_BIN <- length(BIN_LAB)
 MIN_PARENT_MAF <- 0.15
+WORKERS   <- 9L
 dir.create(FIGDIR, showWarnings = FALSE, recursive = TRUE)
+dir.create(SIM_LOCUS_CACHE, showWarnings = FALSE, recursive = TRUE)
 
 fst_prev <- readRDS(FST_RDS)
 stopifnot("MIN_PARENT_MAF must match the audited di25_fst_vs_di_rho05.R" =
             fst_prev$min_parent_maf_primary == MIN_PARENT_MAF,
           identical(fst_prev$di_breaks, DI_BREAKS))
-neutral <- fst_prev$neutral   # med/lo/hi, from the 1000-rep high-DI neutral sim (scalar, not per-bin)
+neutral <- fst_prev$neutral   # med/lo/hi of the POOLED per-replicate Fst (kept for reference only)
 
-## ---- USER REQUEST (2026-09-13): the simulated (neutral) distribution as its
-## own violin/boxplot, placed to the LEFT of the empirical DI bins, instead of
-## a flat summary band. `overall` (one pooled Fst per replicate, over the
-## sim-panel's high-DI units) isn't saved in di25_fst_vs_di_rho05.rds itself --
-## recovered directly from the 1000 already-computed, fingerprinted cache
-## entries (no simulation rerun).
-sim_files <- list.files(SIM_CACHE, pattern = "^rep[0-9]+\\.rds$", full.names = TRUE)
-stopifnot("expected exactly 1000 cached simulation replicates" = length(sim_files) == fst_prev$n_rep)
-simO <- vapply(sim_files, function(f) readRDS(f)$overall, numeric(1))
-stopifnot("recovered sim overall Fst does not match the saved neutral median" =
-            abs(median(simO) - neutral["med"]) < 1e-8)
-message(sprintf("[fst-violin] recovered %d per-replicate simulated Fst values (median %.4f, matches saved neutral)",
-                length(simO), median(simO)))
+## ---- USER FIX (2026-09-13): the simulated reference must be a PER-LOCUS
+## distribution to be comparable with the empirical per-locus violins -- the
+## previous version used `overall` (one multilocus-POOLED Fst per replicate),
+## whose narrowness came from averaging across ~16,616 loci per replicate,
+## not from neutral loci genuinely having low locus-to-locus variance. Fixed
+## by re-parsing all 1000 simulation replicates and keeping wc_ac()'s
+## per-locus a/abc UNPOOLED (one value per locus per replicate, exactly like
+## the empirical fst_locus below), cached per replicate (fingerprinted,
+## atomic writes) since this reruns the same genotype parsing as the pooled
+## simulation (~8 min for all 1000 reps at 9 workers, observed empirically --
+## cheap enough to redo properly rather than reuse the pooled cache).
 
 ## ---- Weir & Cockerham 1984 per-locus a and (a+b+c) -- IDENTICAL to di25_fst_vs_di_rho05.R --
 wc_ac <- function(G, pop) {
@@ -91,11 +92,76 @@ units[, DI := mDI$DiagnosticIndex[match(best, mDI$marker)]]
 units <- units[is.finite(DI)]
 units[, bin := cut(DI, DI_BREAKS, labels = FALSE)]
 
+## ---- per-locus simulated (neutral) Fst: re-parse all sim replicates, keep
+## wc_ac()'s per-locus a/abc UNPOOLED (see USER FIX note above) ---------------
+sim_mk <- { hdr <- readLines(sprintf(BEDFMT, 1), n = 2); s1 <- fread(sprintf(BEDFMT, 1), skip = 2,
+             header = FALSE, sep = "\t", select = c(1, 3), colClasses = list(character = 1), showProgress = FALSE)
+           paste0("Chr", sub("ch", "", s1$V1), ":", s1$V3) }
+ov <- units[best %in% sim_mk]
+message(sprintf("[fst-violin] %d units overlap the DI25 sim panel (per-locus sim extraction)", nrow(ov)))
+
+marker_hash <- digest(ov$best, algo = "md5")
+params_hash <- digest(list(BEDFMT = BEDFMT), algo = "md5")
+run_fp <- list(marker_hash = marker_hash, params_hash = params_hash,
+               script_version = "di25_fst_vs_di_violin_rho05_locus_v1")
+
+process_rep_locus <- function(REP) {
+  cache <- file.path(SIM_LOCUS_CACHE, sprintf("rep%d.rds", REP))
+  if (file.exists(cache)) {
+    ck <- tryCatch(readRDS(cache), error = function(e) NULL)
+    if (!is.null(ck) && !is.null(ck$fingerprint) &&
+        identical(ck$fingerprint[c("marker_hash", "params_hash", "script_version")], run_fp))
+      return(invisible(TRUE))
+  }
+  bed <- sprintf(BEDFMT, REP); if (!file.exists(bed)) return(invisible(FALSE))
+  out <- tryCatch({
+    hdr  <- readLines(bed, n = 2)
+    inds <- strsplit(strsplit(hdr[2], "\t")[[1]][10], "|", fixed = TRUE)[[1]]
+    sim  <- fread(bed, skip = 2, header = FALSE, sep = "\t", select = c(1, 3, 10),
+                  colClasses = list(character = c(1, 10)), showProgress = FALSE)
+    markers <- paste0("Chr", sub("ch", "", sim$V1), ":", sim$V3)
+    S <- matrix(unlist(strsplit(sub("^S", "", sim$V10), "", fixed = TRUE), use.names = FALSE), nrow = nrow(sim), byrow = TRUE)
+    dos <- matrix(NA_integer_, nrow(S), ncol(S)); dos[S == "0"] <- 0L; dos[S == "1"] <- 1L; dos[S == "2"] <- 2L
+    hyb <- grep("^hyb_", inds); pop <- sub("^hyb_(.*)_[0-9]+$", "\\1", inds[hyb])
+    G <- t(dos[, hyb, drop = FALSE]); colnames(G) <- markers
+    mi  <- match(ov$best, colnames(G)); keep <- !is.na(mi)
+    ac  <- wc_ac(G[, mi[keep], drop = FALSE], pop)
+    fst_locus_sim <- ac$a / ac$abc   # UNPOOLED -- one value per overlap locus, this replicate
+    saveRDS(list(fst_locus = fst_locus_sim, rep = REP, fingerprint = run_fp), paste0(cache, ".tmp"))
+    file.rename(paste0(cache, ".tmp"), cache)
+    TRUE
+  }, error = function(e) { message(sprintf("  sim-locus rep%d FAILED: %s", REP, conditionMessage(e))); FALSE })
+  invisible(out)
+}
+reps <- seq_len(fst_prev$n_rep)
+already_ok <- vapply(reps, function(REP) {
+  cache <- file.path(SIM_LOCUS_CACHE, sprintf("rep%d.rds", REP))
+  if (!file.exists(cache)) return(FALSE)
+  ck <- tryCatch(readRDS(cache), error = function(e) NULL)
+  !is.null(ck) && !is.null(ck$fingerprint) && identical(ck$fingerprint[c("marker_hash", "params_hash", "script_version")], run_fp)
+}, logical(1))
+todo <- reps[!already_ok]
+message(sprintf("[fst-violin] per-locus sim: %d/%d reps already cached, %d to compute (workers=%d)",
+                sum(already_ok), length(reps), length(todo), WORKERS))
+if (length(todo)) invisible(mclapply(todo, process_rep_locus, mc.cores = WORKERS, mc.preschedule = FALSE))
+
+done_files <- list.files(SIM_LOCUS_CACHE, pattern = "^rep[0-9]+\\.rds$", full.names = TRUE)
+stopifnot("not all per-locus sim replicates completed" = length(done_files) == length(reps))
+simO_locus <- unlist(lapply(done_files, function(f) readRDS(f)$fst_locus), use.names = FALSE)
+n_nonfinite_sim <- sum(!is.finite(simO_locus))
+simO_locus <- simO_locus[is.finite(simO_locus)]
+message(sprintf("[fst-violin] per-locus simulated Fst: %d values from %d replicates x ~%d loci (%d non-finite excluded; median %.4f, cf. old pooled-per-replicate median %.4f)",
+                length(simO_locus), length(reps), nrow(ov), n_nonfinite_sim, median(simO_locus), neutral["med"]))
+
 ## ---- parental MAF, primary gate (identical convention to di25_fst_vs_di_rho05.R) --
 ep <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = ep)
 par_rows <- grepl("_parent$", ep$sample_data_with_parents$Population)
+## USER FIX (2026-09-13): fold to minor-allele frequency -- pf alone is a raw
+## allele frequency (range [0,1]) and was letting e.g. pf=0.95 (true MAF 0.05)
+## pass the "MAF>=0.15" gate. Same bug/fix as di25_fst_vs_di_rho05.R.
 pf <- colMeans(ep$GTs_with_parents[par_rows, units$best, drop = FALSE], na.rm = TRUE) / 2
-units[, pmaf := pf[match(best, names(pf))]]
+pf_folded <- pmin(pf, 1 - pf)
+units[, pmaf := pf_folded[match(best, names(pf_folded))]]
 rm(ep); gc()
 units_primary <- units[pmaf >= MIN_PARENT_MAF]
 message(sprintf("[fst-violin] %d units total -> %d retained at parental MAF>=%.2f (primary gate)",
@@ -117,13 +183,14 @@ n_per_bin <- units_primary[, .N, by = DI_bin]
 message("[fst-violin] units per DI bin (primary, MAF-gated):")
 print(n_per_bin[order(DI_bin)])
 
-saveRDS(list(units = units_primary, neutral = neutral, simO = simO, di_breaks = DI_BREAKS,
+saveRDS(list(units = units_primary, neutral = neutral, simO_locus = simO_locus, n_sim_reps = length(reps),
+             n_sim_overlap_units = nrow(ov), di_breaks = DI_BREAKS,
              min_parent_maf_primary = MIN_PARENT_MAF, n_per_bin = n_per_bin), OUTRDS)
 
-## ---- figure: simulated (neutral) violin/box to the LEFT of the empirical DI-bin ones --
-SIM_LAB <- "Simulated\n(neutral)"
+## ---- figure: simulated (neutral) PER-LOCUS violin/box to the LEFT of the empirical DI-bin ones --
+SIM_LAB <- "Simulated\n(neutral, per-locus)"
 plot_dt <- rbind(
-  data.table(DI_bin = factor(SIM_LAB, levels = c(SIM_LAB, BIN_LAB)), fst_locus = simO, kind = "Simulated"),
+  data.table(DI_bin = factor(SIM_LAB, levels = c(SIM_LAB, BIN_LAB)), fst_locus = simO_locus, kind = "Simulated"),
   units_primary[, .(DI_bin = factor(as.character(DI_bin), levels = c(SIM_LAB, BIN_LAB)), fst_locus, kind = "Empirical")]
 )
 p <- ggplot(plot_dt, aes(DI_bin, fst_locus, fill = kind, colour = kind)) +
@@ -135,8 +202,9 @@ p <- ggplot(plot_dt, aes(DI_bin, fst_locus, fill = kind, colour = kind)) +
   labs(x = "DiagnosticIndex bin  (left = near-neutral background, right = ancestry-informative)",
        y = expression("per-locus " * F[ST] * "  (Weir & Cockerham, unpooled)"),
        title = "Per-locus Fst distribution by DI bin (rho05, all LD-reduced units)",
-       subtitle = sprintf("%s empirical units (MAF>=%.2f); leftmost = %d simulated neutral replicates",
-                          format(nrow(units_primary), big.mark = ","), MIN_PARENT_MAF, length(simO))) +
+       subtitle = sprintf("%s empirical units (MAF>=%.2f); leftmost = %s per-locus sim values (%d reps)",
+                          format(nrow(units_primary), big.mark = ","), MIN_PARENT_MAF,
+                          format(length(simO_locus), big.mark = ","), length(reps))) +
   theme_bw(base_size = 13) +
   theme(panel.grid.minor = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1),
         plot.margin = margin(8, 12, 4, 6))

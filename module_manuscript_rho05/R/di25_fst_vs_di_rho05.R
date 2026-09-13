@@ -130,9 +130,14 @@ message(sprintf("[fst-rho05] empirical background LD = %.4f", emp_bg))
 ## ---- parental MAF (joined explicitly by marker name) ------------------------
 ep <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = ep)
 par_rows <- grepl("_parent$", ep$sample_data_with_parents$Population)
+## USER FIX (2026-09-13): pf is a raw allele frequency (range [0,1]), NOT
+## folded to minor-allele frequency -- a marker at pf=0.95 was previously kept
+## by "MAF>=0.15" although its true MAF (min(pf,1-pf)) is 0.05. Fold before
+## use; affects both the primary MAF gate below and the mstr stratification.
 pf <- colMeans(ep$GTs_with_parents[par_rows, units$best, drop = FALSE], na.rm = TRUE) / 2
-units[, pmaf := pf[match(best, names(pf))]]   # explicit marker-name join, not positional
-stopifnot("pmaf join lost rows" = length(pf) == nrow(units))
+pf_folded <- pmin(pf, 1 - pf)
+units[, pmaf := pf_folded[match(best, names(pf_folded))]]   # explicit marker-name join, not positional
+stopifnot("pmaf join lost rows" = length(pf_folded) == nrow(units))
 if (anyNA(units$pmaf)) message(sprintf("[fst-rho05] note: %d units have NA parental MAF (no non-missing parent genotype calls at that marker) -- excluded from the MAF>=%.2f gate and from MAF-stratified bins",
                                        sum(is.na(units$pmaf)), MIN_PARENT_MAF))
 rm(ep); gc()
