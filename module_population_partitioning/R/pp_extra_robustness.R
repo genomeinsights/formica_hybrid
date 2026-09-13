@@ -59,12 +59,14 @@ cat(sprintf("full 20-population rho: |r| = %.3f, signed r = %.3f\n", full$rho_ab
 print(loo[order(-abs(rho_r - full$rho_r))])
 
 ## ---------------------------------------------------------------------
-## (b) once-per-region collapse of the 3 named polyctena blocks
+## (b) once-per-region collapse of the 3 named polyctena blocks -- resolved
+##     into THIS (rho05) unit set by physical position in pp_prep_units.R
+##     (obj$blk_rho05); see that script's step 5 for why di25_three_blocks.rds's
+##     own group_ids (superseded min_r2=0.2 clustering) cannot be reused directly.
 ## ---------------------------------------------------------------------
 cat("\n=== (b) once-per-region: collapse the 3 named blocks to 1 representative unit each ===\n")
-blk <- readRDS("module_di25/data/di25_three_blocks.rds")
-blk_list <- strsplit(blk$group_ids, ",")
-names(blk_list) <- paste0(blk$anchor, "_Chr", blk$chr)
+blk_list <- strsplit(obj$blk_rho05$group_ids_rho05, ",")
+names(blk_list) <- obj$blk_rho05$region
 ## representative = the region's own single best-FST unit (avoids inventing a new average)
 rep_ids <- vapply(blk_list, function(ids) u[group_id %in% ids][which.max(FST), group_id], character(1))
 cat("region representatives (highest-FST unit per named block):\n"); print(data.table(region = names(rep_ids), rep_unit = rep_ids))

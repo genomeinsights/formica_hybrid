@@ -81,9 +81,11 @@ p_hm <- ggplot(dm, aes(group_id, pop, fill = f_aqu)) + geom_tile() +
   theme_ms + theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
                    panel.grid = element_blank())
 
-## zoomed panel: the named F7174 block (module_di25/data/di25_three_blocks.rds) +/- flanking units
-blk <- readRDS("module_di25/data/di25_three_blocks.rds")
-blk_ids <- unlist(strsplit(blk[chr == 26]$group_ids, ","))
+## zoomed panel: the named F7174 block, resolved into THIS (rho05) unit set by
+## physical position in pp_prep_units.R (obj$blk_rho05) -- see that script's
+## step 5 for why di25_three_blocks.rds's own group_ids (superseded
+## min_r2=0.2 clustering) cannot be reused directly. +/- flanking units.
+blk_ids <- unlist(strsplit(obj$blk_rho05[chr == 26]$group_ids_rho05, ","))
 blk_pos <- u[group_id %in% blk_ids, range(Pos)]
 zoom_idx <- which(u$Chr == CHR & u$Pos >= blk_pos[1] - 3e5 & u$Pos <= blk_pos[2] + 3e5)
 zsub <- Fmat[, zoom_idx, drop = FALSE]
@@ -95,14 +97,26 @@ zann[, is_block := group_id %in% blk_ids]
 zorder <- zann$group_id
 zdm <- merge(zdm, zann[, .(group_id, Pos, FST, n_loci_g, is_block)], by = "group_id")
 zdm[, pop := factor(pop, levels = rev(pop_ord))]
-zdm[, xlab := sprintf("%s\n(%.2fMb, n_loci=%d)%s", group_id, Pos/1e6, n_loci_g, ifelse(is_block, "*", ""))]
-xlab_ord <- zann[, sprintf("%s\n(%.2fMb, n_loci=%d)%s", group_id, Pos/1e6, n_loci_g, ifelse(is_block, "*", ""))]
-zdm[, xlab := factor(xlab, levels = xlab_ord)]
-p_zoom <- ggplot(zdm, aes(xlab, pop, fill = f_aqu)) + geom_tile() +
+## key the x factor by group_id (unique by construction, already position-
+## ordered) but LABEL ticks with the Mb position (+ "*" for named-block
+## units, coloured red) -- with n=25+ zoom units the old
+## "group_id (Mb, n_loci=N)*" label overlapped illegibly, and formatted Mb
+## values alone are not guaranteed unique as factor levels. Single flat
+## panel (a separate annotation-strip sub-panel here triggered a patchwork
+## nested-composition sizing glitch -- collapsed axis text -- not worth
+## chasing when a coloured tick label does the same job).
+zoom_ord <- zann$group_id
+zdm[, group_id := factor(group_id, levels = zoom_ord)]
+mb_labels <- setNames(sprintf("%.2f%s", zann$Pos / 1e6, ifelse(zann$is_block, "*", "")), zann$group_id)
+tick_colour <- setNames(ifelse(zann$is_block, "firebrick", "grey30"), zann$group_id)[zoom_ord]
+
+p_zoom <- ggplot(zdm, aes(group_id, pop, fill = f_aqu)) + geom_tile() +
   scale_fill_gradient2(low = POL, mid = "grey95", high = AQU, midpoint = 0.5, limits = c(0, 1), guide = "none") +
-  labs(x = sprintf("F7174 block +/- 300kb flanking (* = in the named block, n=%d)", length(blk_ids)), y = NULL,
-      title = "Zoom: named F7174 polyctena block (Chr26)") +
-  theme_ms + theme(axis.text.x = element_text(size = 7), panel.grid = element_blank())
+  scale_x_discrete(labels = mb_labels) +
+  labs(x = sprintf("F7174 block +/- 300kb flanking, Mb (red * = in the named block, n=%d of %d units shown)",
+                   length(blk_ids), nrow(zann)), y = NULL) +
+  theme_ms + theme(axis.text.x = element_text(size = 6, angle = 90, vjust = 0.5, hjust = 1, colour = tick_colour),
+                   panel.grid = element_blank())
 
 fig1 <- p_ann + p_hm + p_zoom + plot_layout(ncol = 1, heights = c(1, 12, 9))
 ggsave(file.path(FIGDIR, "fig1_heatmap_Chr26.png"), fig1, width = 11, height = 9, dpi = 200)

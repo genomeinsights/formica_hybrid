@@ -26,7 +26,8 @@
 ##   Rscript module_population_partitioning/R/pp_robustness_pca.R
 ## Reads : module_population_partitioning/data/pp_units_Fmat.rds
 ##         module_population_partitioning/data/pp_concordance_results.rds
-##         module_di25/data/di25_three_blocks.rds
+##         (module_di25/data/di25_three_blocks.rds, already resolved into the
+##         rho05 unit set by pp_prep_units.R -> obj$blk_rho05)
 ## Writes: module_population_partitioning/data/pp_robustness.rds
 ## =========================================================================
 suppressMessages(library(data.table))
@@ -56,10 +57,13 @@ print(tab_emlg)
 
 ## ---------------------------------------------------------------------
 ## (c) excluding the 3 previously identified dominant polyctena blocks
+##     -- resolved into THIS (rho05) unit set by physical position in
+##     pp_prep_units.R (obj$blk_rho05); di25_three_blocks.rds's own
+##     group_ids belong to the superseded min_r2=0.2 clustering and do not
+##     carry over (see pp_prep_units.R step 5 for why).
 ## ---------------------------------------------------------------------
-blk <- readRDS("module_di25/data/di25_three_blocks.rds")
-blk_ids <- unlist(strsplit(blk$group_ids, ","))
-cat(sprintf("\n=== (c) excluding the 3 named polyctena blocks (%d units: %s) ===\n",
+blk_ids <- unlist(strsplit(obj$blk_rho05$group_ids_rho05, ","))
+cat(sprintf("\n=== (c) excluding the 3 named polyctena blocks (%d rho05 units: %s) ===\n",
             length(blk_ids), paste(blk_ids, collapse = ", ")))
 u[, in_block3 := group_id %in% blk_ids]
 print(u[, .N, by = in_block3])

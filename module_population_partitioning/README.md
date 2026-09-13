@@ -1,12 +1,16 @@
 # module_population_partitioning
 
-> **Status (2026-09, revised after AUDIT.md).** Exploratory but now audited
-> and corrected: an independent review (`AUDIT.md`, root of this module)
-> checked the first pass against the saved data, found it directionally
-> right but overclaiming in places and one real code bug, and recommended a
-> specific next analysis (residualizing against genome-wide ancestry). All
-> of that has been addressed below — see "Changes from the first pass". Not
-> yet in the manuscript.
+> **Status (2026-09-13, migrated to rho05).** Exploratory but audited and
+> corrected: an independent review (`AUDIT.md`, module root) checked the
+> first pass against the saved data, found it directionally right but
+> overclaiming in places and one real code bug — see "Changes from the first
+> pass" — and recommended a residualization analysis, now implemented. Then
+> migrated its primary dataset from the legacy `module_di25` (fixed
+> `min_r2=0.2`) clustering to the corrected `module_di25_rho05`
+> (`min_r2_rho=0.5`) one — see "Migration to the rho05 primary dataset". Full
+> provenance for both this module's inputs and the parallel
+> `module_manuscript_rho05` full-genome universe is in
+> `CROSS_MODULE_INPUTS.md`. Not yet in the manuscript.
 
 Tests whether different high-DI, LD-reduced units **partition the 20 hybrid
 populations differently** — i.e. whether two units can both be strongly
@@ -16,12 +20,43 @@ by itself imply consistently elevated multilocus covariance, which is one
 candidate explanation for why the empirical FST-DI relationship (FST rising
 with diagnostic index) exceeds what the LD-preserving neutral simulations
 produce (`module_di25/R/di25_fst_vs_di.R`,
-`module_di25/doc/di25_neutral_null_supplement.md`).
+`module_di25/doc/di25_neutral_null_supplement.md`; the rho05-corrected,
+full-range counterpart is `module_manuscript_rho05/data/di25_fst_vs_di_rho05.rds`
+— see `CROSS_MODULE_INPUTS.md` Table C).
+
+## Two analysis universes (do not conflate — decided 2026-09-13)
+
+This module and `module_manuscript_rho05` deliberately use **different unit
+universes** for different questions; per the user's explicit decision, this
+module does not migrate onto the full-genome universe wholesale:
+
+- **Primary (this module, always)**: the DI25-restricted, from-scratch,
+  rho05 (`min_r2_rho=0.5`) clustering — units defined purely by
+  ancestry-informative (DI>−25) variation, never diluted by linked lower-DI
+  markers pulled in from a full-genome clustering. No parental-MAF gate
+  (the DI>−25 ascertainment IS the diagnostic gate here — see
+  `pp_prep_units.R` header). Strictly observed (`fill=FALSE`) best-SNP/
+  representative genotypes. **20,807 units.** Used for population-profile
+  concordance, geographic prediction, individual-influence diagnostics,
+  sorting profiles, ancestry-run proxies — everything in this module.
+- **Secondary (module_manuscript_rho05, reference only)**: the full-genome
+  rho05 units (395,996 folded-parental-MAF≥0.15-gated / 661,386 total),
+  consensus-filled (`fill=TRUE`) genotypes, fixed DI bins spanning the full
+  range. For empirical FST across the full DI range, within-species parental
+  differentiation, ancestry-uninformative background comparisons, and
+  genome-wide ancestry/structure covariates. **Not read by any script in
+  this module.** A full-genome-units-restricted-to-DI>−25 analysis may be
+  run later as an explicit *sensitivity check* against the primary universe
+  above, never as a replacement for it.
+
+Full per-object provenance (paths, producing scripts, checksums, dimensions,
+encoded parameters) for both universes: `CROSS_MODULE_INPUTS.md`.
 
 ## Conventions (reused, not re-derived)
 
-DI25 from-scratch clustering, **cM5** merge cap (`module_di25/data/di25_clustering_cM5.rds`,
-11,052 units) · unit representation = **best-SNP** for >2-marker clusters
+DI25 from-scratch clustering, **cM5** merge cap, **rho05** (`min_r2_rho=0.5`,
+decay-relative) Stage-2 quality gate (`module_di25_rho05/data/di25_clustering_cM5_rho05.rds`,
+20,807 units) · unit representation = **best-SNP** for >2-marker clusters
 (`eMLG_best_snp(fill=FALSE)`, strictly observed calls) or the cluster's own
 representative for 1–2-marker clusters — real single-SNP genotypes throughout
 · sorting threshold **τ = 0.6**, φ = 0.85, `sort_rule="binom"`, α = 0.05
@@ -29,23 +64,41 @@ representative for 1–2-marker clusters — real single-SNP genotypes throughou
 orientation to *F. aquilonia* via the parental reference samples, matching
 `parallelism_stats()`'s internal (unsaved) orientation exactly · FST = Weir &
 Cockerham (1984), hybrid populations only, same estimator as
-`module_di25/R/di25_fst_vs_di.R::wc_ac()`.
+`module_di25/R/di25_fst_vs_di.R::wc_ac()` · **no parental-MAF gate** (by
+design — see "Two analysis universes" above).
 
 ## Pipeline (`R/`)
 
 | order | script | role |
 |---|---|---|
-| 1 | `pp_prep_units.R` | Data audit; builds the 20-population × 11,052-unit ancestry-oriented allele-frequency matrix (`Fmat`) and per-unit FST. |
+| 1 | `pp_prep_units.R` | Data audit; builds the 20-population × 20,807-unit ancestry-oriented allele-frequency matrix (`Fmat`), per-unit FST, and resolves the 3 named polyctena blocks into the rho05 unit set by physical position. |
 | 2 | `pp_local_concordance.R` | All within-chromosome unit-pair similarity (signed r, \|r\|, Euclidean, physical distance); adjacent pairs; distance-binned similarity; FST vs local similarity (adjacent + ≤100kb window), by FST quartile, sort_class, DI decile. |
 | 3 | `pp_permutation_null.R` | Two baselines for the large-distance "floor": genuine cross-chromosome unit pairs, and a population-label permutation (pure small-n sampling-noise floor). |
-| 4 | `pp_robustness_pca.R` | Big low-recomb blocks (n_loci>50) vs rest; best-SNP vs representative-only units; excluding the 3 named polyctena blocks; row-centered PCA of sorted-unit profiles. |
+| 4 | `pp_robustness_pca.R` | Big low-recomb clusters (n_loci>50) vs rest; best-SNP vs representative-only units; excluding the 3 named polyctena blocks; row-centered PCA of sorted-unit profiles. |
 | 5 | `pp_block_bootstrap.R` | Chromosome-block bootstrap 95% CIs for the distance-bin curve and the FST-decile trend (replaces naive `sd/sqrt(N)`, which treats millions of non-independent pairs as independent). |
-| 6 | `pp_pca_refined.R` | Row-permutation null for PC1; PC1/PC2 population loadings; leave-one-population-out PCA; separate aqu- vs pol-sorted PCA; direct test of why the naive (non-row-centered) PCA gives PC1=71%. |
+| 6 | `pp_pca_refined.R` | Row-permutation null for PC1; PC1/PC2 population loadings; leave-one-population-out PCA; separate aqu- vs pol-sorted PCA; direct test of why the naive (non-row-centered) PCA gives a large PC1. |
 | 7 | `pp_residualize_ancestry.R` | **Key analysis**: residualizes each unit's population profile against leave-one-chromosome-out genome-wide ancestry, then re-runs the full concordance analysis on the residuals. |
 | 8 | `pp_extra_robustness.R` | Leave-one-population-out (esp. Sielva) and literal once-per-named-region collapse of the genome-wide FST-vs-concordance statistic. |
-| 9 | `pp_figures.R` | The 4 figures (below), revised to lead with signed r and block-bootstrap CIs. |
+| 9 | `pp_figures.R` | The 4 figures (below), leading with signed r and block-bootstrap CIs. |
 
 Run from the repo root, in the order above.
+
+## Migration to the rho05 primary dataset (2026-09-13)
+
+Switched `pp_prep_units.R` from the superseded `module_di25/data/di25_clustering_cM5.rds`
++ `di25_sorting_emlg.rds` (fixed `min_r2=0.2`, 11,052 units) to
+`module_di25_rho05/data/di25_clustering_cM5_rho05.rds` + `di25_sorting_emlg_rho05.rds`
+(`min_r2_rho=0.5`, 20,807 units) — confirmed by reading both rho05 scripts
+directly that every other parameter is unchanged (same DI25 panel, same
+Stage-1 partition, same cM=5 cap, same `fill=FALSE` convention; ONLY the
+Stage-2 quality gate differs). The 3 named polyctena blocks
+(`module_di25/data/di25_three_blocks.rds`) were re-resolved into the new
+unit set **by physical position** (chromosome + Mb span), not by reusing
+their old `group_id`s, which belong to a different partition and would
+silently select the wrong units. The full pipeline (steps 1–9) was re-run
+end to end; every qualitative conclusion below is unchanged, several
+relationships are now visibly stronger (finer clustering → less
+LD-pseudoreplication smoothing).
 
 ## Changes from the first pass (per AUDIT.md — verified independently before acting)
 
@@ -61,15 +114,15 @@ Run from the repo root, in the order above.
    opposite direction / unrelated), and |r| has a positive floor purely from
    sampling 20 populations, inflating apparent concordance for any two units.
 3. **Corrected an overclaim**: the first pass said the genome-wide
-   FST-vs-concordance association was "almost entirely driven by" the 48
-   `n_loci>50` clusters. Checked directly: excluding them moves ρ from 0.081
-   to 0.079 — negligible. Those 48 units *do* have a much stronger internal
-   association (ρ=0.41) — a distinct high-concordance regime — but they're
-   too few (48/11,052) to move the pooled genome-wide statistic. Also
-   corrected: only 4 of those 48 units belong to the three previously-named
-   polyctena blocks, not "mostly" them; the label "giant low-recombination
-   block" for all 48 was dropped since `n_loci>50` identifies large LD
-   clusters, not independently-verified low-recombination regions.
+   FST-vs-concordance association was "almost entirely driven by" the
+   `n_loci>50` clusters. Checked directly: excluding them barely moves ρ.
+   Those clusters *do* have a much stronger internal association (a distinct
+   high-concordance regime) — but they're too few to move the pooled
+   genome-wide statistic. Also corrected: only a minority of them belong to
+   the three previously-named polyctena blocks; the label "giant
+   low-recombination block" for all of them was dropped since `n_loci>50`
+   identifies large LD clusters, not independently-verified low-recombination
+   regions.
 4. **Cross-chromosome empirical pairs, not the label-permutation null, are
    now the primary large-distance reference** (both give the same |r| ≈
    0.19, but cross-chromosome pairs preserve real among-population
@@ -79,86 +132,93 @@ Run from the repo root, in the order above.
 5. **Chromosome-block bootstrap 95% CIs** (2000 replicates, resampling the 26
    chromosomes with replacement) replace the naive `sd/sqrt(N)` error bars in
    Figs 2–3.
-6. **PCA re-examined**: a row-permutation null shows the observed PC1 (11.0%)
-   is above chance (permutation null 95th pct 7.2%) — a real, if modest,
-   recurring axis, not nothing. Its loadings are dominated by one population,
-   **Sielva** (loading −0.82, next largest −0.32 for Åland, all others
-   0.05–0.16); leave-one-population-out PCA confirms this (dropping Sielva:
-   PC1 11.0%→9.9%, the largest of any population's removal; every other
-   population's removal leaves PC1 within 10.9–11.8%). Separately, the naive
-   (non-row-centered) PCA's PC1=71.5% is now directly confirmed, not just
-   inferred, to be the aquilonia/polyctena sort-direction split: mean naive
-   PC1 score is −0.8 for aquilonia-sorted units vs +2.5 for polyctena-sorted
-   (SD ≈0.3 each) — i.e. failing to row-centre just separates the two sorted
-   classes by their own baseline level, not a shared population partition.
+6. **PCA re-examined**: a row-permutation null shows the observed PC1 is
+   above chance — a real, if modest, recurring axis, not nothing. Its
+   loadings are dominated by one population, **Sielva**; leave-one-
+   population-out PCA confirms this (dropping Sielva causes the single
+   largest PC1 drop of any population). Separately, the naive
+   (non-row-centered) PCA's large PC1 is directly confirmed, not just
+   inferred, to be the aquilonia/polyctena sort-direction split: naive PC1
+   score cleanly separates aquilonia-sorted from polyctena-sorted units —
+   i.e. failing to row-centre just separates the two sorted classes by their
+   own baseline level, not a shared population partition.
 7. **Residualization against genome-wide ancestry** (the audit's top
    recommendation) — see below.
 8. **Leave-one-population-out and once-per-region robustness** for the
    headline FST-vs-concordance statistic (not just PCA): dropping any single
-   population, including Sielva, moves ρ only within 0.069–0.085 (|r|) /
-   0.103–0.118 (r) of the full-sample 0.081/0.114 — no population
+   population, including Sielva, barely moves ρ — no population
    disproportionately drives this particular statistic (contrast with PC1
    above). Collapsing the 3 named blocks to one representative unit each
-   changes ρ not at all (0.081→0.081, 0.114→0.114).
+   changes ρ not at all.
 
-## Key results (revised)
+## Key results (rho05 primary dataset, 20,807 units)
 
-- **Local concordance decays fast and is now formally uncertainty-quantified.**
-  Chromosome-block-bootstrap 95% CI, signed r: 0.258 [0.249,0.267] at 0–5kb →
-  0.146 [0.139,0.151] at 5–20kb → 0.076 [0.072,0.081] at 20–100kb → 0.044
-  [0.041,0.048] at 100–500kb → 0.030 [0.027,0.034] at 0.5–2Mb → 0.027
-  [0.024,0.031] at 2–10Mb → 0.024 [0.013,0.034] at >10Mb, approaching (though
+- **Local concordance decays fast and is formally uncertainty-quantified.**
+  Chromosome-block-bootstrap 95% CI, signed r: 0.406 [0.400,0.412] at 0–5kb →
+  0.202 [0.194,0.209] at 5–20kb → 0.099 [0.093,0.105] at 20–100kb → 0.056
+  [0.051,0.061] at 100–500kb → 0.038 [0.034,0.042] at 0.5–2Mb → 0.033
+  [0.030,0.037] at 2–10Mb → 0.031 [0.015,0.041] at >10Mb, approaching (though
   its point estimate stays a little above) the empirical cross-chromosome
   baseline of 0.027. |r| shows the same shape, converging on the
-  cross-chromosome baseline (0.193) by ≈0.5Mb.
+  cross-chromosome baseline (0.191) by ≈0.5Mb.
 - **FST vs local concordance genome-wide is weak but, under a proper
-  chromosome-block bootstrap, real**: signed r ρ=0.114, |r| ρ=0.081; the
-  FST-decile slope's 95% block-bootstrap CI excludes 0 for both (signed r
-  slope 0.0042 [0.0036,0.0049]; |r| slope 0.0016 [0.0012,0.0019]) — small,
-  but not naive-SE noise.
+  chromosome-block bootstrap, clearly real — and stronger under rho05 than
+  under the legacy clustering**: signed r ρ=0.144, |r| ρ=0.142 (legacy
+  values were 0.114/0.081); the FST-decile slope's 95% block-bootstrap CI
+  excludes 0 for both (signed r slope 0.0056 [0.0049,0.0062]; |r| slope
+  0.0031 [0.0027,0.0034]) — small in absolute terms, but the finer rho05
+  partition (less LD-driven pseudoreplication) sharpens rather than weakens
+  this relationship.
 - **Residualizing against genome-wide ancestry (leave-one-chromosome-out)
-  is the key diagnostic.** Per-unit, genome-wide ancestry explains little of
-  most units' among-population variation (median R²=0.037, mean R²=0.070;
-  weakly related to FST, ρ=0.053) — most of a unit's profile is unit-specific,
-  not a shared-ancestry echo. Re-running the full concordance analysis on the
-  residuals: **short-range concordance is essentially unchanged** (0–5kb
-  signed r 0.244 raw-comparable; 20–100kb 0.053), while **the raw curve's
-  slowly-decaying long-range floor collapses to ≈0** (0.5–2Mb: 0.030 raw →
-  0.004 residual; 2–10Mb: 0.027 → 0.001; >10Mb: 0.024 → 0.0004). This
-  directly distinguishes the two candidate explanations the audit posed:
-  the modest long-range floor in the raw curve was mostly the shared
-  genome-wide ancestry gradient, not locus-specific signal, whereas the
-  short-range (<~100kb) concordance is genuinely locus-specific and survives
-  removing that gradient. The FST-vs-concordance association also
-  attenuates somewhat on residuals (signed r ρ 0.114→0.092; |r| ρ
-  0.081→0.059) but does not vanish — part of it, not all, is ancestry-tracking.
+  is the key diagnostic, and confirms the same picture under rho05.**
+  Per-unit, genome-wide ancestry explains little of most units' among-
+  population variation (median R²=0.043, mean R²=0.077; weakly related to
+  FST, ρ=0.075). Re-running the full concordance analysis on the residuals:
+  **short-range concordance is largely retained** (0–5kb signed r 0.387 vs
+  0.406 raw; 20–100kb 0.068 vs 0.099 raw), while **the raw curve's
+  slowly-decaying long-range floor collapses to ≈0** (0.5–2Mb: 0.038 raw →
+  0.005 residual; 2–10Mb: 0.033 → 0.001; >10Mb: 0.031 → 0.002). The
+  FST-vs-concordance association attenuates only modestly on residuals
+  (signed r ρ 0.144→0.119; |r| ρ 0.142→0.121) — most of it is not
+  ancestry-tracking.
 - **No dominant shared partition, but a real modest one, mostly carried by
-  Sielva.** Row-centered PCA: PC1=11.0% (vs a row-permutation null 95th
-  percentile of 7.2% — real, not chance), decaying gradually (46% cumulative
-  by PC6). PC1 is disproportionately driven by Sielva (the F1-like colony
-  with elevated heterozygosity) and, to a lesser extent, Åland.
-- Best-SNP (`is_emlg`) vs representative-only units, and current_map_DI
-  decile, still do not materially change any of the above.
+  Sielva.** Row-centered PCA: PC1=11.8% (vs a row-permutation null 95th
+  percentile of 6.7% — real, not chance), decaying gradually (47%
+  cumulative by PC6). PC1 loadings are dominated by Sielva (0.72, next
+  largest 0.40 for Åland, all others ≤0.23); leave-one-population-out
+  confirms it (dropping Sielva: PC1 11.8%→10.3%, the largest drop of any
+  population).
+- **Robustness holds**: excluding the 50 `n_loci>50` clusters (internal
+  ρ=0.35 vs 0.14 for the rest) leaves the pooled FST-concordance ρ
+  unchanged; excluding the 3 named blocks (now 38 rho05 units, resolved by
+  physical position) leaves it unchanged; leave-one-population-out moves ρ
+  only within 0.125–0.153 (|r|) / 0.131–0.149 (r) of the full-sample
+  values; once-per-region collapse changes nothing; best-SNP vs
+  representative-only units and current_map_DI decile still do not
+  materially change any of the above.
 
 **Interpretation:** outside a handful of physically massive, near-fully-linked
-blocks, marginal differentiation (FST) and multilocus partition concordance
-are weakly related but not decoupled — the relationship is small and mostly,
-though not entirely, attributable to a shared population-level ancestry
-gradient rather than a strong, independent, locus-specific mechanism. The
-genuinely locus-specific signal that survives ancestry-residualization is
+clusters, marginal differentiation (FST) and multilocus partition concordance
+are weakly but genuinely related — largely, though not entirely, independent
+of the shared population-level ancestry gradient, i.e. more consistent with a
+real, if modest, locus-specific mechanism than under the legacy clustering.
+The genuinely locus-specific signal that survives ancestry-residualization is
 real but short-range (<~100kb) and modest in magnitude. See
 `doc/partition_concordance_summary.md` for the full interpretation, revised
 draft Methods/Results paragraphs, and remaining open questions.
 
 ## Not yet run
 
-- Within-block fine-scale structure of the `n_loci>50` regime (is ρ=0.41
-  uniform inside those 48 units, or itself driven by a few).
+- Within-cluster fine-scale structure of the `n_loci>50` regime (is ρ=0.35
+  uniform inside those 50 units, or itself driven by a few).
 - Joining the recombination map to test whether the ≤100kb decay length
   varies with local recombination rate (still describe as "consistent with
   linkage", not "LD-driven", until this is done).
 - Inspecting which populations contribute most to each individual high-FST
   unit (beyond the aggregate PC1 loadings already shown).
+- The full-genome-units-restricted-to-DI>−25 sensitivity check against this
+  module's primary (DI25-specific) unit set, per "Two analysis universes"
+  above.
 - Comparison against population profiles from the existing simulations,
   needed before attributing the empirical-vs-simulated FST gap to this
   mechanism specifically (out of scope for this pass, per the original
@@ -166,13 +226,17 @@ draft Methods/Results paragraphs, and remaining open questions.
 
 ## Inputs
 
-`module_di25/data/di25_inputs.rds`, `di25_clustering_cM5.rds`,
-`di25_sorting_emlg.rds`, `di25_three_blocks.rds` · `moduleA_sorting/R/parallelism_stats.R`
+`module_di25/data/di25_inputs.rds` (marker panel + genotypes, unchanged by
+the rho05 migration), `module_di25_rho05/data/di25_clustering_cM5_rho05.rds`,
+`di25_sorting_emlg_rho05.rds`, `module_di25/data/di25_three_blocks.rds`
+(resolved by physical position, not group_id) · `moduleA_sorting/R/parallelism_stats.R`
 (`classify_sort()` only) · repo-root `data/hybrids_and_parents_maf005.Rdata`.
+Full provenance: `CROSS_MODULE_INPUTS.md`.
 
 ## Outputs
 
-`data/`: `pp_units_Fmat.rds`, `pp_concordance_results.rds`, `pp_all_pairs.csv.gz`,
+`data/`: `pp_units_Fmat.rds` (now includes `blk_rho05`, the physically-resolved
+named blocks), `pp_concordance_results.rds`, `pp_all_pairs.csv.gz`,
 `pp_null_check.rds`, `pp_robustness.rds`, `pp_units_final.rds`,
 `pp_block_bootstrap.rds`, `pp_pca_refined.rds`, `pp_residual_ancestry.rds`,
 `pp_extra_robustness.rds`.
@@ -182,5 +246,7 @@ block-bootstrap CI), `fig3_FST_vs_similarity.png` (same treatment),
 `fig4_genomewide_summary.png` (distance-decay raw vs ancestry-residualized,
 + residual genome-wide panel).
 `doc/`: `partition_concordance_summary.md` — interpretation, draft
-Methods/Results paragraphs, open questions. `AUDIT.md` (module root) —
-the independent review this revision responds to.
+Methods/Results paragraphs, open questions. `AUDIT.md` (module root) — the
+independent review this module's statistics were revised in response to.
+`CROSS_MODULE_INPUTS.md` (module root) — full input provenance across both
+analysis universes.

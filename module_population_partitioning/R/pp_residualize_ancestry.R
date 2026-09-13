@@ -18,8 +18,8 @@
 ##
 ## For each population p and unit u on chromosome c(u):
 ##   H_p^{-c(u)} = leave-one-chromosome-out genome-wide ancestry, i.e. the
-##     mean oriented-aquilonia frequency of population p across all 11,052
-##     DI25 units NOT on chromosome c(u) (excludes the focal unit's own
+##     mean oriented-aquilonia frequency of population p across all DI25 rho05
+##     units NOT on chromosome c(u) (excludes the focal unit's own
 ##     chromosome so within-chromosome LD cannot leak into its own covariate).
 ## Per unit: f_{u,p} = alpha_u + beta_u * H_p^{-c(u)} + residual_{u,p}
 ##   (simple OLS across the 20 hybrid populations, one fit per unit).
@@ -108,7 +108,7 @@ for (k in seq_along(chrs)) {
   acc[[k]] <- data.table(Chr = ch, i = idx[ii], j = idx[jj], dist_bp = abs(pos[ii] - pos[jj]), r = Rm[cbind(ii, jj)])
 }
 pairs_resid <- rbindlist(acc); pairs_resid[, absr := abs(r)]
-cat(sprintf("\n[residualize] residual-profile all-pairs: mean r = %.3f, mean |r| = %.3f (raw-profile values were 0.031 / 0.193)\n",
+cat(sprintf("\n[residualize] residual-profile all-pairs: mean r = %.3f, mean |r| = %.3f (this run's raw-profile values: see pp_local_concordance.R output)\n",
             mean(pairs_resid$r, na.rm = TRUE), mean(pairs_resid$absr, na.rm = TRUE)))
 
 BRK <- c(0, 5e3, 2e4, 1e5, 5e5, 2e6, 1e7, Inf)
@@ -130,12 +130,14 @@ for (ch in chrs) {
     u$near_absr_resid[idx[k]] <- mean(abs(rs), na.rm = TRUE)
   }
 }
-cat(sprintf("\n[residualize] Spearman FST vs residual near(<=100kb) |r|: rho = %.3f (n=%d)  [raw-profile value was 0.081]\n",
+cat(sprintf("\n[residualize] Spearman FST vs residual near(<=100kb) |r|: rho = %.3f (n=%d)  [this run's raw-profile rho: %.3f]\n",
             cor(u$FST, u$near_absr_resid, use = "pairwise.complete.obs", method = "spearman"),
-            sum(!is.na(u$FST) & !is.na(u$near_absr_resid))))
-cat(sprintf("[residualize] Spearman FST vs residual near(<=100kb) signed r: rho = %.3f (n=%d)  [raw-profile value was 0.114]\n",
+            sum(!is.na(u$FST) & !is.na(u$near_absr_resid)),
+            cor(u$FST, u$near_absr, use = "pairwise.complete.obs", method = "spearman")))
+cat(sprintf("[residualize] Spearman FST vs residual near(<=100kb) signed r: rho = %.3f (n=%d)  [this run's raw-profile rho: %.3f]\n",
             cor(u$FST, u$near_r_resid, use = "pairwise.complete.obs", method = "spearman"),
-            sum(!is.na(u$FST) & !is.na(u$near_r_resid))))
+            sum(!is.na(u$FST) & !is.na(u$near_r_resid)),
+            cor(u$FST, u$near_r, use = "pairwise.complete.obs", method = "spearman")))
 
 u[, FST_dec := cut(FST, quantile(FST, seq(0, 1, 0.1), na.rm = TRUE), include.lowest = TRUE, labels = FALSE)]
 cat("\n[residualize] residual local similarity by FST decile:\n")
