@@ -33,7 +33,9 @@ suppressMessages(library(data.table))
 OUTDIR <- "module_population_partitioning/data"
 res <- readRDS(file.path(OUTDIR, "pp_concordance_results.rds"))
 u <- res$u; setDT(u)
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L)
 pairs <- fread(file.path(OUTDIR, "pp_all_pairs.csv.gz"))
+stopifnot("pair indices out of range for the current unit table" = max(pairs$i, pairs$j) <= nrow(u))
 B <- 2000
 set.seed(42)
 

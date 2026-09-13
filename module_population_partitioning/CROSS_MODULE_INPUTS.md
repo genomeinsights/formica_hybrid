@@ -78,6 +78,19 @@ depend on clustering, reused unchanged by `di25_sorting_rho05.R`); this
 module does not read it directly either way (it computes its own per-unit
 statistics from genotypes).
 
+## This module's own stale output — resolved (audit item 1, 2026-09-13)
+
+`data/pp_units_final.rds` (this module's own output, not an input from
+`module_di25`) was found to still have 11,052 rows (the pre-rho05-migration
+lineage) — a `saveRDS()` call in `pp_figures.R` that would have refreshed it
+to 20,807 rows was dropped during an earlier revision and never re-added.
+Grep-verified: no script in this module reads it. Moved, not deleted, to
+`data/legacy/pp_units_final_minr2_02_11052.rds`. **`pp_residual_ancestry.rds$u`
+(20,807 rows) is the canonical current unit table**; every script in this
+module now asserts exact row count (20,807) and `Fmat`/`Resid` column
+identity against it via `stopifnot()`. See `README.md` and
+`FOLLOWUP_STATUS.md` for the same note.
+
 ## Table C — module_manuscript_rho05: corrected full-range DI–FST, neutral summary, empirical sorting (items 1–3)
 
 These are **not currently read** by `module_population_partitioning` (this

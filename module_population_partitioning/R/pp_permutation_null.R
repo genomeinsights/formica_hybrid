@@ -18,6 +18,8 @@ OUTDIR <- "module_population_partitioning/data"
 obj <- readRDS(file.path(OUTDIR, "pp_units_Fmat.rds"))
 u <- obj$u; Fmat <- obj$Fmat
 setDT(u)
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id))
 
 set.seed(1)
 ## (1) cross-chromosome pairs: sample 20000 random unit pairs on DIFFERENT chromosomes

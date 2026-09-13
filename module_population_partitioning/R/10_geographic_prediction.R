@@ -72,7 +72,8 @@ rez <- readRDS("module_population_partitioning/data/pp_residual_ancestry.rds")
 Resid <- rez$Resid; u <- copy(rez$u); setDT(u)
 cat(sprintf("[geo] pp_residual_ancestry.rds: Resid %d pops x %d units; u %d x %d\n",
             nrow(Resid), ncol(Resid), nrow(u), ncol(u)))
-stopifnot(identical(colnames(Resid), u$group_id))
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Resid columns must exactly match u$group_id in order" = identical(colnames(Resid), u$group_id))
 
 bc <- fread("data/bioclimatic_variables.csv")
 bc[Location == "Nyrhispera1", Location := "Nyrhispera74"]
@@ -315,8 +316,6 @@ verdict <- if (p_perm >= 0.05 || obs_primary["R2adj"] < 0.02) {
   "strong geographic prediction of residual ancestry profiles"
 }
 cat(sprintf("\n[geo] VERDICT: %s\n", verdict))
-cat("      (weighting the leave-Sielva-out row of loo_insample more heavily than the\n")
-cat("       all-20-population primary result, given Sielva's disjunct geography)\n")
 
 result <- list(
   n_pops = n_pop, n_units_total = ncol(Resid), n_units_kept = sum(keep_unit),
@@ -328,7 +327,7 @@ result <- list(
   geo_dist = geo_dist, prof_dist = prof_dist, pair_tab = pair_tab,
   mantel_obs = mantel_obs, mantel_null = mantel_null, p_mantel = p_mantel,
   u_kept = u_kept, verdict = verdict,
-  sielva_coordinate_flag = "Sielva lat/lon (46.61N,10.44E) inconsistent with its own bioclim values (fit ~60-61N); see script header",
+  sielva_note = "Sielva (46.61N,10.44E) is a verified, genuine, geographically disjunct Alpine population (confirmed by the user) -- not a coordinate error; retained in the primary analysis, its exclusion is one of the leave-one-population-out sensitivity scenarios (loo_insample, loo_pred), not weighted differently from any other population",
   dataset_note = "uses the current rho05 (20,807-unit) dataset via pp_residual_ancestry.rds, not the legacy 11,052-unit lineage the follow-up brief also named",
   session_info = sessionInfo(), run_time = Sys.time(), elapsed_secs = as.numeric(difftime(Sys.time(), t_start, units = "secs"))
 )

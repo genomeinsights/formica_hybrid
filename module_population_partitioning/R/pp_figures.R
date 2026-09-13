@@ -36,6 +36,9 @@ bb   <- readRDS(file.path(DATADIR, "pp_block_bootstrap.rds"))
 nullc<- readRDS(file.path(DATADIR, "pp_null_check.rds"))
 rez  <- readRDS(file.path(DATADIR, "pp_residual_ancestry.rds"))
 u <- res$u; Fmat <- obj$Fmat; setDT(u)
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id),
+         "residual matrix columns must exactly match u$group_id in order" = identical(colnames(rez$Resid), u$group_id))
 
 AQU <- "#21918C"; POL <- "#D3C93B"
 COL_SIGNED <- "#1b9e77"; COL_ABS <- "#d95f02"; COL_RESID <- "#7570b3"

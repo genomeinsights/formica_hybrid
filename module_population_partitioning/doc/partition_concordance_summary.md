@@ -42,17 +42,39 @@ current primary universe: the DI25-restricted, `min_r2_rho=0.5` clustering,
   large LD clusters, not independently-verified low-recombination regions
   (that needs the recombination map, not yet joined in).
 - **A modest, real (not chance) shared axis exists among sorted units'
-  population profiles (PC1=11.8%, above a row-permutation null's 95th
-  percentile of 6.7%), and it is disproportionately carried by one
+  population profiles (PC1=12.1%, above a row-permutation null's 95th
+  percentile of 6.6%), and it is disproportionately carried by one
   population: Sielva**, the F1-like colony with elevated heterozygosity
-  (loading 0.72, next-largest 0.40 for Åland, all others ≤0.23; dropping
-  Sielva is the single largest mover of PC1 in a leave-one-population-out
-  sweep). This is a different, more specific claim than "no shared
-  partition" — a small number of loci that happen to involve Sielva (and to
-  a lesser extent Åland) recur more than chance, while the genome-wide
-  FST-vs-concordance statistic itself is not disproportionately driven by
-  any single population (leave-one-population-out moves ρ only within
-  0.125–0.153).
+  (loading 0.77, next-largest 0.40 for Åland; dropping Sielva is the single
+  largest mover of PC1 in a leave-one-population-out sweep, PC1 12.1%→10.1%).
+  This is a different, more specific claim than "no shared partition" — a
+  small number of loci that happen to involve Sielva (and to a lesser extent
+  Åland) recur more than chance, while the genome-wide FST-vs-concordance
+  statistic itself is not disproportionately driven by any single population
+  (leave-one-population-out moves ρ only within 0.125–0.153). **Audit fix
+  (item 3, 2026-09-13)**: "sorted units" was corrected from `sort_class !=
+  "unsorted"` (which also wrongly included 46 directionally-**unresolved**
+  units) to `sort_class %in% c("aquilonia","polyctena")` only; this moved
+  PC1 from 11.82% to 12.05% (rounds to 12.1%) — a small correction, not a
+  qualitative change in the finding.
+- **Diagnostic (item 8, 2026-09-13): is the FST-vs-concordance relationship
+  tautological?** Both statistics are computed from the same population-
+  allele-frequency matrix, raising the question of whether ρ≈0.14 could be a
+  mechanical artefact of shared computation. Independently permuting
+  population labels within each unit (destroying genuine cross-unit
+  population correspondence while leaving each unit's own FST unchanged)
+  gives a null centred near 0 (500 reps: |r| 95% interval [-0.013, 0.014]);
+  the observed value falls far outside it, so the relationship is a genuine
+  cross-unit signal, not a tautology (`R/pp_fst_concordance_null.R`).
+- **Core biological interpretation (unchanged by the audit fixes above,
+  explicitly preserved)**: ancestry-informative loci are broadly
+  differentiated among hybrid populations, but differentiation is assembled
+  from many partly independent, region-specific ancestry outcomes. Linkage
+  causes neighbouring loci to distinguish populations similarly, especially
+  in low-recombination regions, whereas distant and unlinked regions
+  generally distinguish different subsets of populations. This is not a
+  claim that every region is independent — the corrected row-centred PCA
+  still shows a real, non-dominant recurring axis (see above).
 - Net picture: strongly differentiated (high-FST, high-DI) loci in this
   dataset generally do **not** share a consistent multilocus population
   partition beyond the scale of direct physical linkage (~100kb) and beyond
@@ -112,9 +134,13 @@ current primary universe: the DI25-restricted, `min_r2_rho=0.5` clustering,
 > concordance largely intact, but collapsed the raw curve's long-range floor
 > to ≈0 (2–10Mb: 0.033→0.001), and only modestly attenuated the
 > FST-concordance association (ρ 0.144→0.119). A row-centred PCA of
-> population profiles among sorted units found a real, if modest, shared
-> axis (PC1=11.8% of variance, above a row-permutation null's 95th
-> percentile of 6.7%), disproportionately loaded on one population (Sielva).
+> population profiles among directionally-sorted (aquilonia/polyctena) units
+> found a real, if modest, shared axis (PC1=12.1% of variance, above a
+> row-permutation null's 95th percentile of 6.6%), disproportionately loaded
+> on one population (Sielva). An independent within-unit population-label
+> permutation diagnostic supports the FST-vs-concordance relationship being a
+> genuine signal rather than a tautological consequence of shared
+> computation (observed ρ=0.14 vs. a null 95% interval of [-0.013, 0.014]).
 > These results indicate that short-range (<~100kb) partition concordance
 > among strongly-differentiated loci is a genuine, largely
 > ancestry-independent, locus-specific signal, but it does not extend to a

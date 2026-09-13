@@ -69,7 +69,8 @@ devtools::load_all("~/gitlab/LDscnR/", quiet = TRUE)
 obj <- readRDS("module_population_partitioning/data/pp_units_Fmat.rds")
 rez <- readRDS("module_population_partitioning/data/pp_residual_ancestry.rds")
 u <- copy(obj$u); Fmat <- obj$Fmat; setDT(u)
-stopifnot(identical(colnames(Fmat), u$group_id))
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id))
 
 inp <- readRDS("module_di25/data/di25_inputs.rds")
 e2 <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e2)
@@ -134,8 +135,29 @@ top1_overall <- indiv_tab[1, Sample_ID]
 top5_overall <- indiv_tab[1:5, Sample_ID]
 top1_per_pop <- indiv_tab[, .SD[which.max(influence_rms)], by = Population][, .(Population, Sample_ID, influence_rms)]
 sielva_ids <- indiv_tab[Population == "Sielva", Sample_ID]
-cat(sprintf("\n[infl] most influential overall: %s (rms=%.5f)\n", top1_overall, indiv_tab[1, influence_rms]))
+cat(sprintf("\n[infl] most influential overall: %s (rms=%.5f) -- driven by small population size (n=%d), not a claim\n",
+            top1_overall, indiv_tab[1, influence_rms], indiv_tab[1, n_pop]))
+cat("    of biological exceptionality; influence_rms is only partially normalized for n, so small\n")
+cat("    populations mechanically surface here regardless of any individual's own genotype.\n")
 cat("[infl] most influential individual per population:\n"); print(top1_per_pop)
+
+## AUDIT FIX (item 7): the "top 5 overall" scenario is NOT a pure individual-
+## exclusion test that preserves the population set -- because influence is
+## size-confounded (see above), it can and does include ALL individuals from
+## one or more small populations, partly removing that population entirely
+## rather than sampling across many populations. Check and label explicitly.
+top5_pop_counts <- indiv_tab[Sample_ID %in% top5_overall, .N, by = Population]
+pop_sizes <- indiv_tab[, .N, by = Population]
+top5_wiped_pops <- merge(top5_pop_counts, pop_sizes, by = "Population", suffixes = c("_in_top5", "_total"))[N_in_top5 == N_total, Population]
+top5_label <- if (length(top5_wiped_pops)) {
+  sprintf("drop top5 overall (wipes out ALL of %s -- a stress test that partly removes a whole population, not a pure individual-level exclusion)",
+          paste(top5_wiped_pops, collapse = ", "))
+} else {
+  "drop top5 overall (individuals only, no population fully emptied)"
+}
+cat(sprintf("\n[infl] top-5-overall composition: %d individual(s), fully wiping out: %s\n",
+            length(top5_overall), if (length(top5_wiped_pops)) paste(top5_wiped_pops, collapse = ", ") else "(none)"))
+print(top5_pop_counts)
 
 ## ---------------------------------------------------------------------
 ## 3. targeted exclusion scenarios: rebuild the population x unit matrix,
@@ -243,7 +265,7 @@ run_scenario <- function(drop_ids, label) {
 
 baseline <- run_scenario(character(0), "baseline (none dropped)")
 sc_top1 <- run_scenario(top1_overall, sprintf("drop top1 overall (%s)", top1_overall))
-sc_top5 <- run_scenario(top5_overall, "drop top5 overall")
+sc_top5 <- run_scenario(top5_overall, top5_label)
 sc_sielva <- run_scenario(sielva_ids, "drop all Sielva")
 sc_top1_per_pop <- rbindlist(lapply(seq_len(nrow(top1_per_pop)), function(k) {
   run_scenario(top1_per_pop$Sample_ID[k], sprintf("drop top1 in %s (%s)", top1_per_pop$Population[k], top1_per_pop$Sample_ID[k]))
@@ -280,11 +302,15 @@ fig_covar <- ggplot(indiv_tab, aes(genome_wide_ancestry, influence_rms, colour =
   theme_ms
 ggsave(file.path(FIGDIR, "11_influence_vs_ancestry_het.png"), fig_covar, width = 7.5, height = 5.5, dpi = 200)
 
-sc_long <- melt(scenarios[scenario %in% c("baseline (none dropped)", sprintf("drop top1 overall (%s)", top1_overall),
-                                          "drop top5 overall", "drop all Sielva")],
+key_scenarios <- c("baseline (none dropped)", sprintf("drop top1 overall (%s)", top1_overall), top5_label, "drop all Sielva")
+## short display tags for the figure axis (the full labels above are long and explicit,
+## kept verbatim in `scenarios`/the saved RDS; the figure needs something legible)
+short_tag <- setNames(c("baseline", "drop top1",
+                        if (length(top5_wiped_pops)) sprintf("drop top5\n(wipes %s)", paste(top5_wiped_pops, collapse = ",")) else "drop top5",
+                        "drop Sielva"), key_scenarios)
+sc_long <- melt(scenarios[scenario %in% key_scenarios],
                 id.vars = "scenario", measure.vars = c("rho_FST_vs_absr", "rho_FST_vs_r", "residual_PC1_pct", "geoR2"))
-sc_long[, scenario := factor(scenario, levels = c("baseline (none dropped)", sprintf("drop top1 overall (%s)", top1_overall),
-                                                  "drop top5 overall", "drop all Sielva"))]
+sc_long[, scenario := factor(short_tag[scenario], levels = short_tag[key_scenarios])]
 fig_before_after <- ggplot(sc_long, aes(scenario, value, fill = scenario)) +
   geom_col() + facet_wrap(~variable, scales = "free_y") +
   labs(x = NULL, y = NULL, title = "Principal statistics: baseline vs targeted individual/Sielva exclusion") +
@@ -297,16 +323,18 @@ cat("\n[infl] figures saved: 11_influence_by_population.png, 11_influence_vs_anc
 ## ---------------------------------------------------------------------
 key_stat_drift <- max(abs(scenarios[-1, rho_FST_vs_absr] - baseline$rho_FST_vs_absr))
 verdict <- if (key_stat_drift < 0.02) {
-  "stable: no single individual or the top-5 combined materially changes the headline FST-vs-concordance statistic -- population-level, not individual-driven"
+  sprintf("stable: no single individual, the top-5-combined stress test (which partly removes %s entirely -- see top5_label), nor any population's own most influential member materially changes the headline FST-vs-concordance statistic -- the reliable result is that the statistic is stable to these targeted exclusions, NOT a claim that any excluded individual (e.g. the most influential overall) is biologically exceptional; influence is mechanically larger in small populations regardless of any individual's own genotype",
+          paste(top5_wiped_pops, collapse = ","))
 } else {
   "unstable: at least one targeted exclusion scenario shifts the headline statistic by >0.02 -- inspect which scenario and whether it points to Sielva or a specific population's own most-influential member"
 }
 cat(sprintf("\n[infl] VERDICT: %s (max |scenario - baseline| in rho_FST_vs_absr = %.4f)\n", verdict, key_stat_drift))
 
 result <- list(indiv_tab = indiv_tab, top1_overall = top1_overall, top5_overall = top5_overall,
+               top5_label = top5_label, top5_wiped_pops = top5_wiped_pops,
                top1_per_pop = top1_per_pop, sielva_ids = sielva_ids, scenarios = scenarios,
                existing_population_loo_reused = extra$loo, key_stat_drift = key_stat_drift, verdict = verdict,
-               dataset_note = "uses the current rho05 (20,807-unit) dataset, approximate residualization (see script header)",
+               dataset_note = "uses the current rho05 (20,807-unit) dataset; scenario recomputation uses an APPROXIMATE (not refit) residualization, see script header",
                session_info = sessionInfo(), run_time = Sys.time(), elapsed_secs = as.numeric(difftime(Sys.time(), t_start, units = "secs")))
 saveRDS(result, file.path(OUTDIR, "11_individual_influence.rds"))
 cat(sprintf("\n[infl] saved -> %s (elapsed %.1fs)\n", file.path(OUTDIR, "11_individual_influence.rds"), result$elapsed_secs))

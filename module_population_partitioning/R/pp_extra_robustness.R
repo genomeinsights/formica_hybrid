@@ -22,6 +22,8 @@ OUTDIR <- "module_population_partitioning/data"
 obj <- readRDS(file.path(OUTDIR, "pp_units_Fmat.rds"))
 res <- readRDS(file.path(OUTDIR, "pp_concordance_results.rds"))
 u <- res$u; Fmat <- obj$Fmat; setDT(u); setorder(u, ChrNum, Pos)
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id))
 
 ## helper: recompute the near(<=100kb) local |r|/r per unit and the genome-wide
 ## FST-vs-similarity Spearman rho, from an arbitrary population x unit matrix

@@ -23,7 +23,8 @@ OUTDIR <- "module_population_partitioning/data"
 obj <- readRDS(file.path(OUTDIR, "pp_units_Fmat.rds"))
 u <- obj$u; Fmat <- obj$Fmat; hybrid_pops <- obj$hybrid_pops
 setDT(u); setorder(u, ChrNum, Pos)
-stopifnot(identical(colnames(Fmat), u$group_id))
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id))
 
 ## ---------------------------------------------------------------------
 ## A. per-chromosome ALL-PAIRS: signed r, |r|, Euclidean on standardized
@@ -134,7 +135,11 @@ cat("\n[concordance] local similarity by FST quartile:\n")
 print(u[!is.na(FST_q), .(n = .N, mean_nxt_absr = round(mean(nxt_absr, na.rm = TRUE), 3),
                          mean_near_absr = round(mean(near_absr, na.rm = TRUE), 3)), by = FST_q][order(FST_q)])
 
-cat("\n[concordance] local similarity by sort_class x FST(sorted units only):\n")
+## AUDIT FIX (item 3): "sorted units" must mean directionally-resolved
+## (aquilonia/polyctena) only, not != "unsorted" -- the latter also sweeps in
+## "unresolved" units. Report unresolved units in their own row, not pooled
+## into a mislabeled "sorted units" table.
+cat("\n[concordance] local similarity by sort_class x FST (aquilonia/polyctena = sorted; unresolved shown separately, unsorted excluded):\n")
 print(u[sort_class != "unsorted", .(n = .N, median_FST = round(median(FST, na.rm = TRUE), 3),
                                     mean_near_absr = round(mean(near_absr, na.rm = TRUE), 3)), by = sort_class])
 

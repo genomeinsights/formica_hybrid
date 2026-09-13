@@ -27,8 +27,19 @@ OUTDIR <- "module_population_partitioning/data"
 obj <- readRDS(file.path(OUTDIR, "pp_units_Fmat.rds"))
 res <- readRDS(file.path(OUTDIR, "pp_concordance_results.rds"))
 u <- res$u; Fmat <- obj$Fmat; setDT(u)
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id))
 
-sorted_ids <- u[sort_class != "unsorted", group_id]
+## AUDIT FIX (item 3): "sorted units" must mean DIRECTIONALLY sorted
+## (aquilonia or polyctena only). sort_class != "unsorted" also included the
+## 46 "unresolved" (direction not significant) units, which are differentiated
+## and near-fixed but NOT assigned a parental direction -- including them in
+## a directional-partition PCA is a category error, not just noise. Unresolved
+## units are reported separately (see cat() below) rather than silently mixed
+## in or silently dropped.
+n_unresolved <- u[sort_class == "unresolved", .N]
+cat(sprintf("[pca] %d unresolved-direction units excluded from 'sorted units' (reported separately, not analysed here)\n", n_unresolved))
+sorted_ids <- u[sort_class %in% c("aquilonia", "polyctena"), group_id]
 M <- t(Fmat[, sorted_ids, drop = FALSE])            # units (rows) x populations (cols)
 M_rc <- M - rowMeans(M, na.rm = TRUE)
 keep_rows <- stats::complete.cases(M_rc)

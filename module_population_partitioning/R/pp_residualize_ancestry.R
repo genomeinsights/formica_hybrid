@@ -41,7 +41,8 @@ obj <- readRDS(file.path(OUTDIR, "pp_units_Fmat.rds"))
 res <- readRDS(file.path(OUTDIR, "pp_concordance_results.rds"))
 u <- res$u; Fmat <- obj$Fmat; hybrid_pops <- obj$hybrid_pops
 setDT(u); setorder(u, ChrNum, Pos)
-stopifnot(identical(colnames(Fmat), u$group_id))
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id))
 
 ## ---------------------------------------------------------------------
 ## 1. leave-one-chromosome-out genome-wide ancestry H_p^{-c}, per population

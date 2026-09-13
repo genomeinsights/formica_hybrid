@@ -168,7 +168,15 @@ LD-pseudoreplication smoothing).
   excludes 0 for both (signed r slope 0.0056 [0.0049,0.0062]; |r| slope
   0.0031 [0.0027,0.0034]) — small in absolute terms, but the finer rho05
   partition (less LD-driven pseudoreplication) sharpens rather than weakens
-  this relationship.
+  this relationship. **Diagnostic (item 8, 2026-09-13,
+  `R/pp_fst_concordance_null.R`)**: is this a genuine cross-unit signal or a
+  mechanical consequence of computing both statistics from the same
+  population-frequency matrix? Independently permuting population labels
+  within each unit (destroying real cross-unit correspondence while leaving
+  each unit's own FST unchanged) gives a null centred near 0 (500 reps: |r|
+  95% interval [-0.013, 0.014], signed r [-0.014, 0.012]) — the observed
+  ρ≈0.14 falls far outside it, so the relationship is not tautological. See
+  `data/pp_fst_concordance_null.rds`.
 - **Residualizing against genome-wide ancestry (leave-one-chromosome-out)
   is the key diagnostic, and confirms the same picture under rho05.**
   Per-unit, genome-wide ancestry explains little of most units' among-
@@ -182,12 +190,16 @@ LD-pseudoreplication smoothing).
   (signed r ρ 0.144→0.119; |r| ρ 0.142→0.121) — most of it is not
   ancestry-tracking.
 - **No dominant shared partition, but a real modest one, mostly carried by
-  Sielva.** Row-centered PCA: PC1=11.8% (vs a row-permutation null 95th
-  percentile of 6.7% — real, not chance), decaying gradually (47%
-  cumulative by PC6). PC1 loadings are dominated by Sielva (0.72, next
-  largest 0.40 for Åland, all others ≤0.23); leave-one-population-out
-  confirms it (dropping Sielva: PC1 11.8%→10.3%, the largest drop of any
-  population).
+  Sielva.** Row-centered PCA: PC1=12.1% (vs a row-permutation null 95th
+  percentile of 6.6% — real, not chance), decaying gradually. PC1 loadings
+  are dominated by Sielva (0.77, next largest 0.40 for Åland); leave-one-
+  population-out confirms it (dropping Sielva: PC1 12.1%→10.1%, still the
+  largest single-population effect). **Audit fix (item 3, 2026-09-13)**:
+  "sorted units" is now correctly restricted to `sort_class %in%
+  c("aquilonia","polyctena")` (previously `!= "unsorted"` also wrongly
+  included 46 "unresolved" units, reported separately). This is a small
+  correction, not a qualitative change — PC1 moved from 11.82% to 12.05%
+  (rounds to 12.1% here); the same populations/loadings dominate.
 - **Robustness holds**: excluding the 50 `n_loci>50` clusters (internal
   ρ=0.35 vs 0.14 for the rest) leaves the pooled FST-concordance ρ
   unchanged; excluding the 3 named blocks (now 38 rho05 units, resolved by
@@ -220,10 +232,20 @@ confirmed recombination effect**:
   more universal relationship than against physical distance alone.
 - **At a FIXED physical distance (100–500kb), concordance is significantly
   higher in low- vs high-recombination-rate regions**: mean signed r 0.068
-  (low tertile) vs 0.049 (high tertile); block-bootstrap 95% CI on the
-  contrast [0.011, 0.027], clearly excluding 0. (At 0.5–2Mb the contrast
+  (low tertile) vs 0.049 (high tertile); single-bin contrast, block-bootstrap
+  95% CI [0.011, 0.027], clearly excluding 0. (At 0.5–2Mb the contrast
   shrinks to ~0, CI [-0.005, 0.008] — by then most pairs have already
-  decayed to background regardless of local recombination rate.)
+  decayed to background regardless of local recombination rate.) **Audit fix
+  (item 4, 2026-09-13)**: the single 100–500kb bin only broadly controls for
+  physical distance. Added a distance-adjusted contrast using 20kb-wide
+  strata spanning the same 100–500kb scope, combined across strata and
+  chromosome-block-bootstrapped (not pair-level SEs): adjusted contrast
+  0.018, CI [0.011, 0.027] — matches the single-bin estimate closely and
+  **supports** (does not, on its own, "confirm") a genuine recombination-rate
+  effect independent of the coarse-bin distance confound. Also checked (and
+  found, as expected): exactly 2 units (F11207 on Chr21, F13909 on Chr27)
+  fall outside the genetic map's covered physical range and are excluded
+  from cM-dependent analyses.
 - A unit's own local recombination rate predicts its local (≤100kb)
   concordance to neighbours (Spearman ρ=-0.171 signed r, -0.152 |r|; clean
   monotonic decile trend, 0.196→0.106 across recombination-rate deciles).
@@ -257,9 +279,24 @@ Full provenance: `CROSS_MODULE_INPUTS.md`.
 
 `data/`: `pp_units_Fmat.rds` (now includes `blk_rho05`, the physically-resolved
 named blocks), `pp_concordance_results.rds`, `pp_all_pairs.csv.gz`,
-`pp_null_check.rds`, `pp_robustness.rds`, `pp_units_final.rds`,
+`pp_null_check.rds`, `pp_robustness.rds`,
 `pp_block_bootstrap.rds`, `pp_pca_refined.rds`, `pp_residual_ancestry.rds`,
-`pp_extra_robustness.rds`.
+`pp_extra_robustness.rds`, `pp_fst_concordance_null.rds` (within-unit
+population-label permutation null for the FST-vs-local-concordance
+relationship).
+
+**`pp_units_final.rds` (audit item 1, resolved 2026-09-13)**: this object
+was stale (11,052 rows, the pre-rho05-migration lineage — the `saveRDS()`
+call that would have refreshed it to 20,807 rows was dropped during an
+earlier revision and never re-added). No script read it. It has been moved,
+not deleted, to `data/legacy/pp_units_final_minr2_02_11052.rds`, clearly
+named by its actual provenance. **`pp_residual_ancestry.rds$u` (20,807
+rows) is the canonical current unit table.** Every script in this module
+that loads a unit table now asserts, via `stopifnot()`, that it has exactly
+20,807 rows with `Fmat`/`Resid` column identity matching `u$group_id` in
+order, so accidental use of the legacy 11,052-unit lineage fails loudly
+instead of silently propagating stale numbers. See `FOLLOWUP_STATUS.md`
+and `CROSS_MODULE_INPUTS.md` for the same resolution note.
 `Figures/`: `fig1_heatmap_Chr26.png` (+ zoomed named-block panel),
 `fig2_similarity_vs_distance.png` (signed primary / \|r\| secondary,
 block-bootstrap CI), `fig3_FST_vs_similarity.png` (same treatment),

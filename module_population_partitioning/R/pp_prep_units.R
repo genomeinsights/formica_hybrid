@@ -191,5 +191,12 @@ cat(sprintf("\n[audit] 3 named blocks resolved by physical position into the rho
 print(blk_rho05[, .(region, start_Mb, end_Mb, n_units_legacy, n_units_rho05)])
 stopifnot(all(blk_rho05$n_units_rho05 > 0))   # fail rather than silently proceeding with an empty region
 
+## provenance guard (audit response item 1.6): the source-of-truth check --
+## every downstream script re-asserts nrow(u)==20807 against ITS OWN load of
+## this file, so a legacy/stale substitution anywhere fails loudly rather
+## than silently propagating.
+stopifnot("expected exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5); got a different count -- check module_di25_rho05/data/di25_clustering_cM5_rho05.rds / di25_sorting_emlg_rho05.rds are the rho05 (not legacy min_r2=0.2) objects" =
+            nrow(u) == 20807L,
+         "Fmat columns must exactly match u$group_id in order" = identical(colnames(Fmat), u$group_id))
 saveRDS(list(u = u, Fmat = Fmat, hybrid_pops = hybrid_pops, blk_rho05 = blk_rho05), file.path(OUTDIR, "pp_units_Fmat.rds"))
 cat("\n[audit] saved unit table + population x unit matrix + resolved named blocks ->", file.path(OUTDIR, "pp_units_Fmat.rds"), "\n")

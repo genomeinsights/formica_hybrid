@@ -15,6 +15,7 @@ DATADIR <- "module_population_partitioning/data"
 FIGDIR  <- "module_population_partitioning/Figures"
 rc <- readRDS(file.path(DATADIR, "pp_recombination.rds"))
 u <- rc$u; setDT(u)
+stopifnot("unit table must have exactly the 20,807 DI25 rho05 units (min_r2_rho=0.5) -- check for a legacy/stale input" = nrow(u) == 20807L)
 
 theme_ms <- theme_bw(base_size = 12) +
   theme(strip.background = element_blank(), panel.grid.minor = element_blank())
@@ -33,16 +34,24 @@ st <- rc$strat[dbin == "100-500kb"]
 ci <- data.table(recomb_tertile = c("low", "high"),
                  lo = quantile(rc$boot_contrast[, "100-500kb"], 0.025, na.rm = TRUE),
                  hi = quantile(rc$boot_contrast[, "100-500kb"], 0.975, na.rm = TRUE))
+## (b) audit fix item 4: subtitle now reports BOTH the original single-bin
+## descriptive contrast AND the distance-adjusted (20kb strata within the
+## same 100-500kb scope) contrast + its own chromosome-block bootstrap CI,
+## so the more precise result sits directly alongside the descriptive one
+## rather than replacing it.
+adj <- rc$adjusted_contrast
 fig_b <- ggplot(st, aes(recomb_tertile, mean_r, fill = recomb_tertile)) +
   geom_col(width = 0.6) +
   scale_fill_manual(values = c(low = COL_LOW, mid = COL_MID, high = COL_HIGH), guide = "none") +
   labs(x = "local recombination-rate tertile", y = "mean signed r",
       title = "(b) same physical distance (100-500kb): low-recomb\nunits stay more concordant",
-      subtitle = sprintf("low minus high contrast = %.3f, block-bootstrap 95%% CI [%.3f, %.3f]",
+      subtitle = sprintf(paste0("single-bin contrast = %.3f, CI [%.3f, %.3f]\n",
+                                "distance-adjusted (20kb strata) contrast = %.3f, CI [%.3f, %.3f] -- supports an effect"),
                          rc$obs_contrast["100-500kb"],
                          quantile(rc$boot_contrast[, "100-500kb"], 0.025, na.rm = TRUE),
-                         quantile(rc$boot_contrast[, "100-500kb"], 0.975, na.rm = TRUE))) +
-  theme_ms + theme(plot.subtitle = element_text(size = 8.5))
+                         quantile(rc$boot_contrast[, "100-500kb"], 0.975, na.rm = TRUE),
+                         adj$obs, adj$ci[1], adj$ci[2])) +
+  theme_ms + theme(plot.subtitle = element_text(size = 7.8))
 
 ## (c) per-unit local concordance vs local recombination-rate decile
 rd <- copy(rc$recomb_dec_tab)
