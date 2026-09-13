@@ -28,7 +28,7 @@
 ##   Rscript module_manuscript_rho05/R/moduleB_stage1_snp_manhattan_by_region.R
 ## =========================================================
 
-suppressMessages({ library(data.table); library(ggplot2) })
+suppressMessages({ library(data.table); library(ggplot2); library(ggrepel) })
 devtools::load_all("~/gitlab/LDscnR/")
 
 BP_DIR   <- "module_manuscript_rho05/baypass_stage1"
@@ -189,12 +189,17 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
     geom_point(data = snp_dt[is_region == FALSE & band == FALSE], aes(gpos, stat), colour = "grey75", size = 0.4, alpha = 0.6) +
     geom_point(data = snp_dt[is_region == FALSE & band == TRUE], aes(gpos, stat), colour = "grey50", size = 0.4, alpha = 0.6) +
     geom_point(data = snp_dt[is_region == TRUE], aes(gpos, stat, colour = s2_group), size = 1.1) +
-    { if (n_region > 0) geom_segment(
-        data = arrows_dt, aes(x = gpos_mid, xend = gpos_mid, y = arrow_y_tail, yend = arrow_y_head),
-        arrow = arrow(length = unit(0.18, "cm"), type = "closed"), linewidth = 0.6, colour = "black") } +
-    { if (n_region > 0) geom_label(
-        data = arrows_dt, aes(x = gpos_mid, y = arrow_y_tail, label = s2_group, colour = s2_group),
-        vjust = 0, size = 3.2, fontface = "bold", fill = "white", label.padding = unit(0.15, "lines"),
+    ## USER FIX (2026-09-13): closely-spaced floor-survivor regions (e.g.
+    ## bio_winter's 3 regions near Chr17) produced overlapping fixed-position
+    ## labels -- switched to ggrepel so labels spread out automatically while
+    ## each keeps its own arrow (segment + closed arrowhead) pointing straight
+    ## at its region's genomic midpoint.
+    { if (n_region > 0) geom_label_repel(
+        data = arrows_dt, aes(x = gpos_mid, y = arrow_y_head, label = s2_group, colour = s2_group),
+        fill = "white", fontface = "bold", size = 3.2, label.padding = unit(0.15, "lines"),
+        nudge_y = arrow_y_tail - arrow_y_head, direction = "x",
+        arrow = arrow(length = unit(0.18, "cm"), type = "closed"), segment.colour = "black", segment.size = 0.6,
+        box.padding = 0.4, point.padding = 0.1, min.segment.length = 0, max.overlaps = Inf, seed = 1,
         show.legend = FALSE) } +
     geom_hline(yintercept = thresh, linetype = 2, colour = "black", linewidth = 0.3) +
     scale_colour_manual(values = region_cols, guide = "none") +
@@ -233,9 +238,9 @@ process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"), "log10(
 ## combination of bio6's/bio11's separate BF outputs). bio11's now-redundant
 ## full-SNP rerun was killed on mini2 and replaced with a bio_winter full-SNP
 ## run (in progress); add the call below once it lands:
-# process_one(file.path(UNIT_DIR, "bio_winter_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
-#            file.path(SNP_DIR, "bio_winter_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
-#            "bio_winter", "BF(dB)",
-#            file.path(DATA_DIR, "moduleB_stage1_bio_winter_null.rds"), "floor")
+process_one(file.path(UNIT_DIR, "bio_winter_S1units_withOmega_summary_betai_reg.out"), "BF(dB)", 15, "BF(dB)>=15",
+           file.path(SNP_DIR, "bio_winter_fullSNP_stage1Omega_summary_betai_reg.out"), "BF(dB)",
+           "bio_winter", "BF(dB)",
+           file.path(DATA_DIR, "moduleB_stage1_bio_winter_null.rds"), "floor")
 
 message("\n[moduleB-stage1-snp-manhattan-by-region] done")
