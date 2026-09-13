@@ -26,6 +26,7 @@
 suppressMessages({ library(data.table); library(ggplot2) })
 
 FST_RDS   <- "module_manuscript_rho05/data/di25_fst_vs_di_rho05.rds"
+SIM_CACHE <- "module_manuscript_rho05/data/fst_sim_cache_full_rho05_v2"
 OUTRDS    <- "module_manuscript_rho05/data/di25_fst_vs_di_violin_rho05.rds"
 FIGDIR    <- "module_manuscript_rho05/Figures"
 OUTPNG    <- file.path(FIGDIR, "di25_fst_vs_di_violin_rho05.png")
@@ -40,6 +41,20 @@ stopifnot("MIN_PARENT_MAF must match the audited di25_fst_vs_di_rho05.R" =
             fst_prev$min_parent_maf_primary == MIN_PARENT_MAF,
           identical(fst_prev$di_breaks, DI_BREAKS))
 neutral <- fst_prev$neutral   # med/lo/hi, from the 1000-rep high-DI neutral sim (scalar, not per-bin)
+
+## ---- USER REQUEST (2026-09-13): the simulated (neutral) distribution as its
+## own violin/boxplot, placed to the LEFT of the empirical DI bins, instead of
+## a flat summary band. `overall` (one pooled Fst per replicate, over the
+## sim-panel's high-DI units) isn't saved in di25_fst_vs_di_rho05.rds itself --
+## recovered directly from the 1000 already-computed, fingerprinted cache
+## entries (no simulation rerun).
+sim_files <- list.files(SIM_CACHE, pattern = "^rep[0-9]+\\.rds$", full.names = TRUE)
+stopifnot("expected exactly 1000 cached simulation replicates" = length(sim_files) == fst_prev$n_rep)
+simO <- vapply(sim_files, function(f) readRDS(f)$overall, numeric(1))
+stopifnot("recovered sim overall Fst does not match the saved neutral median" =
+            abs(median(simO) - neutral["med"]) < 1e-8)
+message(sprintf("[fst-violin] recovered %d per-replicate simulated Fst values (median %.4f, matches saved neutral)",
+                length(simO), median(simO)))
 
 ## ---- Weir & Cockerham 1984 per-locus a and (a+b+c) -- IDENTICAL to di25_fst_vs_di_rho05.R --
 wc_ac <- function(G, pop) {
@@ -102,23 +117,26 @@ n_per_bin <- units_primary[, .N, by = DI_bin]
 message("[fst-violin] units per DI bin (primary, MAF-gated):")
 print(n_per_bin[order(DI_bin)])
 
-saveRDS(list(units = units_primary, neutral = neutral, di_breaks = DI_BREAKS,
+saveRDS(list(units = units_primary, neutral = neutral, simO = simO, di_breaks = DI_BREAKS,
              min_parent_maf_primary = MIN_PARENT_MAF, n_per_bin = n_per_bin), OUTRDS)
 
-## ---- figure: violin + boxplot per DI bin, neutral-sim band for reference --
-p <- ggplot(units_primary, aes(DI_bin, fst_locus)) +
-  annotate("rect", xmin = -Inf, xmax = Inf, ymin = neutral["lo"], ymax = neutral["hi"],
-           fill = "#66c2a5", alpha = 0.30) +
-  geom_hline(yintercept = neutral["med"], colour = "#1b9e77", linetype = 2, linewidth = 0.6) +
-  geom_violin(fill = "#d95f02", alpha = 0.25, colour = "#d95f02", scale = "width", linewidth = 0.4, trim = TRUE) +
+## ---- figure: simulated (neutral) violin/box to the LEFT of the empirical DI-bin ones --
+SIM_LAB <- "Simulated\n(neutral)"
+plot_dt <- rbind(
+  data.table(DI_bin = factor(SIM_LAB, levels = c(SIM_LAB, BIN_LAB)), fst_locus = simO, kind = "Simulated"),
+  units_primary[, .(DI_bin = factor(as.character(DI_bin), levels = c(SIM_LAB, BIN_LAB)), fst_locus, kind = "Empirical")]
+)
+p <- ggplot(plot_dt, aes(DI_bin, fst_locus, fill = kind, colour = kind)) +
+  geom_violin(alpha = 0.25, scale = "width", linewidth = 0.4, trim = TRUE) +
   geom_boxplot(width = 0.12, outlier.size = 0.3, outlier.alpha = 0.3, fill = "white", linewidth = 0.4) +
-  annotate("text", x = 1, y = neutral["med"], label = "neutral sim (high-DI)", colour = "#1b7f63",
-           hjust = 0, vjust = -0.6, size = 3.2) +
+  geom_vline(xintercept = 1.5, linetype = 3, colour = "grey50") +
+  scale_fill_manual(values = c(Simulated = "#1b9e77", Empirical = "#d95f02"), guide = "none") +
+  scale_colour_manual(values = c(Simulated = "#1b9e77", Empirical = "#d95f02"), guide = "none") +
   labs(x = "DiagnosticIndex bin  (left = near-neutral background, right = ancestry-informative)",
        y = expression("per-locus " * F[ST] * "  (Weir & Cockerham, unpooled)"),
        title = "Per-locus Fst distribution by DI bin (rho05, all LD-reduced units)",
-       subtitle = sprintf("%s units, parental MAF>=%.2f; shaded = neutral high-DI simulation 95%% interval (pooled, %d reps)",
-                          format(nrow(units_primary), big.mark = ","), MIN_PARENT_MAF, fst_prev$n_rep)) +
+       subtitle = sprintf("%s empirical units (MAF>=%.2f); leftmost = %d simulated neutral replicates",
+                          format(nrow(units_primary), big.mark = ","), MIN_PARENT_MAF, length(simO))) +
   theme_bw(base_size = 13) +
   theme(panel.grid.minor = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1),
         plot.margin = margin(8, 12, 4, 6))
