@@ -197,7 +197,7 @@ process_one <- function(unit_stat_file, unit_stat_col, thresh, thresh_label,
     { if (n_region > 0) geom_label_repel(
         data = arrows_dt, aes(x = gpos_mid, y = arrow_y_head, label = s2_group, colour = s2_group),
         fill = "white", fontface = "bold", size = 3.2, label.padding = unit(0.15, "lines"),
-        nudge_y = arrow_y_tail - arrow_y_head, direction = "x",
+        nudge_y = arrow_y_tail - arrow_y_head, direction = "y",
         arrow = arrow(length = unit(0.18, "cm"), type = "closed"), segment.colour = "black", segment.size = 0.6,
         box.padding = 0.4, point.padding = 0.1, min.segment.length = 0, max.overlaps = Inf, seed = 1,
         show.legend = FALSE) } +
