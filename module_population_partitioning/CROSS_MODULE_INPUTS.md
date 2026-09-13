@@ -86,12 +86,24 @@ joining a full-range object). Traced here because a future synthesis step
 will need them, and because they use a **different, incompatible MAF
 convention** from Table A (see warning below).
 
+> **Companion document, cross-checked 2026-09-13**:
+> `module_manuscript_rho05/POPULATION_PARTITIONING_HANDOFF.md`, written by
+> the peer session that owns `module_manuscript_rho05`, specifically to hand
+> off these objects for this module's follow-up work. Re-verified its 4
+> checksummed objects independently (size/mtime/MD5) — all match what this
+> table already records; no staleness. It adds detail this table
+> summarizes below rather than duplicates in full; read it directly before
+> using any Table C/D object for a new analysis, especially §3 (three
+> distinct, non-interchangeable neutral-FST quantities), §7 (known
+> limitations) and §9 (stale objects under `stale_pre_fix_20260912/` — do
+> not read from that directory).
+
 | path | producing script | module | dims / key columns | mtime | sha256 (first 12) | role | status |
 |---|---|---|---|---|---|---|---|
-| `module_manuscript_rho05/data/di25_fst_vs_di_rho05.rds` | `module_manuscript_rho05/R/di25_fst_vs_di_rho05.R` | module_manuscript_rho05 | list($env: 10×10 [bin,DI_bin,**emp**,emp_ungated,n_emp_units,n_emp_units_ungated,n_sim_units,sim_med,sim_lo,sim_hi], $strat: 34×4 MAF-stratified, $neutral: length-3 overall summary, $sim_bg: 1000 background-LD replicates, $run_fingerprint) | 2026-09-13 14:16 | `78276ed9bab2` | **items 1 AND 2 combined**: corrected full-range (fixed DI bins, DI −Inf..+Inf) empirical FST-vs-DI (`env$emp`, MAF≥0.15-gated primary + `env$emp_ungated` sensitivity) AND its neutral-simulation comparison (`env$sim_med/lo/hi` per bin, `$neutral` overall) in one object | **authoritative** — post "AUDIT FIX Issue 2" (2026-09-12), uses the complete 661,386-unit representation (Table D), not the old 17,509-row partial one |
-| `module_manuscript_rho05/data/di25_fst_vs_di_violin_rho05.rds` | `module_manuscript_rho05/R/di25_fst_vs_di_violin_rho05.R` (confirmed via its `OUTRDS`/`saveRDS` call) | module_manuscript_rho05 | list($units: **395,996**×8 [group_id,best,rep_type,DI,bin,pmaf,fst_locus,DI_bin], $neutral, $simO_locus, $n_per_bin) | 2026-09-13 14:29 | `ec063ab3109c` | **per-unit** (not per-bin) FST for every MAF≥0.15-gated, full-genome LD-reduced unit — the full-range analogue of this module's per-unit `FST` column, but on a completely different unit set (395,996 full-genome MAF-gated units vs. this module's 20,807 DI25-only ungated units) | **authoritative** for full-range per-unit FST |
-| `module_manuscript_rho05/data/di25_fst_vs_di_sorting_stratified_rho05.rds` | `module_manuscript_rho05/R/di25_fst_vs_di_sorting_stratified_rho05.R` | module_manuscript_rho05 | list($units: 395,996×13, adds differentiated/prop_fixed/uni_score/sort_class/sort_label to the violin units) | 2026-09-13 14:38 | `de18674aa998` | **item 3**: per-unit FST stratified by `sort_class`/`prop_fixed`, computed FRESH via `parallelism_stats()` on the same 395,996 MAF-gated units (all 20 hybrid pops, Åland included) — NOT reused from `moduleA_stage1_cluster_sorting.rds` below, which only covers a narrower subset | **authoritative** for the full-range FST~sort_class question |
-| `module_manuscript_rho05/data/moduleA_stage1_cluster_sorting.rds` (+ `_tau05/_tau06/_tau08` variants) | `module_manuscript_rho05/R/moduleA_stage1_cluster_sorting.R` | module_manuscript_rho05 | 18,361×9 [group_id,n_loci,differentiated,sort_class,DI,prop_fixed,uni_score,directional,sorted] | 2026-09-12 18:01 | `cb336adac6c6` | sort_class annotation, but **only for the 18,361-unit "Stage-1-direct" subset** (the BayPass Stage-1 climate-association unit universe, not the full 395,996 or 661,386 rho05 unit sets) | **narrower-scope, do not treat as "the" full-genome sort_class annotation** — use `di25_fst_vs_di_sorting_stratified_rho05.rds$units$sort_class` for anything full-genome |
+| `module_manuscript_rho05/data/di25_fst_vs_di_rho05.rds` | `module_manuscript_rho05/R/di25_fst_vs_di_rho05.R` | module_manuscript_rho05 | list($env: 10×10 [bin,DI_bin,**emp**,emp_ungated,n_emp_units,n_emp_units_ungated,n_sim_units,sim_med,sim_lo,sim_hi], $strat: 34×4 MAF-stratified, $neutral: length-3 overall summary, $sim_bg: 1000 background-LD replicates, $run_fingerprint) | 2026-09-13 14:16 | `78276ed9bab2` | **items 1 AND 2 combined**: corrected full-range (fixed DI bins, DI −Inf..+Inf) empirical FST-vs-DI (`env$emp`, MAF≥0.15-gated primary + `env$emp_ungated` sensitivity) AND its neutral-simulation comparison. `env$sim_med/lo/hi` (per-DI-bin, pooled-per-replicate) is **populated for DI bins 6–10 only** — the DI25 sim panel overlaps only ~2.5% of empirical units, concentrated in high-DI bins; bins 1–5 are NA. `$neutral` (length-3) is a SEPARATE, coarser quantity: one pooled genome-wide value per replicate (median 0.0213, 95% interval [0.0187,0.0248]), not usable for any per-bin or per-locus comparison — see the handoff's §3 for the full three-way distinction (pooled-per-replicate vs pooled-per-bin vs per-locus, in two different files, not interchangeable) | **authoritative** — post "AUDIT FIX Issue 2" (2026-09-12) + the 2026-09-13 parental-MAF-fold fix (see below), uses the complete 661,386-unit representation (Table D), not the old 17,509-row partial one |
+| `module_manuscript_rho05/data/di25_fst_vs_di_violin_rho05.rds` | `module_manuscript_rho05/R/di25_fst_vs_di_violin_rho05.R` (confirmed via its `OUTRDS`/`saveRDS` call) | module_manuscript_rho05 | list($units: **395,996**×8 [group_id,best,rep_type,DI,bin,pmaf,fst_locus,DI_bin], $neutral, **$simO_locus: 16,615,717×1 per-locus unpooled neutral FST — the only neutral quantity usable for a locus-level comparison**, $n_sim_reps, $n_sim_overlap_units, $n_per_bin) | 2026-09-13 14:29 | `ec063ab3109c` | **per-unit** (not per-bin) FST for every MAF≥0.15-gated, full-genome LD-reduced unit — the full-range analogue of this module's per-unit `FST` column, but on a completely different unit set (395,996 full-genome MAF-gated units vs. this module's 20,807 DI25-only ungated units) | **authoritative** for full-range per-unit FST, post the 2026-09-13 parental-MAF-fold fix (previously 636,649 units under an unfolded-MAF bug — do not use that count or anything derived from it) |
+| `module_manuscript_rho05/data/di25_fst_vs_di_sorting_stratified_rho05.rds` | `module_manuscript_rho05/R/di25_fst_vs_di_sorting_stratified_rho05.R` | module_manuscript_rho05 | list($units: 395,996×13, adds differentiated/prop_fixed/uni_score/sort_class/**sort_label**/directional to the violin units) | 2026-09-13 14:38 | `de18674aa998` | **item 3**: per-unit FST stratified by `sort_class`/`prop_fixed`, computed FRESH via `parallelism_stats()` on the same 395,996 MAF-gated units, **all 20 hybrid pops, Åland included** — matches this module's own population set (all 20, Åland included). NOT reused from `moduleA_stage1_cluster_sorting.rds` below, which excludes Åland and covers a narrower subset | **authoritative** for the full-range FST~sort_class question |
+| `module_manuscript_rho05/data/moduleA_stage1_cluster_sorting.rds` (+ `_tau05/_tau06/_tau08` variants) | `module_manuscript_rho05/R/moduleA_stage1_cluster_sorting.R` | module_manuscript_rho05 | 18,361×9 [group_id,n_loci,differentiated,sort_class,DI,prop_fixed,uni_score,directional,sorted] | 2026-09-12 18:01 | `cb336adac6c6` | sort_class annotation, but **only for the 18,361-unit "Stage-1-direct" subset** (the BayPass/Omega climate-association unit universe, **Åland EXCLUDED, 19 hybrid pops**) — a DIFFERENT population set from both this module (20 pops) and `di25_fst_vs_di_sorting_stratified_rho05.rds` above (20 pops) | **narrower-scope AND different population set, do not treat as "the" full-genome sort_class annotation** — use `di25_fst_vs_di_sorting_stratified_rho05.rds$units$sort_class` for anything full-genome, and never mix its 19-pop calls into a 20-pop comparison |
 
 **A third, older sort_class candidate to not confuse with either of the
 above:** `moduleA_sorting/data/moduleA_cluster_sorting.rds` (produced by
@@ -132,6 +144,21 @@ rather than a real difference.
 
 Not the DI25-restricted units this module uses — the full-genome universe
 Table C's per-unit FST objects are built from.
+
+**A third parameter difference (beyond MAF-gating and fill-convention,
+below): the merge distance cap and the eMLG-size threshold are also
+different**, not just the min_r2 relative-threshold value the "rho05"
+suffix refers to. Confirmed by reading `module0_ld_pruning_rho05/R/module0_ld_pruning_rho05_DIEM.R`
+directly:
+
+| parameter | this module's units (Table A, DI25-specific) | full-genome units (Table D) |
+|---|---|---|
+| `cM_threshold` (Stage-2 merge cap) | **5** cM | **0.5** cM — note the filename itself encodes this (`...cM05...`), easy to misread as "05 = rho05" rather than "0.5 cM"; it is the latter |
+| `min_n_loci_flag` / `min_n_loci_eMLG` | 1 / **3** | 5 / **5** |
+| `min_r2_rho` | 0.5 (both) | 0.5 (both) |
+
+A unit's `n_loci` and `has_eMLG` status are therefore not comparable
+across Table A and Table D even where marker IDs overlap.
 
 | path | producing script | module | dims / key columns | mtime | sha256 (first 12) | role |
 |---|---|---|---|---|---|---|
