@@ -207,13 +207,33 @@ real but short-range (<~100kb) and modest in magnitude. See
 `doc/partition_concordance_summary.md` for the full interpretation, revised
 draft Methods/Results paragraphs, and remaining open questions.
 
+## Recombination-map join (`pp_recombination.R`, `pp_fig_recombination.R`)
+
+Joins `data/Frufa_DTOL_PR.ref_genome.recmap` (per-chromosome `approx(rule=2)`
+interpolation of cM position and local cM/Mb rate, same convention as
+`module_di25/R/di25_ld_clustering.R`). Answers the item flagged in "Not yet
+run" below — **upgrades "consistent with linkage" to a directly tested,
+confirmed recombination effect**:
+
+- Local similarity decays cleanly and monotonically against GENETIC (cM)
+  distance (signed r: 0.355 at <0.001cM → 0.037 beyond 2cM), a tighter,
+  more universal relationship than against physical distance alone.
+- **At a FIXED physical distance (100–500kb), concordance is significantly
+  higher in low- vs high-recombination-rate regions**: mean signed r 0.068
+  (low tertile) vs 0.049 (high tertile); block-bootstrap 95% CI on the
+  contrast [0.011, 0.027], clearly excluding 0. (At 0.5–2Mb the contrast
+  shrinks to ~0, CI [-0.005, 0.008] — by then most pairs have already
+  decayed to background regardless of local recombination rate.)
+- A unit's own local recombination rate predicts its local (≤100kb)
+  concordance to neighbours (Spearman ρ=-0.171 signed r, -0.152 |r|; clean
+  monotonic decile trend, 0.196→0.106 across recombination-rate deciles).
+
+Figure: `Figures/fig5_recombination.png`. Data: `data/pp_recombination.rds`.
+
 ## Not yet run
 
 - Within-cluster fine-scale structure of the `n_loci>50` regime (is ρ=0.35
   uniform inside those 50 units, or itself driven by a few).
-- Joining the recombination map to test whether the ≤100kb decay length
-  varies with local recombination rate (still describe as "consistent with
-  linkage", not "LD-driven", until this is done).
 - Inspecting which populations contribute most to each individual high-FST
   unit (beyond the aggregate PC1 loadings already shown).
 - The full-genome-units-restricted-to-DI>−25 sensitivity check against this
