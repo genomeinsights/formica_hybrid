@@ -402,62 +402,106 @@ Section~5 asked whether any \emph{individual} Stage-1 unit's climate Bayes facto
 exceptional against the $\Omega$-structured null (the floor-survivor test). A second,
 complementary calibration asks a different, genome-wide question: across all 18{,}361
 Stage-1-direct units, is the \emph{strength} of a unit's climate association --
-its BF(dB) on PC1/PC2 -- itself predictable from genomic architecture (ancestry
-differentiation, recombination rate, unidirectional ancestry sorting) any more or less
-than an $\Omega$-structured pseudo-covariate with no causal link to climate would show by
-chance? For each of PC1, PC2, and 10{,}000 null covariates, the genome-wide BF vector is
-reduced to three statistics -- Spearman correlation with the per-unit Diagnostic Index
-(DI), Spearman correlation with recombination rate, and a directional-sorting contrast
-(mean BF percentile of unidirectionally-sorted vs.\ non-directional units, among
-differentiated units only) -- and each observed statistic is compared to its own
-10{,}000-value null distribution. The six resulting tests (2 axes $\times$ 3 architecture
-measures) are Benjamini-Hochberg corrected as one family.
+its BF(dB) on PC1, PC2, or bio\_winter -- itself predictable from genomic architecture
+(ancestry differentiation, recombination rate, unidirectional ancestry sorting) any more or
+less than an $\Omega$-structured pseudo-covariate with no causal link to climate would show
+by chance? For each of PC1, PC2, bio\_winter, and 10{,}000 null covariates (structured draws
+through $\Omega$'s own eigendecomposition, sharing the populations' covariance structure but
+carrying no climate information), the genome-wide BF vector is reduced to three statistics --
+Spearman correlation with the per-unit Diagnostic Index (DI), Spearman correlation with
+recombination rate, and a directional-sorting contrast (mean BF percentile of
+unidirectionally-sorted vs.\ non-directional units, among differentiated units only) -- and
+each observed statistic is compared to its own 10{,}000-value null distribution. PC1, PC2,
+and bio\_winter are tested against the \emph{identical} null distribution (the null depends
+only on $\Omega$/architecture, not on which real covariate is observed, and this identity was
+checked directly rather than assumed), so the nine resulting tests (3 axes $\times$ 3
+architecture measures) are Benjamini-Hochberg corrected as one family.
+
+The same question was also asked of mitoC2, the BayPass C2 population-contrast statistic for
+the \Faq{}-/\Fpo{}-like mitotype split (Section~3). mitoC2 is not a continuous-covariate
+regression, so the PC1/PC2/bio\_winter null does not apply: it uses its own dedicated null of
+10{,}000 population-level $+1/-1$ partitions, each matching the real split's group sizes
+(7 vs.\ 12 populations) and rank-thresholded from the same $\Omega$-eigenvector draws, then
+re-run through BayPass in contrast mode. Because this is a structurally different
+null-generating process, mitoC2's three tests form their own Benjamini-Hochberg family, not
+pooled with the continuous-covariate family above.
 
 \begin{table}[H]\centering\small
 \begin{tabular}{llrrrr}
 \toprule
 Test & Axis & Observed & Null median & Null 95\% & $p_{\mathrm{BH}}$ \\
 \midrule
-DI (Spearman $\rho$)            & PC1 & $+0.100$ & $+0.029$ & $[-0.018, 0.072]$ & $0.004$ \\
-DI (Spearman $\rho$)            & PC2 & $-0.131$ & $+0.029$ & $[-0.018, 0.072]$ & $<0.001$ \\
-Recombination (Spearman $\rho$) & PC1 & $-0.099$ & $+0.065$ & $[-0.013, 0.144]$ & $<0.001$ \\
-Recombination (Spearman $\rho$) & PC2 & $+0.020$ & $+0.065$ & $[-0.013, 0.144]$ & $0.269$ \\
-Sorting (differentiated only)   & PC1 & $+0.036$ & $+0.123$ & $[0.078, 0.168]$ & $0.001$ \\
-Sorting (differentiated only)   & PC2 & $+0.019$ & $+0.123$ & $[0.078, 0.168]$ & $<0.001$ \\
+DI (Spearman $\rho$)            & PC1         & $+0.100$ & $+0.029$ & $[-0.018, 0.072]$ & $0.005$ \\
+DI (Spearman $\rho$)            & PC2         & $-0.131$ & $+0.029$ & $[-0.018, 0.072]$ & $<0.001$ \\
+DI (Spearman $\rho$)            & bio\_winter & $-0.055$ & $+0.029$ & $[-0.018, 0.072]$ & $0.001$ \\
+Recombination (Spearman $\rho$) & PC1         & $-0.099$ & $+0.065$ & $[-0.013, 0.144]$ & $<0.001$ \\
+Recombination (Spearman $\rho$) & PC2         & $+0.020$ & $+0.065$ & $[-0.013, 0.144]$ & $0.269$ \\
+Recombination (Spearman $\rho$) & bio\_winter & $+0.142$ & $+0.065$ & $[-0.013, 0.144]$ & $0.063$ \\
+Sorting (differentiated only)   & PC1         & $+0.036$ & $+0.123$ & $[0.078, 0.168]$  & $0.001$ \\
+Sorting (differentiated only)   & PC2         & $+0.019$ & $+0.123$ & $[0.078, 0.168]$  & $0.001$ \\
+Sorting (differentiated only)   & bio\_winter & $+0.036$ & $+0.123$ & $[0.078, 0.168]$  & $0.001$ \\
+\midrule
+\multicolumn{6}{l}{\textit{mitoC2 -- dedicated contrast-mode null, own BH family (not pooled with the rows above)}} \\
+\midrule
+DI (Spearman $\rho$)            & mitoC2 & $+0.015$ & $+0.021$ & $[-0.037, 0.069]$ & $0.963$ \\
+Recombination (Spearman $\rho$) & mitoC2 & $+0.006$ & $+0.008$ & $[-0.082, 0.114]$ & $0.963$ \\
+Sorting (differentiated only)   & mitoC2 & $+0.037$ & $+0.016$ & $[-0.030, 0.072]$ & $0.963$ \\
 \bottomrule
 \end{tabular}
 \caption{Genome-wide architecture calibration, Stage-1-direct universe (18{,}361 units).
-``Null median''/``Null 95\%'' describe the same statistic computed on 10{,}000
-$\Omega$-structured pseudo-covariates -- i.e.\ what a typical covariate sharing only the
-populations' covariance structure, with no climate information, would produce.}
+``Null median''/``Null 95\%'' describe the same statistic computed on 10{,}000 null
+covariates/contrasts -- i.e.\ what a typical covariate or contrast sharing only the
+populations' covariance structure, with no climate/mitotype information, would produce.
+PC1/PC2/bio\_winter share one null and one nine-test BH family; mitoC2 uses its own
+dedicated contrast-mode null and its own three-test BH family (see text).}
 \end{table}
 
-\textbf{Finding: five of the six tests survive FDR, but the directions do not tell a single
-clean story.} DI is significantly correlated with BF strength on \emph{both} axes, in
-\emph{opposite} directions ($+0.100$ on PC1, above the null range; $-0.131$ on PC2, below
-it) -- consistent with PC1 and PC2 capturing different, partly opposing aspects of the same
-underlying ancestry structure (Section~1 already found opposite-signed raw
-ancestry--climate correlations for the two axes). Recombination shows a real effect only on
-PC1: BF is \emph{more} concentrated in low-recombination regions than an $\Omega$-structured
-covariate would produce by chance ($\rho=-0.099$, below the null), while PC2 is
-indistinguishable from the null ($p_{\mathrm{BH}}=0.269$). Directional sorting is where the
-result is least intuitive: on \emph{both} axes, real climate BF is \emph{less} elevated in
+\textbf{Finding: PC1, PC2, and bio\_winter all depart from the structured null, but not in a
+single consistent direction, and mitoC2 does not depart from its null at all.} DI is
+significantly correlated with BF strength on all three continuous axes, but not uniformly:
+PC1 is above the null range ($+0.100$), while PC2 ($-0.131$) and bio\_winter ($-0.055$) are
+both below it -- so PC1's DI enrichment does not generalize even to the other two axes tested
+here, let alone establish a shared ``climate BF tracks ancestry'' mechanism. Recombination
+shows a real, negative effect (BF concentrated in low-recombination regions) only for PC1
+($\rho=-0.099$); PC2 is indistinguishable from the null ($p_{\mathrm{BH}}=0.269$) and
+bio\_winter is a near-miss in the \emph{opposite} direction ($\rho=+0.142$,
+$p_{\mathrm{BH}}=0.063$). Directional sorting gives the most consistent -- and least
+intuitive -- pattern: on \emph{all three} axes, real climate BF is \emph{less} elevated in
 directionally-sorted (vs.\ non-directional) differentiated units than the null baseline
-predicts ($0.036$ and $0.019$ vs.\ a null median of $0.123$) -- the \emph{opposite} of what a
-naive ``sorted regions are more differentiated, so they mechanically inflate any
-covariate's BF'' argument would predict.
+predicts ($0.036$, $0.019$, $0.036$ vs.\ a null median of $0.123$), the opposite of a naive
+``sorted regions are more differentiated, so they mechanically inflate any covariate's BF''
+argument.
+
+mitoC2's genome-wide landscape, by contrast, is indistinguishable from its own null on all
+three measures ($p_{\mathrm{BH}}=0.963$ throughout, the observed value sitting inside the
+null 95\% interval on every panel). This is a useful calibration check on the framework
+itself, not just a substantive result for mitotype: the DI/recombination/sorting reduction
+code, the annotation set, and the unit universe are identical to the PC1/PC2/bio\_winter
+tests above, so a covariate landing cleanly inside its null -- reinforced here by an exact,
+not Monte-Carlo-tolerance, match between the null reduced for this test and the
+independently-computed floor-test exceedance counts of Section~5 -- is evidence that the
+shared machinery is not manufacturing spurious enrichment on its own. That makes the
+PC1/PC2/bio\_winter departures above more credible as genuine architectural relationships
+rather than artifacts of the calibration procedure. mitoC2 is not a designed negative
+control, however (there is no a priori guarantee its true genome-wide signal is zero), so
+this supports the method's specificity rather than proving it.
 
 This genome-wide result should not be over-read as either confirming or contradicting
 Section~5's conclusion. It does not identify individual climate-adaptive loci -- that
-remains the floor-survivor test's job, and it still returns a high set-level FDR ($\geq0.6$)
-under both scans. What it adds is a more granular picture: the Stage-1-direct climate-BF
-landscape is \emph{not} architecture-agnostic (5 of 6 tests depart from the structured-null
-baseline), but the departures point in different, and for sorting an unexpected, direction
-on the two climate axes -- so \emph{which} architectural feature aligns with which axis, and
-whether that alignment reflects the same ancestry confound discussed in Sections~1--4 or a
-distinct mechanism, is not resolved here and would need its own follow-up (e.g.\ relating
-each axis's DI/recombination/sorting correlation directly to that axis's own
-ancestry-confound coefficient from \texttt{moduleB\_ancestry\_confound.R}).
+remains the floor-survivor test's job. PC1/PC2 still return a high set-level FDR
+($\geq0.6$) under both scans, while bio\_winter's floor test returns 10 of 18{,}361 units at
+FDR$\approx0.18$ (Section~5) despite this section's finding that bio\_winter's
+\emph{overall} genome-wide BF landscape trends, if anything, \emph{away} from high-DI and
+sorted regions -- a handful of individually exceptional loci coexisting with a bulk
+distribution pulling in the opposite direction from what a simple ancestry-confound story
+would predict. What Section~6 adds is a more granular picture: the Stage-1-direct climate-BF
+landscape is \emph{not} architecture-agnostic for any of the three continuous axes, but the
+departures point in different, and for sorting a uniformly unexpected, direction -- so
+\emph{which} architectural feature aligns with which axis, and whether that alignment
+reflects the same ancestry confound discussed in Sections~1--4 or a distinct mechanism, is
+not resolved here and would need its own follow-up (e.g.\ relating each axis's
+DI/recombination/sorting correlation directly to that axis's own ancestry-confound
+coefficient from \texttt{moduleB\_ancestry\_confound.R}).
 
 \clearpage
 \section*{\color{Accent}Limitations and recommended follow-up}\label{sec:limitations}
@@ -486,11 +530,15 @@ confirmed result, for several reasons:
     alone.
   \item \textbf{Section~6's genome-wide architecture calibration has mixed-direction results
     that were not chased down.} DI, recombination, and sorting depart from the
-    $\Omega$-structured null on different axes and, for sorting, in the opposite direction
-    from a naive confounding argument. Relating each axis's departure directly to that
-    axis's own ancestry-confound coefficient (rather than to the coarser population-level
-    ancestry summary used in Sections~1--4) would be needed before drawing a mechanistic
-    conclusion from it.
+    $\Omega$-structured null differently across PC1, PC2, and bio\_winter, and for sorting in
+    the opposite direction from a naive confounding argument on all three axes. Adding
+    bio\_winter and the mitoC2 calibration check (own dedicated null, no departure on any
+    measure) strengthens confidence that these departures are not an artifact of the
+    null-covariate machinery, but neither addition explains \emph{why} the three continuous
+    axes disagree on direction. Relating each axis's departure directly to that axis's own
+    ancestry-confound coefficient (rather than to the coarser population-level ancestry
+    summary used in Sections~1--4) would be needed before drawing a mechanistic conclusion
+    from it.
 \end{itemize}
 
 \section*{\color{Accent}Summary}
@@ -511,17 +559,25 @@ sufficient to explain the raw candidate counts in the original BayPass climate s
 invoking any locus-specific climate effect (Section~5): no PC1 cluster and only a
 null-expected number of PC2 clusters exceeded the $\Omega$-structured null. The BayPass
 scan therefore provides no locus-specific evidence for climate adaptation beyond what
-population structure already predicts. A separate, genome-wide calibration (Section~6)
-shows the Stage-1-direct climate-BF landscape is not architecture-agnostic -- five of six
-tests relating BF strength to Diagnostic Index, recombination, and directional sorting
-depart from the structured-null baseline -- but the directions differ across the two
-climate axes and, for sorting, run counter to a simple confounding story, so this result
-sharpens rather than resolves the population-level picture above. The one climate result
-that stands apart from this whole ancestry-confound narrative is bio\_winter (the combined,
-standardized bio6/bio11 axis): 10 of 18{,}361 Stage-1 units survive the floor test
-(FDR$\approx0.18$, Section~5), clearly stronger than PC1 or PC2 achieve on either scan and
-not something this document's ancestry-confound argument accounts for -- an open lead for
-future work, not explored further here. This document should be
-read as a supplementary, exploratory analysis, not a confirmed finding for the main text.
+population structure already predicts. A separate, genome-wide calibration (Section~6), extended here to bio\_winter and to mitoC2
+as a specificity check, shows the Stage-1-direct climate-BF landscape is not
+architecture-agnostic for any of PC1, PC2, or bio\_winter -- seven of nine tests relating BF
+strength to Diagnostic Index, recombination, and directional sorting depart from a shared
+structured-null baseline -- but the directions differ across the three axes and, for
+sorting, run counter to a simple confounding story on all three, so this result sharpens
+rather than resolves the population-level picture above. mitoC2, tested the same way against
+its own dedicated contrast-mode null, shows no such departure on any of the three measures
+($p_{\mathrm{BH}}=0.963$ throughout), reinforcing that the PC1/PC2/bio\_winter departures are
+a property of those covariates and not an artifact of the calibration framework itself.
+bio\_winter (the combined, standardized bio6/bio11 axis) remains the one climate result that
+stands apart from the rest of this ancestry-confound narrative at the individual-locus level:
+10 of 18{,}361 Stage-1 units survive the floor test (FDR$\approx0.18$, Section~5), clearly
+stronger than PC1 or PC2 achieve on either scan. Section~6 complicates rather than resolves
+that lead, however: bio\_winter's \emph{overall} genome-wide BF distribution trends away from
+high-DI and directionally-sorted regions, the opposite of what would be expected if its
+floor-survivor loci reflected a broad ancestry-tracking signal -- so those 10 units look more
+like a distinct, localized signal than the tip of a genome-wide ancestry-confound iceberg,
+though this is not established and remains an open lead for future work. This document should
+be read as a supplementary, exploratory analysis, not a confirmed finding for the main text.
 
 \end{document}
