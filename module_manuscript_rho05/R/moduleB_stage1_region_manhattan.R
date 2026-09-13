@@ -184,6 +184,7 @@ process_one <- function(stat_file, stat_col, thresh, thresh_label, tag, title_st
 
 NULL_S1  <- "module_manuscript_rho05/data/moduleB_stage1_S1units_null.rds"
 NULL_C2  <- "module_manuscript_rho05/data/moduleB_stage1_mitoC2_null.rds"
+NULL_BW  <- "module_manuscript_rho05/data/moduleB_stage1_bio_winter_null.rds"
 r_pc1 <- process_one(file.path(UNIT_DIR, "PC1_S1units_withOmega_summary_betai_reg.out"),
                      "BF(dB)", 15, "BF(dB)>=15", "PC1", "BF(dB)",
                      null_file = NULL_S1, null_flag_col = "floor1")
@@ -193,5 +194,8 @@ r_pc2 <- process_one(file.path(UNIT_DIR, "PC2_S1units_withOmega_summary_betai_re
 r_c2  <- process_one(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"),
                      "log10(1/pval)", 3, "-log10(p)>=3", "mitoC2", "C2 -log10(p)",
                      null_file = NULL_C2, null_flag_col = "floor3")
+r_bw  <- process_one(file.path(UNIT_DIR, "bio_winter_S1units_withOmega_summary_betai_reg.out"),
+                     "BF(dB)", 15, "BF(dB)>=15", "bio_winter", "BF(dB)",
+                     null_file = NULL_BW, null_flag_col = "floor")
 
 message("[moduleB-stage1-region-manhattan] done")
