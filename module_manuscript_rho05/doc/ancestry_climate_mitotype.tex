@@ -499,7 +499,31 @@ covariate's floor-survivor units onto the canonical Stage-2 (rho05) clustering
 (\texttt{eMLG\_5loci\_0025\_cM05\_rho05.rds}) gives zero shared Stage-2 groups between any
 pair of PC1 (1 region), PC2 (2), mitoC2 (0), and bio\_winter (7) -- even the closest case, a
 PC1 and a bio\_winter floor-survivor both on Chr24 only $\sim$53~kb apart, falls into two
-distinct Stage-2 clusters. What Section~6 adds is a more granular picture: the Stage-1-direct climate-BF
+distinct Stage-2 clusters (Figure~\ref{fig:region-manhattan-combined}).
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.78\linewidth]{../Figures/moduleB_stage1_snp_manhattan_combined.png}
+  \caption{\label{fig:region-manhattan-combined}Stage-1-direct genome-wide scan, all four
+  covariates. Every genome-wide SNP is plotted at its own full-SNP BayPass value -- BF(dB)
+  for PC1, PC2, and bio\_winter (continuous-covariate regression); the C2 contrast statistic
+  $-\log_{10}(p)$ for mitoC2 (population contrast). Dashed line: the raw threshold
+  (BF(dB)$\geq15$, or $-\log_{10}(p)\geq3$ for mitoC2). Grey (alternating shade by
+  chromosome): no Stage-1 cluster in this canonical Stage-2 (rho05) region raw-crossed the
+  threshold. Coloured (one colour per region, recycled): every Stage-2 (rho05) region
+  containing $\geq1$ raw threshold crossing -- most of these are raw crossings only, not
+  validated candidates. Arrowed and labelled (Stage-2 group\_id): the subset of coloured
+  regions that additionally contain a floor-survivor Stage-1 unit (beats all 10{,}000
+  $\Omega$-structured null draws), with the label coloured to match its region -- PC1: 45 raw
+  crossings $\rightarrow$ 34 regions coloured, 1 floor survivor $\rightarrow$ 1 region
+  arrowed (F237397); PC2: 65 raw crossings $\rightarrow$ 42 regions coloured, 2 floor
+  survivors $\rightarrow$ 2 regions arrowed (F42664, F53302); mitoC2: 11 raw crossings
+  $\rightarrow$ 11 regions coloured, 0 floor survivors, no region arrowed; bio\_winter: 113
+  raw crossings $\rightarrow$ 71 regions coloured, 10 floor survivors $\rightarrow$ 7 regions
+  arrowed (F24630, F27359, F45674, F183260 [4 Stage-1 clusters], F190105, F191253, F238394).
+  No arrowed region is shared between any pair of covariates (see text).}
+\end{figure}
+
+What Section~6 adds is a more granular picture: the Stage-1-direct climate-BF
 landscape is \emph{not} architecture-agnostic for any of the three continuous axes, but the
 departures point in different, and for sorting a uniformly unexpected, direction -- so
 \emph{which} architectural feature aligns with which axis, and whether that alignment
