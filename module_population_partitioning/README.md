@@ -307,3 +307,18 @@ Methods/Results paragraphs, open questions. `AUDIT.md` (module root) — the
 independent review this module's statistics were revised in response to.
 `CROSS_MODULE_INPUTS.md` (module root) — full input provenance across both
 analysis universes.
+
+## Follow-up analyses
+
+`R/1{0,1,2,4}_*.R` — alternative-explanation follow-ups (geographic
+prediction, individual influence, an exploratory genotype-state run proxy,
+synthesis) plus `R/pp_fst_concordance_null.R` (a within-unit permutation
+null for the core FST-vs-concordance result). `R/15_*.R` through
+`R/22_*.R` — a separate follow-up importing `module_manuscript_rho05`'s
+frozen Stage-1-direct BayPass candidate-locus scans (PC1, PC2, bio_winter,
+mitoC2; 18,361 units, 19 populations, Åland excluded — a different unit
+universe and population set from this module's own primary pipeline above)
+for population-frequency heatmaps, profile-similarity, structure-adjustment,
+and matched-null analysis. See `FOLLOWUP_STATUS.md` for full write-ups
+(Analyses 1–6 and the FST-concordance diagnostic) and `CROSS_MODULE_INPUTS.md`
+Table G for the candidate-locus follow-up's full input provenance.

@@ -795,15 +795,149 @@ below for the corrected framing.
 > the corrected row-centred PCA still shows a real, non-dominant recurring
 > axis, so this is not a claim that every region behaves independently.
 
+## Analysis 6: candidate-locus population-frequency and profile-similarity analysis — COMPLETE (2026-09-14)
+
+**Scripts**: `R/15_candidate_import.R` through `R/22_candidate_synthesis.R`
+(8 scripts) · **Outputs**: `data/followup/15_candidate_data.rds` through
+`22_candidate_synthesis.rds` · **Figures**: `Figures/followup/17_heatmap_*`,
+`18_simheatmap_*`/`18_distance_decay_*`, `19_*_adj_*`, `20_matched_null_*`,
+`21_climate_context_*`, `22_synthesis.png` · session info saved inside every
+output RDS.
+
+This is a separate follow-up brief from Analyses 1–5/the item-8 diagnostic
+above: it imports and analyses `module_manuscript_rho05`'s frozen Stage-1-
+direct BayPass candidate-locus scans (PC1, PC2, bio_winter, mitoC2), never
+recomputing LD reduction or redefining candidates. `module_manuscript_rho05`
+is read-only throughout; every imported object, its role, and its row count
+before/after mapping is recorded in `data/followup/15_manifest.rds` and
+printed by `R/22_candidate_synthesis.R`.
+
+### Inputs and parameters
+
+- **Population set: 19 hybrid populations, Åland excluded** throughout —
+  matches exactly the population set `module_manuscript_rho05`'s BayPass
+  scans were computed on (user-confirmed decision, 2026-09-14; deliberately
+  different from this module's own 20-population primary-pipeline
+  convention, to keep "what made a locus a candidate" and "what is
+  analysed" consistent).
+- Candidate universe: the 18,361-unit Stage-1-direct LD clustering
+  (`module_manuscript_rho05/data/moduleB_stage1_units_bestsnp.rds`), **not**
+  this module's own 20,807-unit DI25 rho05 primary unit set — a distinct,
+  finer clustering built and owned entirely by `module_manuscript_rho05`.
+- No oriented (toward *F. aquilonia*) allele-frequency matrix existed
+  upstream for this unit set — reconstructed here with the identical
+  formula `pp_prep_units.R` uses, then validated against
+  `moduleA_stage1_cluster_sorting.rds$uni_score` (mismatch rate: **0%**
+  among strongly-sorted units).
+- DI vintage: `module_manuscript_rho05`'s full-genome, **ungated**
+  `map_hyb_005$DiagnosticIndex` — not this module's own DI25-ascertained
+  vintage; the two are not interchangeable and are never conflated in this
+  analysis's outputs.
+- Structure-adjustment reference: the 17,509-unit large-cluster subset of
+  `module0_ld_pruning_rho05`'s canonical genome-wide panel (never candidate
+  loci), PC1 of a row-centered PCA (8.6% variance explained — a real but
+  modest axis, similar in magnitude to this module's own DI25-based finding
+  elsewhere in this document), leave-one-chromosome-out via a full PCA
+  refit per excluded chromosome.
+- BDMI overlap: `module_di25`'s `merge_iv()`/`in_intervals()` interval logic
+  lifted directly, cutoff index 13 (documented default, adjustable).
+- Matched-null: DI (±2), folded parental MAF (±0.05), recombination rate
+  (±50%), cluster size (±3 markers), same-chromosome preferred with
+  genome-wide fallback; `B=1000` matched-set draws, real Stage-1 unit
+  profiles only (no synthetic permutation of population values).
+
+### Numerical results
+
+**Candidate counts (before/after mapping, all complete — no incomplete or
+duplicated mappings encountered):**
+
+| target | raw candidates | floor survivors | undefined-orientation (in raw) |
+|---|---|---|---|
+| PC1 | 45 | 1 | 3 |
+| PC2 | 65 | 2 | 22 |
+| bio_winter | 113 | **10** (highlighted discovery set) | 36 |
+| mitoC2 | 11 | **0** (no discovery set constructed) | 0 |
+
+**Matched-null comparison (candidate vs. B=1000 matched Stage-1-direct sets, raw profiles):**
+
+| target | cross-chr mean\|r\| (candidate) | matched-null mean | p | structure_dominance (candidate) | matched-null mean | p |
+|---|---|---|---|---|---|---|
+| PC1 | 0.366 | 0.204 | 0 | 0.405 | 0.173 | 0 |
+| PC2 | 0.350 | 0.198 | 0 | 0.385 | 0.149 | 0 |
+| bio_winter | 0.374 | 0.198 | 0 | 0.421 | 0.131 | 0 |
+| mitoC2 | 0.355 | 0.190 | 0 | 0.429 | 0.223 | 0 |
+
+Structure-adjusted (LOCO reference-panel PC1 removed) cross-chr mean\|r\|
+stays close to the raw value for every target (PC1: 0.366→0.294; PC2:
+0.350→0.352; bio_winter: 0.374→0.382; mitoC2: 0.355→0.348) — consistent
+with the reference PC1 explaining only a modest fraction of any given
+candidate's variance (median per-locus R² ≈0.04).
+
+**Climate context (bio_winter's own selecting variable)**: long-range
+locus pairs where both loci are strongly climate-correlated
+(\|r\|≥0.5 with the population-level bio_winter axis) show mean\|r\|=0.437
+(PC1) / 0.428 (bio_winter) vs 0.327 / 0.282 for other pairs — for bio_winter
+this substantially explains its elevated long-range similarity (expected,
+since it was selected on climate). **PC2 and mitoC2 have zero long-range
+pairs where both loci are climate-correlated** — their elevated similarity
+is not climate-explained and remains open. BDMI-BDMI vs BDMI-other vs
+other-other long-range similarity shows **no consistent enrichment pattern**
+across targets (elevated for PC1, flat for PC2, reduced for bio_winter).
+
+### Verdict
+
+Across all four targets, candidate profiles show substantially greater
+cross-chromosome/distant similarity and a higher structure_dominance
+(locus×locus correlation matrix's leading-eigenvalue fraction) than
+DI/MAF/recomb/cluster-size-matched genomic background — but
+structure_dominance stays well below 1 throughout (0.39–0.43 vs a
+matched-null mean of 0.13–0.22): candidate profiles are **neither dominated
+by a single genome-wide population division nor fully independent of each
+other — they form several partly-overlapping, reproducible groups**,
+directly answering the brief's central inferential question. This
+long-range signal is **not** removed by genome-wide structure adjustment,
+**is** substantially explained by shared climate-tracking for bio_winter
+specifically, is **not** climate-explained for PC2/mitoC2, and shows **no**
+consistent BDMI enrichment — per the brief's explicit instruction, none of
+this is interpreted as evidence of epistasis by itself.
+
+### Limitations
+
+PC1/PC2 raw sets are never described as discoveries (floor-survivor counts
+of only 1 and 2); no mitoC2 discovery set was constructed (0 floor
+survivors, current audited calibration). 3–36 candidates per target have
+undefined ancestry orientation (fixed for the same allele in both parental
+species) and are excluded from similarity/matched-null analyses, reported
+explicitly rather than silently dropped. Same-chromosome-near pair counts
+are frequently too small (<10) for a distance-decay slope to be estimable,
+and this is reported as "not estimable" rather than computed on a handful
+of pairs. DI vintage, structure-reference construction (Åland-excluded,
+missingness-filtered), BDMI cutoff choice, and matched-null tolerance bands
+are all documented, adjustable design choices, not hidden defaults.
+
+### Interpretation impact
+
+**Suitable for the supplement** as a structured, multi-target robustness
+comparison; the central finding (several reproducible groups, not one
+dominant division, surviving structure adjustment and matched-null
+comparison) is a genuinely new result not covered by Analyses 1–5 above,
+and should be read alongside them, not as a replacement for the DI25-based
+population-partitioning concordance findings elsewhere in this document —
+the two use different unit universes (Stage-1-direct 18,361 vs. DI25 rho05
+20,807) and different population sets (19 vs. 20) by design.
+
 ## Overall status
 
-Analyses 1, 2, 3 (exploratory only), 5 complete; the FST-concordance null
+Analyses 1, 2, 3 (exploratory only), 5, 6 complete; the FST-concordance null
 diagnostic (item 8) complete; Analysis 4 stopped (no verified parental
 locality metadata — user-confirmed decision, see above). All new code, data,
-and figures are under `R/1{0,1,2,4}_*.R`, `R/pp_fst_concordance_null.R`,
-`data/followup/`, `data/pp_fst_concordance_null.rds`, `Figures/followup/`;
-the pre-existing `pp_*.R` pipeline scripts received only the item-1/3/2/4
-audit fixes documented at the top of this file and in `README.md` (20,807-
-unit provenance assertions; corrected `sorted_ids` definition; Sielva
-wording; recombination distance-adjustment) — their scientific outputs and
-figures were rerun, not hand-edited.
+and figures are under `R/1{0,1,2,4,5,6,7,8,9}_*.R`, `R/2{0,1,2}_*.R`,
+`R/pp_fst_concordance_null.R`, `data/followup/`,
+`data/pp_fst_concordance_null.rds`, `Figures/followup/`; the pre-existing
+`pp_*.R` pipeline scripts received only the item-1/3/2/4 audit fixes
+documented at the top of this file and in `README.md` (20,807-unit
+provenance assertions; corrected `sorted_ids` definition; Sielva wording;
+recombination distance-adjustment) — their scientific outputs and figures
+were rerun, not hand-edited. `module_manuscript_rho05`, `module_di25`,
+`moduleA_sorting`, and repository-root `data/` were treated as read-only
+throughout Analysis 6 and were not modified.
