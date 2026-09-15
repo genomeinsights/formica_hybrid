@@ -69,48 +69,59 @@ cor_null <- lapply(names(obs), function(tag) {
 })
 names(cor_null) <- names(obs)
 
-## real pairwise correlations between the three continuous covariates
-## (a direct, single-number test of the "shared architecture" pattern
-## noted qualitatively for the local-score windows)
+## real pairwise BF-vs-BF correlations between the three continuous
+## covariates' OBSERVED vectors (a direct, single-number test of the
+## "shared architecture" pattern noted qualitatively for the local-score
+## windows). PC1 and PC2 are PCA axes -- their sign is an arbitrary
+## artifact of the eigendecomposition, not biologically meaningful -- so
+## the DEFENSIBLE summary statistic for "is this relationship stronger
+## than chance" is |r| (equivalently, r^2; both give identical percentile
+## rankings), not signed r. Signed r is still reported/plotted since
+## bio_winter and mitoC2 individually DO have a meaningful, fixed sign,
+## but every percentile/significance claim below uses |r|.
 real_cor <- combn(c("PC1", "PC2", "bio_winter"), 2, function(p)
   data.table(a = p[1], b = p[2], r = cor(obs[[p[1]]], obs[[p[2]]])), simplify = FALSE)
 real_cor <- rbindlist(real_cor)
-print(real_cor)
 
-## empirical percentile of each real pairwise correlation within the
-## corresponding covariate's own null-correlation distribution
-pctl <- function(x, null_dist) mean(null_dist <= x)
-real_cor[, pctl_in_a := mapply(function(bb, rr) pctl(rr, cor_null[[bb]]), b, r)]
-real_cor[, pctl_in_a_label := sprintf("%.1f%%", 100 * pctl_in_a)]
-cat("\nReal pairwise correlations vs each covariate's own null-correlation distribution:\n")
-print(real_cor)
+## empirical percentile of |real correlation| within the corresponding
+## covariate's own |null-correlation| distribution
+pctl_abs <- function(x, null_dist) mean(abs(null_dist) <= abs(x))
+real_cor[, pctl_abs_in_a := mapply(function(aa, rr) pctl_abs(rr, cor_null[[aa]]), a, r)]
+real_cor[, pctl_abs_in_b := mapply(function(bb, rr) pctl_abs(rr, cor_null[[bb]]), b, r)]
+real_cor[, `:=`(pctl_abs_in_a_label = sprintf("%.1f%%", 100 * pctl_abs_in_a),
+                pctl_abs_in_b_label = sprintf("%.1f%%", 100 * pctl_abs_in_b))]
+cat("\nReal pairwise BF-vs-BF correlations, with |r| percentile within each covariate's own |null-correlation| distribution:\n")
+print(real_cor[, .(a, b, r, pctl_abs_in_a_label, pctl_abs_in_b_label)])
 
-## ---- histogram figure -------------------------------------------------
-long <- rbindlist(lapply(names(cor_null), function(tag) data.table(covariate = tag, r = cor_null[[tag]])))
+## ---- histogram figure: |r|, since PC1/PC2's sign is arbitrary ---------
+## Each panel: |Pearson r| between a null draw's Stage-1-cluster BF/C2
+## vector and THAT PANEL'S OBSERVED BF/C2 vector (both axes of every
+## correlation here are BF/C2 values -- never raw covariate values).
+long <- rbindlist(lapply(names(cor_null), function(tag) data.table(covariate = tag, abs_r = abs(cor_null[[tag]]))))
 long[, covariate := factor(covariate, levels = c("PC1", "PC2", "bio_winter", "mitoC2"))]
 
 marks <- rbindlist(list(
-  data.table(covariate = "PC1", other = "PC2", r = real_cor[a == "PC1" & b == "PC2", r]),
-  data.table(covariate = "PC1", other = "bio_winter", r = real_cor[a == "PC1" & b == "bio_winter", r]),
-  data.table(covariate = "PC2", other = "PC1", r = real_cor[a == "PC1" & b == "PC2", r]),
-  data.table(covariate = "PC2", other = "bio_winter", r = real_cor[a == "PC2" & b == "bio_winter", r]),
-  data.table(covariate = "bio_winter", other = "PC1", r = real_cor[a == "PC1" & b == "bio_winter", r]),
-  data.table(covariate = "bio_winter", other = "PC2", r = real_cor[a == "PC2" & b == "bio_winter", r])
+  data.table(covariate = "PC1", other = "PC2", abs_r = abs(real_cor[a == "PC1" & b == "PC2", r])),
+  data.table(covariate = "PC1", other = "bio_winter", abs_r = abs(real_cor[a == "PC1" & b == "bio_winter", r])),
+  data.table(covariate = "PC2", other = "PC1", abs_r = abs(real_cor[a == "PC1" & b == "PC2", r])),
+  data.table(covariate = "PC2", other = "bio_winter", abs_r = abs(real_cor[a == "PC2" & b == "bio_winter", r])),
+  data.table(covariate = "bio_winter", other = "PC1", abs_r = abs(real_cor[a == "PC1" & b == "bio_winter", r])),
+  data.table(covariate = "bio_winter", other = "PC2", abs_r = abs(real_cor[a == "PC2" & b == "bio_winter", r]))
 ))
 marks[, covariate := factor(covariate, levels = c("PC1", "PC2", "bio_winter", "mitoC2"))]
 
-p_hist <- ggplot(long, aes(r)) +
+p_hist <- ggplot(long, aes(abs_r)) +
   geom_histogram(bins = 60, fill = "grey75", colour = NA) +
-  geom_vline(data = marks, aes(xintercept = r, colour = other), linewidth = 0.8) +
-  geom_text(data = marks, aes(x = r, y = Inf, label = other, colour = other),
+  geom_vline(data = marks, aes(xintercept = abs_r, colour = other), linewidth = 0.8) +
+  geom_text(data = marks, aes(x = abs_r, y = Inf, label = other, colour = other),
             angle = 90, vjust = -0.4, hjust = 1.05, size = 2.8, show.legend = FALSE) +
   facet_wrap(~ covariate, scales = "free", ncol = 2) +
   scale_colour_manual(values = c(PC1 = "#0072B2", PC2 = "#D55E00", bio_winter = "#009E73"), name = "real covariate") +
   coord_cartesian(clip = "off") +
-  labs(x = expression("Pearson "*italic(r)*" (null draw vs. observed)"),
+  labs(x = expression("|Pearson "*italic(r)*"| between a null draw's BF/C2 and the panel's OBSERVED BF/C2"),
        y = sprintf("count (of %d null draws)", N_NULL),
-       title = "Correlation of each Omega-structured null draw with the observed Stage-1-cluster BF/C2",
-       subtitle = "Coloured lines: the REAL pairwise correlation between that panel's covariate and another observed covariate") +
+       title = "|Correlation| of each Omega-structured null draw's BF/C2 with the observed Stage-1-cluster BF/C2",
+       subtitle = "|r| used throughout (PC1/PC2 sign is an arbitrary PCA artifact). Coloured lines: |real BF-vs-BF correlation| with another observed covariate") +
   theme_bw(base_size = 10) + theme(panel.grid.minor = element_blank(), plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt"))
 ggsave(file.path(FIGDIR, "null_correlation_histograms.png"), p_hist, width = 180, height = 140, units = "mm", dpi = 300)
 ggsave(file.path(FIGDIR, "null_correlation_histograms.pdf"), p_hist, width = 180, height = 140, units = "mm")
