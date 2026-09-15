@@ -1,0 +1,270 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{21918C}
+\definecolor{Muted}{HTML}{5B6570}
+\definecolor{Warn}{HTML}{B03A2E}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}BayPass local-score cross-check}
+\rhead{\small\color{Muted}Poikela et al., rho05 pipeline}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.5em}\setlength{\parindent}{0pt}
+
+\title{\vspace{-3em}\textbf{\color{Accent}BayPass's local-score outlier-region method}\\[0.2em]
+\large A cross-check against the Stage-1-direct climate/mitotype scan}
+\author{}
+\date{\small Generated \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\section*{\color{Accent}Motivation}
+BayPass ships its own recommended method for turning per-SNP association evidence into
+outlier \emph{regions}: \texttt{compute.local.scores()}
+(\texttt{baypass\_public/utils/baypass\_utils.R}), implementing the local-score approach of
+Fariello et al.\ (2017) and Bonhomme et al.\ (2019). This is methodologically different from the
+region-definition already used throughout \texttt{module\_manuscript\_rho05} (LD-based Stage-2
+(rho05) clustering, tested against a 10{,}000-draw $\Omega$-structured null covariate/contrast
+distribution -- the ``floor-survivor'' test). This document asks two questions: (1) what
+outlier regions does BayPass's own method identify in our four Stage-1-direct covariates
+(PC1, PC2, bio\_winter, mitoC2), and (2) is that method's built-in significance threshold
+actually well calibrated for this dataset, checked directly against the same
+$\Omega$-structured nulls used everywhere else in this pipeline.
+
+\textbf{Bottom line, stated up front:} the local-score method's analytic threshold is
+\emph{not} well calibrated here. A meaningful fraction of pure $\Omega$-structured null draws
+(no causal covariate effect at all) produce multiple ``significant'' windows using BayPass's
+own default settings -- for the mitotype contrast, the typical null draw already produces
+several. This document should be read as a diagnostic exercise and a cautionary
+demonstration, not as a source of new candidate loci for the main manuscript.
+
+\section*{\color{Accent}1. Method}
+For each SNP, a score $S_i = \mathrm{BF(dB)}_i/10 - \xi$ (continuous covariates) or
+$S_i = -\log_{10}(p)_i - \xi$ (mitoC2's C2 contrast $p$-value) is computed, where $\xi>0$ is a
+fixed per-marker penalty (default $\xi=1$, used throughout). SNPs with negative BF have no
+natural $p$-value, so BayPass's own code substitutes a random draw,
+$-\log_{10}(U)$, $U\sim\mathrm{Unif}(0,1)$ -- this is the source of a real reproducibility
+caveat discussed in Section~5. A per-chromosome \emph{Lindley process}
+$L_i=\max(0, L_{i-1}+S_i)$ then accumulates evidence along the chromosome, resetting to zero
+whenever cumulative evidence turns negative -- this is what lets neighbouring,
+individually-weak signals combine into one region without any externally-imposed LD
+clustering. An analytic significance threshold is derived per chromosome from its length and
+its marker-to-marker $p$-value autocorrelation (exact for $\xi\in\{1,2,3,4\}$;
+$\xi=1$ throughout here), at $\alpha=0.01$ (BayPass's default, \texttt{pval.local.score.thres}).
+Markers with estimated $\hat\pi<0.2$ or $>0.8$ are excluded (\texttt{min.maf=0.2}, default).
+Every excursion of $L$ above threshold is reported as one significant window
+(chromosome, start, end, size, \#SNPs, and the peak position of both the Lindley score and
+the original statistic within it).
+
+Run at two resolutions:
+\begin{itemize}
+  \item \textbf{Full-SNP} (\texttt{local\_score\_regions.R}): every genome-wide SNP
+    individually ($\sim$1.08M retained after MAF filtering per covariate), using the real
+    full-SNP BayPass scan already computed for the manuscript.
+  \item \textbf{Stage-1-cluster} (\texttt{local\_score\_regions\_S1units.R}): the 18{,}361
+    Stage-1-direct clusters ($n_{\mathrm{SNPs}}\geq5$) used by Module~C, one representative
+    marker per cluster. \texttt{min.nsnp} (minimum markers/chromosome to compute a threshold)
+    had to be lowered from BayPass's default (10{,}000) to 100 -- the largest chromosome has
+    only 1{,}078 Stage-1 units, so the default would silently exclude every chromosome.
+\end{itemize}
+
+\section*{\color{Accent}2. Observed data, full-SNP resolution}
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrl}
+\toprule
+Covariate & Raw threshold crossings & Local-score windows & Total window span \\
+\midrule
+PC1        & 2{,}779 & 6  & Chr2, Chr8, Chr15 ($\times2$), Chr24 ($\times2$) \\
+PC2        & 1{,}484 & 7  & Chr4, Chr5, Chr13, Chr24, Chr26 ($\times2$), Chr27 \\
+bio\_winter & 2{,}636 & 8  & Chr2, Chr3, Chr8, Chr11, Chr15 ($\times2$), Chr24 ($\times2$) \\
+mitoC2      & 648     & 95 & scattered across 26 of 26 chromosomes \\
+\bottomrule
+\end{tabular}
+\caption{Local-score windows, full-SNP resolution, BayPass default parameters
+($\xi=1$, $\alpha=0.01$, MAF$\geq0.2$). Figure~\ref{fig:obs-fullsnp}.}
+\end{table}
+
+\textbf{Striking cross-covariate overlap.} PC1 and bio\_winter's windows share
+near-\emph{identical} start coordinates at five of their six/eight loci (Chr2: 10{,}008{,}320
+bp both; Chr8: 6{,}712{,}279 bp both; Chr15: both peaks within $\sim$1.2~kb; Chr24: both peaks
+within $\sim$0 bp). PC2 additionally has its own Chr24 window (1{,}764{,}859--1{,}843{,}054)
+\emph{nested entirely inside} PC1/bio\_winter's broader Chr24 window
+(1{,}309{,}506--1{,}894{,}413/1{,}928{,}191). Three unrelated covariates converging on the same
+loci is not consistent with covariate-specific climate signal -- it is exactly the
+genome-architecture/ancestry-confound pattern already central to
+\texttt{ancestry\_climate\_mitotype.tex} (Section~6 there), now recovered independently by a
+completely different region-detection method.
+
+\textbf{Relationship to the floor-survivor candidates.} Of the 12 floor-survivor loci
+identified elsewhere in this pipeline (PC1: 1, PC2: 2, bio\_winter: 10), only bio\_winter's
+three loci on Chr2 (both units) and Chr24 fall inside a full-SNP local-score window; PC1's
+Chr24 floor-survivor sits in the $\sim$170~kb gap between two adjacent local-score windows,
+and neither PC2 floor-survivor is recovered at all. The two methods substantially disagree at
+the level of individual candidate loci, even though (per the paragraph above) they agree on
+which broad regions show elevated signal shared across covariates.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.9\linewidth]{../Figures/local_score_snp_manhattan_combined.png}
+  \caption{\label{fig:obs-fullsnp}Full-SNP local-score windows, styled identically to the
+  manuscript's Figure~5 (\texttt{ancestry\_climate\_mitotype.tex}): every genome-wide SNP at
+  its own BayPass value; grey = not in any raw-crossing Stage-2 (rho05) region; coloured =
+  Stage-2 region containing $\geq1$ raw threshold crossing (BF(dB)$\geq15$, or
+  $-\log_{10}(p)\geq3$ for mitoC2); arrowed and labelled = one arrow per significant
+  local-score window (not per touched Stage-2 region -- see Section~4), positioned at the
+  window midpoint and labelled/coloured by the Stage-2 group of the window's own peak SNP.}
+\end{figure}
+
+\section*{\color{Accent}3. Observed data, Stage-1-cluster resolution}
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrp{7cm}}
+\toprule
+Covariate & Local-score windows & vs. full-SNP & Windows (chr) \\
+\midrule
+PC1        & 1 & 6 & Chr24 \\
+PC2        & 0 & 7 & -- \\
+bio\_winter & 2 & 8 & Chr2, Chr24 \\
+mitoC2      & 8 & 95 & scattered \\
+\bottomrule
+\end{tabular}
+\caption{Local-score windows, Stage-1-cluster resolution (18{,}361 units, min.nsnp=100).
+Figure~\ref{fig:obs-s1}.}
+\end{table}
+
+Far fewer windows survive at this coarser resolution -- expected, since Stage-1 units are
+deliberately LD-pruned (rho=0.5) to be much less correlated than neighbouring full SNPs, so
+the Lindley process has far less to accumulate. PC1's Chr24 window and bio\_winter's Chr2 and
+Chr24 windows correspond to the SAME loci recovered at full-SNP resolution and to real
+floor-survivor candidates -- the one part of this cross-check where local-score, Stage-1, and
+the structured-null floor test all agree. PC2 loses its signal entirely at this resolution.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.78\linewidth]{../Figures/local_score_manhattan_S1units.png}
+  \caption{\label{fig:obs-s1}Local-score windows, Stage-1-cluster resolution. Points are
+  coloured by local-score window identity (not Stage-2 group, unlike
+  Figure~\ref{fig:obs-fullsnp}); every genome-wide member SNP of a tested Stage-1 cluster
+  inherits its cluster's own single value (not an independent per-SNP estimate -- no such
+  Stage-1-resolution SNP-level scan exists), which is why points inside a coloured window form
+  flat vertical bands rather than the natural scatter in Figure~\ref{fig:obs-fullsnp}.}
+\end{figure}
+
+\clearpage
+\section*{\color{Accent}4. Does the analytic threshold survive the $\Omega$-structured null?}
+The real question this document exists to answer: if a covariate/contrast carries
+\emph{no} causal signal -- only the populations' $\Omega$ covariance structure, exactly like
+the null covariates already built for Module~C's genome-wide calibration
+(\texttt{moduleC\_stage1\_null\_regen.R}) and the mitotype floor test
+(\texttt{moduleB\_stage1\_mitoC2\_null.R}) -- how often does BayPass's own analytic threshold
+still call something ``significant''? Run at Stage-1-cluster resolution (the only resolution
+at which null draws exist at all -- generating a full-SNP null would need $\Omega$-structured
+covariates re-run through BayPass on $\sim$1.1M markers each, an order of magnitude beyond
+anything already computed in this pipeline).
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrrrr}
+\toprule
+Null pool (1{,}000 draws each) & Mean windows & Median & Max & \% draws $\geq$ real count \\
+\midrule
+Continuous (PC1/PC2/bio\_winter's shared null) & 0.25 & 0 & 3 & 21.6\% ($\geq1$) \\
+mitoC2's dedicated contrast null                & 3.88 & 4 & 16 & 6.6\% ($\geq8$) \\
+\bottomrule
+\end{tabular}
+\caption{Distribution of local-score window counts under 1{,}000 structured-null draws per
+pool (\texttt{local\_score\_null\_check\_S1units.R}), same procedure as the observed data.
+``\% draws $\geq$ real count'' compares against the real covariates' OWN Stage-1-cluster
+window count from Section~3 (PC1: 1, bio\_winter: 2, mitoC2: 8 -- PC2's real count is 0, so no
+comparable tail probability applies).}
+\end{table}
+
+\textbf{Interpretation.} Roughly one in five draws from a covariate with \emph{zero} true
+signal already produces at least one ``significant'' local-score window under BayPass's
+default threshold; for the mitotype contrast, the typical null draw produces about four. This
+is a strong, direct demonstration that the analytic threshold under-corrects for this
+dataset's population structure -- consistent with, and now quantifying, the same conclusion
+reached independently in \texttt{ancestry\_climate\_mitotype.tex} Section~6 (mitoC2's
+genome-wide BF/C2 landscape is indistinguishable from its own $\Omega$-structured null on
+every measure tested there).
+
+\section*{\color{Accent}5. False-positive demonstration}
+Figure~\ref{fig:null-demo} renders one high-scoring null draw per covariate --
+\emph{styled identically to Figure~\ref{fig:obs-fullsnp}} (Stage-2 (rho05) region colouring,
+one arrow per significant window) -- to make concrete how convincing a purely-null result can
+look. PC1/PC2/bio\_winter each use a different draw from the shared continuous-null pool
+(\#624, \#536, \#107: 3, 2, 2 windows) and mitoC2 uses its own pool's worst draw (\#480: 16
+windows). None of these draws carry any real covariate signal.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.78\linewidth]{../Figures/local_score_null_examples.png}
+  \caption{\label{fig:null-demo}Four \textbf{NULL} draws (titled in red, explicitly marked
+  NOT REAL DATA), one per covariate, styled identically to Figure~\ref{fig:obs-fullsnp}.
+  Every arrowed, labelled, distinctly-coloured region here is a false positive by
+  construction.}
+\end{figure}
+
+\section*{\color{Accent}6. Caveats and limitations}\label{sec:limitations}
+\begin{itemize}
+  \item \textbf{The BF-based score is not deterministic.} BayPass's own code draws a random
+    $p$-value for every negative BF value (Section~1), so re-running
+    \texttt{compute.local.scores()} on the identical BF vector can change the exact window
+    count and boundaries from call to call. All numbers in this document use a fixed seed
+    (\texttt{set.seed(1)} in the region-calling scripts; \texttt{set.seed(10000+draw)} per
+    panel in the demonstration figure) purely for reproducibility -- the instability itself is
+    a genuine, separate calibration concern for continuous covariates, on top of Section~4's
+    finding. mitoC2 (a $p$-value statistic) is unaffected and fully deterministic.
+  \item \textbf{Arrows are per window, not per touched Stage-2 (rho05) region.} An early
+    version of the full-SNP figure arrowed every Stage-2 cluster overlapped by a significant
+    window and produced 138--8{,}055 arrows per covariate, because local-score windows
+    (hundreds of kb to several Mb) routinely span dozens of the much finer-grained
+    (rho=0.5, 0.5~cM cap) Stage-2 clusters. That inflated the apparent candidate count and
+    does not reflect what the method actually claims (a WINDOW is the significant unit).
+    Every figure in this document instead places one arrow per window, at its midpoint,
+    labelled/coloured by the Stage-2 group of the window's own peak SNP -- which is itself
+    often not a raw threshold crossing (the method's entire point is windows where evidence
+    accumulates without any single SNP crossing a naive threshold).
+  \item \textbf{No full-SNP-resolution null exists.} Section~4/5's calibration check and
+    demonstration are necessarily at Stage-1-cluster resolution. The qualitative conclusion
+    (the analytic threshold under-corrects for this dataset) is unlikely to reverse at full-SNP
+    resolution -- if anything, denser, more autocorrelated markers give the Lindley process
+    more opportunity to accumulate spurious runs -- but this has not been directly tested and
+    would require a large new BayPass campaign to check properly.
+  \item \textbf{This document does not replace the floor-survivor test.} The
+    $\Omega$-structured-null-calibrated floor-survivor test used throughout
+    \texttt{module\_manuscript\_rho05} remains the primary, trusted candidate-locus method for
+    this project. Local-score is presented here purely as an independent cross-check and a
+    calibration diagnostic, not as a source of new candidates for the manuscript.
+\end{itemize}
+
+\section*{\color{Accent}Summary}
+BayPass's own local-score outlier-region method, run with its own default settings, recovers
+a striking cross-covariate architecture signal (PC1, PC2, and bio\_winter converging on
+near-identical genomic windows despite carrying no obvious shared cause) that reinforces the
+manuscript's ancestry-confound narrative. But a direct check against the same
+$\Omega$-structured nulls used everywhere else in this pipeline shows the method's analytic
+significance threshold is not well calibrated for this dataset: roughly one in five
+structure-only null draws for the continuous covariates, and the clear majority for mitoC2's
+contrast, already produce one or more ``significant'' windows by chance. Combined with a
+separate, unrelated instability in how the method scores negative Bayes factors, this method
+should be treated as a supplementary, exploratory cross-check -- informative for the
+architecture question it incidentally answers, but not a substitute for, or independent
+confirmation of, the structured-null floor-survivor candidates already reported in the main
+manuscript.
+
+\bigskip
+{\small\color{Muted}
+\textit{References:} Fariello M.-I. et al.\ (2017) \textit{Mol.\ Ecol.} 26:3700--3714 --
+local score method. Bonhomme M.\ et al.\ (2019) \textit{Heredity} 123:1--14 -- extension to
+$\xi=3,4$. Olazcuaga L.\ et al.\ (2020) -- BayPass C2 contrast statistic.}
+
+\end{document}
