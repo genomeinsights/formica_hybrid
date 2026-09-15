@@ -48,6 +48,43 @@ obs <- list(
   mitoC2     = fread(file.path(UNIT_DIR, "mito_C2_S1units_summary_contrast.out"))$`log10(1/pval)`
 )
 NM <- length(obs$PC1)
+
+## ========================================================================
+## 0. Self-consistency check: does the S1units (18,361-marker) BayPass run
+## agree with the full-SNP (1,114,423-marker) run at the SAME physical
+## markers? This matters because the S1units resolution is the ONLY one
+## with null draws available (see header), so anything below implicitly
+## trusts S1units BF values as "the observed result" -- if that run is
+## itself a noisy estimate relative to the full-SNP scan (which is what
+## Figure 1/fig:obs-fullsnp actually shows and what the manuscript uses),
+## conclusions drawn purely from S1units correlations could be artifacts
+## of that noise rather than real biology. Checked directly, not assumed.
+## ========================================================================
+SNP_DIR <- "module_manuscript_rho05/baypass_stage1/aland_excluded"
+stage1 <- readRDS("module0_ld_pruning/data/pruned_stage1.rds")
+cl5 <- as.data.table(stage1$clusters)[n_snps >= 5]
+load("data/hybrids_only_maf005.Rdata")
+mk_idx <- match(cl5$core_snp, map_hyb_005$marker)
+stopifnot(!any(is.na(mk_idx)), length(mk_idx) == NM)
+
+obs_full <- list(
+  PC1        = fread(file.path(SNP_DIR, "PC1_fullSNP_stage1Omega_summary_betai_reg.out"), select = c("MRK", "BF(dB)"))$`BF(dB)`[mk_idx],
+  PC2        = fread(file.path(SNP_DIR, "PC2_fullSNP_stage1Omega_summary_betai_reg.out"), select = c("MRK", "BF(dB)"))$`BF(dB)`[mk_idx],
+  bio_winter = fread(file.path(SNP_DIR, "bio_winter_fullSNP_stage1Omega_summary_betai_reg.out"), select = c("MRK", "BF(dB)"))$`BF(dB)`[mk_idx],
+  mitoC2     = fread(file.path(SNP_DIR, "mito_C2_fullSNP_stage1Omega_summary_contrast.out"), select = c("MRK", "log10(1/pval)"))$`log10(1/pval)`[mk_idx]
+)
+self_consistency <- rbindlist(lapply(names(obs), function(tag)
+  data.table(covariate = tag, cor_S1units_vs_fullSNP = cor(obs[[tag]], obs_full[[tag]]))))
+cat("\n=== Self-consistency: S1units BF vs full-SNP BF, same physical markers ===\n")
+print(self_consistency)
+fwrite(self_consistency, file.path(DATA, "s1units_fullsnp_self_consistency.tsv"), sep = "\t")
+
+full_pairs <- combn(c("PC1", "PC2", "bio_winter"), 2, function(p)
+  data.table(a = p[1], b = p[2], r_fullSNP = cor(obs_full[[p[1]]], obs_full[[p[2]]])), simplify = FALSE)
+full_pairs <- rbindlist(full_pairs)
+cat("\n=== Full-SNP-resolution pairwise BF correlations (at Stage-1-representative markers) ===\n")
+print(full_pairs)
+fwrite(full_pairs, file.path(DATA, "fullsnp_pairwise_correlations.tsv"), sep = "\t")
 stopifnot(all(vapply(obs, length, integer(1)) == NM))
 
 ## ---- load the two null pools (1000 draws each) -----------------------------
