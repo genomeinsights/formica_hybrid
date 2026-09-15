@@ -1,10 +1,10 @@
 ## =========================================================
-## module_manuscript_rho05 -- Manhattan plot of BayPass's own local-score
+## module_localscore_crosscheck -- Manhattan plot of BayPass's own local-score
 ## outlier regions (Fariello et al. 2017 / Bonhomme et al. 2019), all four
 ## covariates
 ## =========================================================
 ## Visualises the significant.windows produced by
-## moduleB_stage1_local_score_regions.R (compute.local.scores(), BayPass's
+## local_score_regions.R (compute.local.scores(), BayPass's
 ## own defaults: xi=1, pval.local.score.thres=0.01, min.maf=0.2,
 ## min.nsnp=1e4) against the full-SNP genome-wide scan. Every SNP whose
 ## position falls INSIDE a significant local-score window is coloured (one
@@ -15,22 +15,22 @@
 ## comparison figure, not yet manuscript-styled (keeps per-panel counts in
 ## the subtitle rather than stripping them).
 ##
-## Reads : module_manuscript_rho05/data/moduleB_stage1_localscore_<tag>.rds
-##         (from moduleB_stage1_local_score_regions.R)
+## Reads : module_localscore_crosscheck/data/localscore_<tag>.rds
+##         (from local_score_regions.R)
 ##         module_manuscript_rho05/baypass_stage1/aland_excluded/
 ##           <tag>_fullSNP_stage1Omega_summary_{betai_reg,contrast}.out
-## Writes: module_manuscript_rho05/Figures/moduleB_stage1_local_score_manhattan.{png,pdf}
+## Writes: module_localscore_crosscheck/Figures/local_score_manhattan.{png,pdf}
 ##
 ## Run from the repo root:
-##   Rscript module_manuscript_rho05/R/moduleB_stage1_local_score_manhattan.R
+##   Rscript module_localscore_crosscheck/R/local_score_manhattan.R
 ## =========================================================
 
 suppressMessages({ library(data.table); library(ggplot2); library(patchwork) })
 devtools::load_all("~/gitlab/LDscnR/")
 
 BP_DIR <- "module_manuscript_rho05/baypass_stage1/aland_excluded"
-DATA   <- "module_manuscript_rho05/data"
-FIGDIR <- "module_manuscript_rho05/Figures"
+DATA   <- "module_localscore_crosscheck/data"
+FIGDIR <- "module_localscore_crosscheck/Figures"
 dir.create(FIGDIR, showWarnings = FALSE, recursive = TRUE)
 
 load("data/hybrids_only_maf005.Rdata")   # map_hyb_005 (Chr, Pos, marker), full-SNP MRK order
@@ -48,7 +48,7 @@ lum <- { rgb <- t(col2rgb(PAL_ALL)) / 255; 0.299 * rgb[, 1] + 0.587 * rgb[, 2] +
 PAL <- PAL_ALL[lum <= 0.75]
 
 make_panel <- function(tag, stat_file, stat_col, thresh, y_lab) {
-  ls_res <- readRDS(file.path(DATA, sprintf("moduleB_stage1_localscore_%s.rds", tag)))
+  ls_res <- readRDS(file.path(DATA, sprintf("localscore_%s.rds", tag)))
   win <- as.data.table(ls_res$significant.windows)
   n_win <- if (is.null(win) || nrow(win) == 0) 0L else nrow(win)
   if (n_win > 0) win[, win_id := paste0(tag, "_W", seq_len(.N))]
@@ -91,8 +91,8 @@ p_c2  <- make_panel("mitoC2", file.path(BP_DIR, "mito_C2_fullSNP_stage1Omega_sum
 
 combined <- (p_pc1 / p_pc2 / p_bw / p_c2)
 
-outpng <- file.path(FIGDIR, "moduleB_stage1_local_score_manhattan.png")
-outpdf <- file.path(FIGDIR, "moduleB_stage1_local_score_manhattan.pdf")
+outpng <- file.path(FIGDIR, "local_score_manhattan.png")
+outpdf <- file.path(FIGDIR, "local_score_manhattan.pdf")
 ggsave(outpng, combined, width = 12, height = 16, dpi = 300, limitsize = FALSE)
 ggsave(outpdf, combined, width = 12, height = 16, limitsize = FALSE)
 cat("wrote", outpng, "and", outpdf, "\n")

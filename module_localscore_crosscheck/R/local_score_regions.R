@@ -1,5 +1,5 @@
 ## =========================================================
-## module_manuscript_rho05 -- BayPass's own local-score outlier-region
+## module_localscore_crosscheck -- BayPass's own local-score outlier-region
 ## method (Fariello et al. 2017; Bonhomme et al. 2019), applied to the
 ## full-SNP Stage-1-direct scan for all four covariates
 ## =========================================================
@@ -42,19 +42,27 @@
 ##         module_manuscript_rho05/baypass_stage1/aland_excluded/
 ##           {PC1,PC2,mito_C2}_fullSNP_stage1Omega_summary_{betai_reg,pi_xtx,contrast}.out
 ##           bio_winter_fullSNP_stage1Omega_summary_betai_reg.out
-## Writes: module_manuscript_rho05/data/moduleB_stage1_localscore_<tag>.rds
+## Writes: module_localscore_crosscheck/data/localscore_<tag>.rds
 ##         (list(res.local.scores, significant.windows) per covariate)
-##         module_manuscript_rho05/data/moduleB_stage1_localscore_summary.tsv
+##         module_localscore_crosscheck/data/localscore_summary.tsv
 ##
 ## Run from the repo root:
-##   Rscript module_manuscript_rho05/R/moduleB_stage1_local_score_regions.R
+##   Rscript module_localscore_crosscheck/R/local_score_regions.R
 ## =========================================================
 
 suppressMessages(library(data.table))
 source("~/gitlab/baypass_public-master/utils/baypass_utils.R")
 
+## compute.local.scores() draws a RANDOM p-value (-log10(runif())) for every
+## NEGATIVE BF value (BayPass's own code, not this script's), so re-running
+## this script can change the exact window count/boundaries for the
+## BF-based covariates from one run to the next. Seeded here so the numbers
+## reported in doc/ are exactly reproducible; see doc/ for a worked example
+## of the resulting run-to-run instability itself.
+set.seed(1)
+
 BP_DIR <- "module_manuscript_rho05/baypass_stage1/aland_excluded"
-DATA   <- "module_manuscript_rho05/data"
+DATA   <- "module_localscore_crosscheck/data"
 dir.create(DATA, showWarnings = FALSE, recursive = TRUE)
 
 load("data/hybrids_only_maf005.Rdata")   # map_hyb_005 (Chr, Pos, marker), full-SNP MRK order
@@ -90,7 +98,7 @@ res_c2  <- run_pval("mitoC2", file.path(BP_DIR, "mito_C2_fullSNP_stage1Omega_sum
                     file.path(BP_DIR, "mito_C2_fullSNP_stage1Omega_summary_pi_xtx.out"))
 
 all_res <- list(PC1 = res_pc1, PC2 = res_pc2, bio_winter = res_bw, mitoC2 = res_c2)
-for (tag in names(all_res)) saveRDS(all_res[[tag]], file.path(DATA, sprintf("moduleB_stage1_localscore_%s.rds", tag)))
+for (tag in names(all_res)) saveRDS(all_res[[tag]], file.path(DATA, sprintf("localscore_%s.rds", tag)))
 
 ## ---- summary across covariates --------------------------------------------
 summ <- rbindlist(lapply(names(all_res), function(tag) {
@@ -100,7 +108,7 @@ summ <- rbindlist(lapply(names(all_res), function(tag) {
   dt[, covariate := tag]
   dt
 }), fill = TRUE)
-fwrite(summ, file.path(DATA, "moduleB_stage1_localscore_summary.tsv"), sep = "\t")
+fwrite(summ, file.path(DATA, "localscore_summary.tsv"), sep = "\t")
 
 cat("\n=== Local-score significant windows, all covariates ===\n")
 print(summ)

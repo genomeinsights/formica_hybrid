@@ -1,9 +1,9 @@
 ## =========================================================
-## module_manuscript_rho05 -- BayPass's local-score outlier-region method
+## module_localscore_crosscheck -- BayPass's local-score outlier-region method
 ## applied to the Stage-1-DIRECT CLUSTER scan (18,361 units, n_snps>=5),
 ## not the full-SNP scan
 ## =========================================================
-## Same method as moduleB_stage1_local_score_regions.R (compute.local.scores(),
+## Same method as local_score_regions.R (compute.local.scores(),
 ## Fariello et al. 2017 / Bonhomme et al. 2019), but run on the coarser
 ## Stage-1-unit resolution used by Module C (one best/representative SNP
 ## per LD-pruned cluster, core_snp) instead of every genome-wide SNP.
@@ -31,18 +31,26 @@
 ##         module_manuscript_rho05/baypass_stage1/aland_excluded_S1units/
 ##           {PC1,PC2,bio_winter}_S1units_withOmega_summary_{betai_reg,pi_xtx}.out
 ##           mito_C2_S1units_summary_{contrast,pi_xtx}.out
-## Writes: module_manuscript_rho05/data/moduleB_stage1_localscore_S1units_<tag>.rds
-##         module_manuscript_rho05/data/moduleB_stage1_localscore_S1units_summary.tsv
+## Writes: module_localscore_crosscheck/data/localscore_S1units_<tag>.rds
+##         module_localscore_crosscheck/data/localscore_S1units_summary.tsv
 ##
 ## Run from the repo root:
-##   Rscript module_manuscript_rho05/R/moduleB_stage1_local_score_regions_S1units.R
+##   Rscript module_localscore_crosscheck/R/local_score_regions_S1units.R
 ## =========================================================
 
 suppressMessages(library(data.table))
 source("~/gitlab/baypass_public-master/utils/baypass_utils.R")
 
+## compute.local.scores() draws a RANDOM p-value (-log10(runif())) for every
+## NEGATIVE BF value (BayPass's own code, not this script's), so re-running
+## this script can change the exact window count/boundaries for the
+## BF-based covariates from one run to the next. Seeded here so the numbers
+## reported in doc/ are exactly reproducible; see doc/ for a worked example
+## of the resulting run-to-run instability itself.
+set.seed(1)
+
 UNIT_DIR <- "module_manuscript_rho05/baypass_stage1/aland_excluded_S1units"
-DATA     <- "module_manuscript_rho05/data"
+DATA     <- "module_localscore_crosscheck/data"
 dir.create(DATA, showWarnings = FALSE, recursive = TRUE)
 
 stage1 <- readRDS("module0_ld_pruning/data/pruned_stage1.rds")
@@ -95,7 +103,7 @@ res_c2  <- run_pval("mitoC2", file.path(UNIT_DIR, "mito_C2_S1units_summary_contr
                     file.path(UNIT_DIR, "mito_C2_S1units_summary_pi_xtx.out"))
 
 all_res <- list(PC1 = res_pc1, PC2 = res_pc2, bio_winter = res_bw, mitoC2 = res_c2)
-for (tag in names(all_res)) saveRDS(all_res[[tag]], file.path(DATA, sprintf("moduleB_stage1_localscore_S1units_%s.rds", tag)))
+for (tag in names(all_res)) saveRDS(all_res[[tag]], file.path(DATA, sprintf("localscore_S1units_%s.rds", tag)))
 
 summ <- rbindlist(lapply(names(all_res), function(tag) {
   w <- all_res[[tag]]$significant.windows
@@ -104,7 +112,7 @@ summ <- rbindlist(lapply(names(all_res), function(tag) {
   dt[, covariate := tag]
   dt
 }), fill = TRUE)
-fwrite(summ, file.path(DATA, "moduleB_stage1_localscore_S1units_summary.tsv"), sep = "\t")
+fwrite(summ, file.path(DATA, "localscore_S1units_summary.tsv"), sep = "\t")
 
 cat("\n=== Local-score significant windows, Stage-1-unit resolution, all covariates ===\n")
 print(summ[, .N, by = covariate])

@@ -1,5 +1,5 @@
 ## =========================================================
-## module_manuscript_rho05 -- FALSE-POSITIVE DEMONSTRATION: a high-scoring
+## module_localscore_crosscheck -- FALSE-POSITIVE DEMONSTRATION: a high-scoring
 ## NULL draw for each of the four covariates, styled EXACTLY like the real
 ## Stage-2-region-coloured, arrow-labelled Manhattan figure
 ## (moduleB_stage1_snp_manhattan_combined.R)
@@ -7,7 +7,7 @@
 ## THESE ARE NOT REAL RESULTS. Each panel plots one Omega-structured NULL
 ## draw (no causal link to climate or mitotype) chosen because it happens
 ## to produce an unusually high number of "significant" local-score
-## windows (moduleB_stage1_local_score_null_check_S1units.R already showed
+## windows (local_score_null_check_S1units.R already showed
 ## ~19% of continuous-null draws and the great majority of mitoC2-null
 ## draws produce >=1 such window purely by chance). The purpose is
 ## explicitly to illustrate how easily the local-score method's analytic
@@ -28,14 +28,14 @@
 ## draw, so a "significant" region below is, by construction, a false
 ## positive, not a candidate locus.
 ##
-## Reads : module_manuscript_rho05/data/moduleB_stage1_localscore_nullcheck_S1units.rds
+## Reads : module_localscore_crosscheck/data/localscore_nullcheck_S1units.rds
 ##         module_manuscript_rho05/baypass_stage1/aland_excluded_S1units/null/bf_matrices/
 ##           cRegen_bf_b01..05.rds, mitoC2_bf_b01..05.rds
 ##         module0_ld_pruning_rho05/data/eMLG_5loci_0025_cM05_rho05.rds (canonical Stage-2)
-## Writes: module_manuscript_rho05/Figures/moduleB_stage1_local_score_null_examples.{png,pdf}
+## Writes: module_localscore_crosscheck/Figures/local_score_null_examples.{png,pdf}
 ##
 ## Run from the repo root:
-##   Rscript module_manuscript_rho05/R/moduleB_stage1_local_score_manhattan_null_examples.R
+##   Rscript module_localscore_crosscheck/R/local_score_manhattan_null_examples.R
 ## =========================================================
 
 suppressMessages({ library(data.table); library(ggplot2); library(ggrepel); library(patchwork) })
@@ -44,8 +44,8 @@ source("~/gitlab/baypass_public-master/utils/baypass_utils.R")
 
 UNIT_DIR <- "module_manuscript_rho05/baypass_stage1/aland_excluded_S1units"
 BFDIR    <- file.path(UNIT_DIR, "null", "bf_matrices")
-DATA     <- "module_manuscript_rho05/data"
-FIGDIR   <- "module_manuscript_rho05/Figures"
+DATA     <- "module_localscore_crosscheck/data"
+FIGDIR   <- "module_localscore_crosscheck/Figures"
 dir.create(FIGDIR, showWarnings = FALSE, recursive = TRUE)
 
 ## ---- shared inputs (identical to moduleB_stage1_snp_manhattan_combined.R) --
@@ -121,23 +121,28 @@ make_null_panel <- function(tag, draw_label, draw_idx, stat_vec_mrk, thresh, y_l
   ## logic to the real-data script)
   raw <- cl5s[stat >= thresh]
   raw[marker2s2, on = .(core_snp = marker), s2_group := i.s2_group]
-  all_regions <- sort(unique(raw$s2_group))
+  raw_regions <- sort(unique(raw$s2_group))
 
-  ## "significant" (arrow-worthy) Stage-1 units = core_snp position falls
-  ## inside a local-score window for this null draw (stands in for the
-  ## floor-survivor null test used for the real covariates)
-  sig_units <- cl5s[0]
-  region_counts <- data.table(s2_group = character(0), N = integer(0))
+  ## ONE ARROW PER WINDOW (not per touched Stage-2 region -- see
+  ## local_score_snp_manhattan_manuscript_style.R's header for why: a
+  ## window's peak unit is the strongest RAW value inside it, and is often
+  ## not itself a raw crossing, so its Stage-2 group is looked up directly
+  ## from the canonical clustering, independent of raw_regions, and unioned
+  ## in below so the arrowed region still gets its own colour either way.
+  arrows_dt <- data.table(win_id = character(0), s2_group = character(0), gpos_mid = numeric(0))
   if (n_win > 0) {
     win <- as.data.table(win)
-    idx <- rep(FALSE, nrow(cl5s))
-    for (i in seq_len(nrow(win))) idx <- idx | (cl5s$Chr == win$chr[i] & cl5s$core_pos >= win$beg[i] & cl5s$core_pos <= win$end[i])
-    sig_units <- cl5s[idx]
-    sig_units[marker2s2, on = .(core_snp = marker), s2_group := i.s2_group]
-    region_counts <- sig_units[, .N, by = s2_group]
-    setorder(region_counts, -N)
+    peak_col <- if (is_bf) "BF (dB) peak pos" else "-log10(p-val) peak pos"
+    win[, peak_pos := as.integer(get(peak_col))]
+    win[, mid_pos := as.integer(round((beg + end) / 2))]
+    win[, win_id := paste0(tag, "_W", seq_len(.N))]
+    peak_snp <- cl5s[.(Chr = win$chr, core_pos = win$peak_pos), on = .(Chr, core_pos), core_snp]
+    win[, peak_s2 := marker2s2[.(peak_snp), on = "marker", s2_group]]
+    win[, gpos_mid := mid_pos + chr_lens$offset[match(chr, chr_lens$Chr)]]
+    arrows_dt <- win[!is.na(peak_s2), .(win_id, s2_group = peak_s2, gpos_mid)]
   }
 
+  all_regions <- sort(union(raw_regions, unique(arrows_dt$s2_group)))
   region_cols <- setNames(rep(PAL, length.out = length(all_regions)), all_regions)
   region_snps <- if (length(all_regions) > 0) g2[group_id %in% all_regions,
                                       .(marker = unlist(members)), by = .(s2_group = group_id)] else
@@ -156,12 +161,9 @@ make_null_panel <- function(tag, draw_label, draw_idx, stat_vec_mrk, thresh, y_l
   y_top <- max(snp_dt$stat, na.rm = TRUE)
   arrow_y_head <- y_top * 1.35
   arrow_y_tail <- y_top * 1.55
-  arrows_dt <- if (n_win > 0 && nrow(region_counts) > 0)
-    snp_dt[is_region == TRUE & s2_group %in% region_counts$s2_group, .(gpos_mid = mean(range(gpos))), by = s2_group] else
-    data.table(s2_group = character(0), gpos_mid = numeric(0))
 
-  message(sprintf("[%s null draw %s] %d raw crossings -> %d regions coloured; %d local-score window(s) -> %d region(s) arrowed",
-                  tag, draw_label, nrow(raw), length(all_regions), n_win, nrow(region_counts)))
+  message(sprintf("[%s null draw %s] %d raw crossings -> %d regions coloured; %d local-score window(s) -> %d window(s) arrowed",
+                  tag, draw_label, nrow(raw), length(all_regions), n_win, nrow(arrows_dt)))
 
   ggplot() +
     geom_point(data = snp_dt[is_region == FALSE & band == FALSE], aes(gpos, stat), colour = "grey75", size = 0.3, alpha = 0.6) +
@@ -180,8 +182,8 @@ make_null_panel <- function(tag, draw_label, draw_idx, stat_vec_mrk, thresh, y_l
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.45))) +
     labs(x = "Chromosome", y = y_lab,
          title = sprintf("%s -- NULL DRAW %s (NOT REAL DATA)", tag, draw_label),
-         subtitle = sprintf("%d raw crossings -> %d Stage-2 regions coloured; %d local-score window(s) -> %d region(s) arrowed as \"significant\"",
-                            nrow(raw), length(all_regions), n_win, nrow(region_counts))) +
+         subtitle = sprintf("%d raw crossings -> %d Stage-2 regions coloured; %d local-score window(s) -> %d window(s) arrowed as \"significant\"",
+                            nrow(raw), length(all_regions), n_win, nrow(arrows_dt))) +
     theme_bw(base_size = 9) +
     theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
           plot.title = element_text(size = 11, face = "bold", hjust = 0, colour = "#B03A2E"),
@@ -189,14 +191,14 @@ make_null_panel <- function(tag, draw_label, draw_idx, stat_vec_mrk, thresh, y_l
 }
 
 ## ---- picks: 3 different high-scoring continuous-null draws (PC1/PC2/
-## bio_winter labels; from moduleB_stage1_local_score_null_check_S1units.R's
+## bio_winter labels; from local_score_null_check_S1units.R's
 ## top-5 by window count), 1 high-scoring mitoC2-null draw (its top-1) -------
 batch_col <- function(k, batch_size = 200L) c(batch = ((k - 1L) %/% batch_size) + 1L,
                                               col   = ((k - 1L) %% batch_size) + 1L)
 
 ## NOTE: compute.local.scores() draws a random p-value for every negative
 ## BF value, so the raw (unseeded) window counts recorded by
-## moduleB_stage1_local_score_null_check_S1units.R for the continuous-null
+## local_score_null_check_S1units.R for the continuous-null
 ## pool (draws #536/#6/#204: 4/3/3 windows) are not exactly reproducible
 ## call-to-call. These three picks were reselected from the same top
 ## candidates AFTER fixing the per-draw seed used below (see make_null_panel),
@@ -218,8 +220,8 @@ for (tag in names(PICKS)) {
 
 combined <- (panels$PC1 / panels$PC2 / panels$bio_winter / panels$mitoC2)
 
-outpng <- file.path(FIGDIR, "moduleB_stage1_local_score_null_examples.png")
-outpdf <- file.path(FIGDIR, "moduleB_stage1_local_score_null_examples.pdf")
+outpng <- file.path(FIGDIR, "local_score_null_examples.png")
+outpdf <- file.path(FIGDIR, "local_score_null_examples.pdf")
 ggsave(outpng, combined, width = 12, height = 16, dpi = 300, limitsize = FALSE)
 ggsave(outpdf, combined, width = 12, height = 16, limitsize = FALSE)
 cat("wrote", outpng, "and", outpdf, "\n")

@@ -1,8 +1,8 @@
 ## =========================================================
-## module_manuscript_rho05 -- does the local-score method's analytic
+## module_localscore_crosscheck -- does the local-score method's analytic
 ## threshold survive the structured-Omega null? (Stage-1-cluster resolution)
 ## =========================================================
-## moduleB_stage1_local_score_regions_S1units.R found 1/0/1/8 "significant"
+## local_score_regions_S1units.R found 1/0/1/8 "significant"
 ## local-score windows for PC1/PC2/bio_winter/mitoC2 using BayPass's own
 ## ANALYTIC per-chromosome threshold (Fariello et al. 2017 / Bonhomme et
 ## al. 2019) -- not the 10,000-draw Omega-structured null used everywhere
@@ -23,29 +23,34 @@
 ## Both were built at Stage-1-cluster resolution (18,361 units) -- there is
 ## no full-SNP-resolution null (would require ~9-10h of additional BayPass
 ## compute per batch), so this check is necessarily at the coarser
-## resolution, matching moduleB_stage1_local_score_regions_S1units.R.
+## resolution, matching local_score_regions_S1units.R.
 ##
 ## Reports the distribution of "significant window" counts across 1000
 ## null draws per covariate-type, and saves the single WORST-CASE null
 ## draw (most windows) for each, so it can be visualised the same way as
-## the real covariates (moduleB_stage1_local_score_manhattan_null_S1units.R).
+## the real covariates (local_score_manhattan_null_S1units.R).
 ##
 ## Reads : module_manuscript_rho05/baypass_stage1/aland_excluded_S1units/
 ##           null/bf_matrices/cRegen_bf_b01..05.rds (continuous null)
 ##           null/bf_matrices/mitoC2_bf_b01..05.rds (contrast null)
 ##           PC1_S1units_..._pi_xtx.out, mito_C2_S1units_..._pi_xtx.out
-## Writes: module_manuscript_rho05/data/moduleB_stage1_localscore_nullcheck_S1units.rds
+## Writes: module_localscore_crosscheck/data/localscore_nullcheck_S1units.rds
 ##
 ## Run from the repo root:
-##   Rscript module_manuscript_rho05/R/moduleB_stage1_local_score_null_check_S1units.R
+##   Rscript module_localscore_crosscheck/R/local_score_null_check_S1units.R
 ## =========================================================
 
 suppressMessages(library(data.table))
 source("~/gitlab/baypass_public-master/utils/baypass_utils.R")
 
+## see local_score_regions.R's header: compute.local.scores() draws a random
+## p-value for every negative BF value, so the per-draw window counts below
+## (and which draw ends up "best") are only reproducible with a fixed seed.
+set.seed(1)
+
 UNIT_DIR <- "module_manuscript_rho05/baypass_stage1/aland_excluded_S1units"
 BFDIR    <- file.path(UNIT_DIR, "null", "bf_matrices")
-DATA     <- "module_manuscript_rho05/data"
+DATA     <- "module_localscore_crosscheck/data"
 dir.create(DATA, showWarnings = FALSE, recursive = TRUE)
 
 stage1 <- readRDS("module0_ld_pruning/data/pruned_stage1.rds")
@@ -118,5 +123,5 @@ cat("fraction of null draws with >=8 windows (mitoC2's real count):", mean(mito_
 
 saveRDS(list(cont_null = cont_null, mito_null = mito_null,
             real_counts = c(PC1 = 1L, PC2 = 0L, bio_winter = 1L, mitoC2 = 8L)),
-       file.path(DATA, "moduleB_stage1_localscore_nullcheck_S1units.rds"))
-cat("\n[null-check] wrote module_manuscript_rho05/data/moduleB_stage1_localscore_nullcheck_S1units.rds\n")
+       file.path(DATA, "localscore_nullcheck_S1units.rds"))
+cat("\n[null-check] wrote module_localscore_crosscheck/data/localscore_nullcheck_S1units.rds\n")
