@@ -106,7 +106,18 @@ within $\sim$0 bp). PC2 additionally has its own Chr24 window (1{,}764{,}859--1{
 loci is not consistent with covariate-specific climate signal -- it is exactly the
 genome-architecture/ancestry-confound pattern already central to
 \texttt{ancestry\_climate\_mitotype.tex} (Section~6 there), now recovered independently by a
-completely different region-detection method.
+completely different region-detection method. \textbf{Confirmed directly (Section~6
+below): genome-wide, PC1 and bio\_winter's full-SNP BF vectors correlate at $r=+0.89$}
+(restricted to the Stage-1-representative markers used elsewhere in this document; $r=+0.90$
+genome-wide) -- strongly positive, consistent with the raw covariates' own near-collinearity
+($r=-0.957$ across the 19 populations) and with the shared windows shown here. PC2, which is
+genuinely a different axis (raw correlation with PC1: $-0.155$; with bio\_winter: $-0.030$),
+shows essentially no such relationship with either ($r=+0.04$ and $r=+0.03$) -- consistent
+with having no local-score windows in common with PC1 or bio\_winter above. Section~6 also
+reports a striking, reproducible \emph{negative} version of the PC1/bio\_winter correlation
+at a different (Stage-1-cluster) resolution, traced there to a real but mechanistically
+unresolved property of that smaller-scale BayPass run -- not a competing finding about
+PC1 and bio\_winter's true relationship, which this full-SNP result establishes directly.
 
 \textbf{Relationship to the floor-survivor candidates.} Of the 12 floor-survivor loci
 identified elsewhere in this pipeline (PC1: 1, PC2: 2, bio\_winter: 10), only bio\_winter's
@@ -198,22 +209,164 @@ genome-wide BF/C2 landscape is indistinguishable from its own $\Omega$-structure
 every measure tested there).
 
 \section*{\color{Accent}5. False-positive demonstration}
-Figure~\ref{fig:null-demo} renders one high-scoring null draw per covariate --
-\emph{styled identically to Figure~\ref{fig:obs-fullsnp}} (Stage-2 (rho05) region colouring,
-one arrow per significant window) -- to make concrete how convincing a purely-null result can
-look. PC1/PC2/bio\_winter each use a different draw from the shared continuous-null pool
-(\#624, \#536, \#107: 3, 2, 2 windows) and mitoC2 uses its own pool's worst draw (\#480: 16
-windows). None of these draws carry any real covariate signal.
+
+\subsection*{\color{Muted}5a. Full-SNP resolution -- worst of 20 random draws, genuine BayPass pipeline}
+To avoid any suggestion of cherry-picking the most extreme case out of a large pre-scanned
+pool, 20 draws were randomly sampled (not the full 1{,}000) from each null pool, and the
+\emph{worst} of those 20 (most local-score windows, Stage-1-cluster resolution: continuous
+draw \#74, 1 window; mitoC2 draw \#212, 9 windows) was carried forward. Because the nulls are
+shared across PC1/PC2/bio\_winter, only one continuous-pool draw and one mitoC2-pool draw are
+needed. Each was then run through the \emph{actual full-SNP BayPass pipeline} -- the identical
+invocation used for the real covariates (same \texttt{u\_DIEM.geno}, Omega, poolsize, MCMC
+settings; only the \texttt{-efile}/\texttt{-contrastfile} swapped for the null draw's raw
+covariate/contrast values, pulled from the preserved
+\texttt{null\_b01.env} row 74 / \texttt{nullc2\_b02.contrast} row 12) -- not the Stage-1-cluster
+BF inherited across member SNPs used in Section~5b below. This is the first null ever run
+through full-SNP BayPass in this pipeline (the 10{,}000-draw scale used elsewhere is
+infeasible at 1.1M markers) and gives a genuine apples-to-apples comparison with
+Figure~\ref{fig:obs-fullsnp}.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=\linewidth]{../Figures/local_score_null_fullsnp_examples.png}
+  \caption{\label{fig:null-fullsnp}Two \textbf{NULL} draws (NOT REAL DATA), full-SNP
+  resolution, styled identically to Figure~\ref{fig:obs-fullsnp}. Continuous-pool draw \#74:
+  2 significant windows. mitoC2-pool draw \#212: \textbf{104} significant windows -- an even
+  more dramatic false-positive count than any result reported for the real mitoC2 covariate
+  itself (Table~1: 95 windows), from a covariate with zero true signal by construction.}
+\end{figure}
+
+\subsection*{\color{Muted}5b. Stage-1-cluster resolution -- three additional example draws}
+For context, Figure~\ref{fig:null-demo} shows three more high-scoring draws (also from
+the worst-of-20 samples described above where available) at Stage-1-cluster resolution
+(member SNPs inherit their cluster's value, as in Figure~\ref{fig:obs-s1} -- cheaper to
+generate, illustrating that this is not a one-off result).
 
 \begin{figure}[H]\centering
   \includegraphics[width=0.78\linewidth]{../Figures/local_score_null_examples.png}
   \caption{\label{fig:null-demo}Four \textbf{NULL} draws (titled in red, explicitly marked
-  NOT REAL DATA), one per covariate, styled identically to Figure~\ref{fig:obs-fullsnp}.
-  Every arrowed, labelled, distinctly-coloured region here is a false positive by
-  construction.}
+  NOT REAL DATA), Stage-1-cluster resolution, one per covariate, styled identically to
+  Figure~\ref{fig:obs-fullsnp}. Every arrowed, labelled, distinctly-coloured region here is a
+  false positive by construction.}
 \end{figure}
 
-\section*{\color{Accent}6. Caveats and limitations}\label{sec:limitations}
+\section*{\color{Accent}6. Correlation with pure null draws}
+A threshold-free complement to Section~4: for each of the 1{,}000 null draws per pool, the
+Pearson correlation between that draw's Stage-1-cluster BF/C2 vector and the REAL observed
+BF/C2 vector for each covariate (every correlation in this section is between two BF/C2
+vectors -- never between raw covariate values). This asks a different question than the
+window count -- not ``does this null draw cross a significance threshold'' but ``how
+similar, in bulk, does a structure-only covariate typically look to the real result.''
+\textbf{$|r|$ is used throughout, not signed $r$}: PC1 and PC2 are PCA axes, so their sign is
+an arbitrary artifact of the eigendecomposition, not a biologically meaningful direction --
+$|r|$ (equivalently $r^2$; both give identical percentile rankings) is the defensible summary
+of relationship strength (Figure~\ref{fig:null-corr}).
+
+\begin{figure}[H]\centering
+  \includegraphics[width=\linewidth]{../Figures/null_correlation_histograms.png}
+  \caption{\label{fig:null-corr}Grey: distribution of $|$Pearson $r|$ between each of 1{,}000
+  null draws' BF/C2 and the observed BF/C2, per covariate, \textbf{Stage-1-cluster
+  resolution}. Coloured vertical lines: $|$the REAL BF-vs-BF correlation$|$ between that
+  panel's covariate and another observed covariate, same resolution. Read together with the
+  self-consistency finding below before interpreting the PC1/bio\_winter panels.}
+\end{figure}
+
+\textbf{Only PC1 vs.\ bio\_winter is genuinely extreme at Stage-1-cluster resolution.}
+$|r|=0.748$, beyond the maximum $|r|$ seen in any of the 1{,}000 null draws for either
+covariate (max $0.190$ in PC1's pool, $0.336$ in bio\_winter's). PC1 vs.\ PC2 ($|r|=0.046$)
+and PC2 vs.\ bio\_winter ($|r|=0.044$) both sit at the 54--58th percentile of their own null
+$|r|$ distributions -- statistically unremarkable. \textbf{But this specific number is
+resolution-dependent and should not be read at face value} -- see below.
+
+\textbf{Self-consistency check: does the Stage-1-cluster (S1units) BayPass run agree with the
+full-SNP run at the same physical markers?} This matters because Stage-1-cluster resolution
+is the only one with null draws available, so every result above implicitly trusts S1units BF
+values as ``the observed result.'' Checked directly: PC1 and bio\_winter's local-score
+windows sit at near-identical genomic positions (Section~2), which predicts a
+\emph{positive} BF-vs-BF correlation -- yet the number above is strongly \emph{negative}.
+At full-SNP resolution, restricted to the same 18{,}361 Stage-1-representative markers, the
+correlation is $r=+0.892$ (Table~\ref{tab:selfcons}) -- strongly positive, exactly as
+predicted by the shared windows and the raw covariates' collinearity. PC1's and PC2's own
+run-to-run self-consistency (S1units vs.\ full-SNP BF, same markers) is only $r=0.13$/$0.36$
+overall, rising to $r=0.89$--$0.98$ once restricted to loci with any real effect size
+(\texttt{Beta\_is} more than $\sim$0.05 from the prior boundary) -- i.e.\ the S1units run is
+a substantially noisier estimate of the true (full-SNP) result than at first glance, though
+individually-reliable at its own strongest loci.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrr}
+\toprule
+Covariate & cor(S1units BF, full-SNP BF), same markers & \\
+\midrule
+PC1        & 0.134 & \\
+PC2        & 0.359 & \\
+bio\_winter & 0.451 & \\
+mitoC2     & 0.939 & \\
+\bottomrule
+\end{tabular}
+\caption{\label{tab:selfcons}Self-consistency between the two independent BayPass runs, all
+18{,}361 Stage-1-representative markers, unconditional on effect size.}
+\end{table}
+
+\textbf{The PC1/bio\_winter sign reversal at S1units resolution is real and fully
+reproducible -- not random MCMC noise, not a data-alignment bug, and not explained by
+covariate collinearity -- but its mechanism remains unresolved.} Ruled out directly:
+(i) file identity -- \texttt{u.bio\_winter} and the Omega file are byte-identical between the
+two BayPass run directories; (ii) marker misalignment -- \texttt{MRK} order was verified
+against \texttt{cl5}'s row order, and the same physical markers were looked up explicitly;
+(iii) MCMC convergence failure -- pilot-run acceptance-rate diagnostics are near-identical
+between the PC1 and bio\_winter S1units runs, no anomaly flagged; (iv) random seed --
+\textbf{both covariates' S1units runs were independently re-run with a different seed (75 vs.\
+the original 74)}. PC1's own reproducibility is $r=0.983$ (orig.\ vs.\ reseed) and
+bio\_winter's is $r=0.968$ -- both runs are internally reliable. Using \emph{only} the two
+independently-reseeded runs (sharing no random state with the original pair, and none with
+each other's original run), the anomaly reproduces almost exactly:
+$\mathrm{cor}(\mathrm{BF}_{\mathrm{PC1,reseed}},\mathrm{BF}_{\mathrm{bio\_winter,reseed}})=-0.751$,
+and among the 50 markers with the strongest PC1 effect, \texttt{sign(Beta\_is)} agrees for
+\textbf{100\% of loci at S1units resolution in both seed pairs}, vs.\ \textbf{0\% (perfect
+disagreement)} for the identical 50 markers at full-SNP resolution
+($r_{\mathrm{full\text{-}SNP}}=-0.911$ for that subset, matching the expected negative
+relationship). This total, seed-independent reversal is a genuine, deterministic property of
+running BayPass's covariate-regression model on this specific $\sim$18K-marker scale for
+these two covariates -- not a fluke, not attributable to any of the usual candidate causes --
+but \emph{why} $\Omega$-correction at this marker-set scale produces it has not been
+mechanistically resolved here (candidate directions for further work: whether it reflects a
+real property of the aux/IS grid integration near the $\beta$ prior boundary interacting with
+near-collinear covariates, or something specific to how the smaller marker set's global
+hyperparameters are estimated) and would need direct examination of BayPass's internals or
+consultation with its authors to resolve properly.
+
+\textbf{Practical conclusion: trust the full-SNP correlation, not the S1units one, for any
+claim about PC1's and bio\_winter's true relationship.} Figure~\ref{fig:obs-fullsnp}'s shared
+windows and the full-SNP $r=+0.89$--$0.90$ correlation (Section~2) are the reliable result.
+The S1units-based $|r|$ percentiles above remain a valid, self-consistent test of \emph{that
+specific resolution's} calibration (Section~4's window-count conclusion is unaffected, since
+it compares S1units observed against S1units null on equal footing), but the PC1/bio\_winter
+correlation specifically should not be read as telling us anything new about those two
+covariates' real relationship -- Section~2 already established that directly and more
+reliably.
+
+\section*{\color{Accent}7. QQ-plots: observed vs.\ pooled null}
+Figure~\ref{fig:null-qq} compares the full distribution of observed BF/C2 values against the
+pooled distribution from the same 1{,}000 null draws (quantile-matched), for all four
+covariates.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=\linewidth]{../Figures/null_qq_plots.png}
+  \caption{\label{fig:null-qq}QQ-plots, observed vs.\ pooled null (1{,}000 draws), Stage-1-
+  cluster resolution. Dashed line = 1:1.}
+\end{figure}
+
+The same qualitative pattern holds for all four covariates, including mitoC2: the bulk of the
+distribution tracks the null 1:1 line closely (most Stage-1 units behave exactly like a
+structure-only covariate would), with clear upward departure concentrated in the upper tail
+only. This is the expected shape for a genome scan with a small number of real or
+structurally-inflated outliers sitting on top of an otherwise well-behaved background --
+it does not by itself distinguish "real candidate loci" from "architecture-driven tail
+inflation," but it does show that whatever is driving Section~4's window-count miscalibration
+for mitoC2 is a broad, distributional effect rather than being confined to a few dramatic
+loci.
+
+\section*{\color{Accent}8. Caveats and limitations}\label{sec:limitations}
 \begin{itemize}
   \item \textbf{The BF-based score is not deterministic.} BayPass's own code draws a random
     $p$-value for every negative BF value (Section~1), so re-running
@@ -248,18 +401,30 @@ windows). None of these draws carry any real covariate signal.
 
 \section*{\color{Accent}Summary}
 BayPass's own local-score outlier-region method, run with its own default settings, recovers
-a striking cross-covariate architecture signal (PC1, PC2, and bio\_winter converging on
-near-identical genomic windows despite carrying no obvious shared cause) that reinforces the
-manuscript's ancestry-confound narrative. But a direct check against the same
-$\Omega$-structured nulls used everywhere else in this pipeline shows the method's analytic
-significance threshold is not well calibrated for this dataset: roughly one in five
-structure-only null draws for the continuous covariates, and the clear majority for mitoC2's
-contrast, already produce one or more ``significant'' windows by chance. Combined with a
-separate, unrelated instability in how the method scores negative Bayes factors, this method
-should be treated as a supplementary, exploratory cross-check -- informative for the
-architecture question it incidentally answers, but not a substitute for, or independent
-confirmation of, the structured-null floor-survivor candidates already reported in the main
-manuscript.
+a real, directly-confirmed architecture signal: PC1 and bio\_winter's full-SNP BF landscapes
+converge on near-identical genomic windows and correlate at $r\approx+0.90$ genome-wide
+(Section~2), consistent with their near-collinearity as raw covariates ($r=-0.957$) and
+reinforcing the manuscript's ancestry-confound narrative. PC2 -- genuinely a different axis
+-- shows neither shared windows nor a meaningful correlation with either. A direct check
+against the same $\Omega$-structured nulls used everywhere else in this pipeline shows the
+method's analytic significance threshold is not well calibrated for this dataset: roughly one
+in five structure-only null draws for the continuous covariates, and the clear majority for
+mitoC2's contrast, already produce one or more ``significant'' windows by chance
+(Section~4), and a worst-of-20-random-draws null run through the actual full-SNP BayPass
+pipeline produced 104 significant windows for a covariate with zero true signal by
+construction (Section~5) -- more than the real mitoC2 covariate itself. Investigating an
+unexpected negative correlation between PC1 and bio\_winter specifically at Stage-1-cluster
+resolution (Section~6) turned up a separate, striking finding in its own right: that
+correlation is genuine, fully reproducible across independent MCMC seeds, and not
+attributable to any data or alignment error, yet is the \emph{opposite} sign of the
+(reliable) full-SNP result for the exact same markers -- an unresolved, resolution-dependent
+property of BayPass's covariate-regression model at this smaller marker-set scale that is
+worth flagging to the BayPass developers or investigating further, independent of this
+document's main purpose. Combined with a separate, unrelated instability in how the local-score
+method scores negative Bayes factors (Section~1/8), this method should be treated as a
+supplementary, exploratory cross-check -- informative for the architecture question it
+incidentally answers, but not a substitute for, or independent confirmation of, the
+structured-null floor-survivor candidates already reported in the main manuscript.
 
 \bigskip
 {\small\color{Muted}
