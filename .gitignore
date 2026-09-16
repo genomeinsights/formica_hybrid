@@ -105,3 +105,7 @@ Figures_legacy/
 
 # archived pre-streamline manuscript (kept on disk, not tracked)
 manuscript_legacy/
+
+# module_localscore_crosscheck: raw multi-GB BayPass output (regenerable
+# from R/ scripts + config/; kept on disk, not tracked)
+module_localscore_crosscheck/full_snp_null10/raw/
