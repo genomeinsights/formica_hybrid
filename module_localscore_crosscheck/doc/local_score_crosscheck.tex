@@ -229,10 +229,32 @@ Figure~\ref{fig:obs-fullsnp}.
 \begin{figure}[H]\centering
   \includegraphics[width=\linewidth]{../Figures/local_score_null_fullsnp_examples.png}
   \caption{\label{fig:null-fullsnp}Two \textbf{NULL} draws (NOT REAL DATA), full-SNP
-  resolution, styled identically to Figure~\ref{fig:obs-fullsnp}. Continuous-pool draw \#74:
+  resolution, styled identically to Figure~\ref{fig:obs-fullsnp} (Stage-2 (rho05)
+  cluster colouring). Continuous-pool draw \#74:
   2 significant windows. mitoC2-pool draw \#212: \textbf{104} significant windows -- an even
   more dramatic false-positive count than any result reported for the real mitoC2 covariate
   itself (Table~1: 95 windows), from a covariate with zero true signal by construction.}
+\end{figure}
+
+Two different colouring conventions are used across this document for the same underlying
+local-score result, and they can look quite different for the same data:
+Figure~\ref{fig:obs-fullsnp}/\ref{fig:null-fullsnp} colour by Stage-2 (rho05) LD-cluster
+membership (matching the main manuscript's convention, Section~1), which looks visually busy
+because a single local-score window routinely spans dozens of the much finer-grained Stage-2
+clusters; Figure~\ref{fig:null-fullsnp-direct} instead colours directly by local-score window
+identity (one clean, contiguous block per window, no sub-division), matching how
+Section~2/3's underlying local-score analysis itself was first visualised. The window counts
+and their genomic locations are identical between the two -- only the colouring/segmentation
+shown differs.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=\linewidth]{../Figures/local_score_null_fullsnp_manhattan.png}
+  \caption{\label{fig:null-fullsnp-direct}The same two \textbf{NULL} draws as
+  Figure~\ref{fig:null-fullsnp}, coloured directly by local-score window identity instead of
+  Stage-2 cluster (one colour per window, no arrows/labels needed since each block already is
+  one window). Continuous-pool draw \#74's 2 windows are clearly visible on Chr17/Chr27;
+  mitoC2-pool draw \#212's 104 windows are individually well-defined and span nearly the
+  entire genome.}
 \end{figure}
 
 \subsection*{\color{Muted}5b. Stage-1-cluster resolution -- three additional example draws}
