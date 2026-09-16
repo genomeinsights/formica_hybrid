@@ -271,6 +271,44 @@ generate, illustrating that this is not a one-off result).
   false positive by construction.}
 \end{figure}
 
+\subsection*{\color{Muted}5c. Do the null and real windows land on the same regions?}
+Figures~\ref{fig:null-fullsnp}/\ref{fig:null-fullsnp-direct} and \ref{fig:obs-fullsnp} can look
+superficially similar at a glance, raising an important question: are the null draws'
+``significant'' windows actually landing on the \emph{same} genomic regions as the real
+covariates', which would suggest specific loci are inherently prone to false positives
+regardless of the covariate tested? Checked by exact physical overlap between window sets.
+
+\textbf{Continuous covariates: zero overlap.} None of PC1's 6, PC2's 7, or bio\_winter's 8
+real windows overlap either of the continuous-null draw's 2 windows. The visual similarity
+some panels share (e.g.\ both showing a tall, isolated peak) is coincidental -- different
+chromosomes, different positions.
+
+\textbf{mitoC2: real overlap, but not because of shared true signal.} 15 of the null draw's
+104 windows overlap a real mitoC2 window -- more than a position-randomized null-of-null
+predicts (1{,}000 simulations reshuffling each null window to a random position on its own
+chromosome, preserving window size: mean $6.6$, 95\% interval $[4,10]$, observed $15$,
+empirical $p=0.001$), even though real and null windows cover almost identical fractions of
+the genome ($5.37\%$ vs.\ $5.05\%$).
+
+\textbf{Mechanism: both real and null windows balloon in the same low-recombination, high-LD
+regions -- a property of the method, not of either covariate.} Pooling all 199 real and null
+mitoC2 windows, window size correlates strongly with two independent LD-context measures at
+the same locus: per-SNP LD weight ($\mathtt{ld\_w\_095}$, $r=0.77$ with $\log_{10}$(window
+size)) and canonical Stage-2 (rho05) LD-cluster size ($r=0.63$). Restricting to the null
+windows alone, the 15 that overlap a real window average $3\times$ higher $\mathtt{ld\_w\_095}$
+($0.306$ vs.\ $0.103$), $4\times$ larger Stage-2 clusters ($713$ vs.\ $177$ mean max cluster
+size), and are $25\times$ larger ($814$~kb vs.\ $33$~kb mean) than the 89 that do not. The two
+largest overlapping windows (Chr10, Chr26) sit in regions with recombination rate
+$\sim$20$\times$ below the genome-wide median ($0.69$--$0.73$~cM/Mb vs.\ $14.4$~cM/Mb),
+consistent with centromeric or pericentromeric location. The Lindley-process window-growth
+mechanism (Section~1) naturally extends further wherever long-range LD correlates many
+physically-distant markers' scores together -- this happens for \emph{any} input statistic,
+real signal or pure null noise, so the genome's lowest-recombination blocks are simply where
+\emph{both} real and null local-score windows are most likely to grow large and, by sheer
+size, to coincide. This is not evidence of shared true signal between mitoC2 and its null;
+it is a further, independent illustration of the method's calibration problem in exactly the
+genomic regions where it is least trustworthy.
+
 \section*{\color{Accent}6. Correlation with pure null draws}
 A threshold-free complement to Section~4: for each of the 1{,}000 null draws per pool, the
 Pearson correlation between that draw's Stage-1-cluster BF/C2 vector and the REAL observed
