@@ -532,6 +532,27 @@ not resolved here and would need its own follow-up (e.g.\ relating each axis's
 DI/recombination/sorting correlation directly to that axis's own ancestry-confound
 coefficient from \texttt{moduleB\_ancestry\_confound.R}).
 
+\textbf{Independent cross-check using BayPass's own outlier-region method.} A separate module
+(\texttt{module\_localscore\_crosscheck}, own report) re-examines the same four Stage-1-direct
+covariates with BayPass's own recommended \emph{local-score} outlier-region method (Fariello
+et al.\ 2017; Bonhomme et al.\ 2019), which builds candidate windows directly from each
+statistic's spatial profile rather than from the Stage-2 LD-clustering used throughout this
+document. Run genome-wide (full-SNP resolution), it independently recovers PC1 and
+bio\_winter's shared architecture ($r=+0.89$--$0.90$ genome-wide, matching their near-collinear
+raw values and their near-identical significant windows), with PC2 -- a genuinely different
+axis -- showing neither. But a direct check of the method's own significance threshold against
+the same $\Omega$-structured nulls used throughout this pipeline shows it is not well
+calibrated for this dataset: roughly one in five structure-only null draws for the continuous
+covariates, and the clear majority for mitoC2's contrast, already produce one or more
+``significant'' windows by chance, and a single worst-of-20-random-draws null run through the
+actual full-SNP BayPass pipeline produced 104 convincing-looking significant windows from a
+covariate with zero true signal by construction -- more than the real mitoC2 covariate itself.
+Those null and real mitoC2 windows also overlap more than chance predicts, traced to both
+ballooning specifically in the genome's lowest-recombination, highest-LD regions (an artifact
+of the method's window-growth mechanism, not of shared true signal). This independent method
+therefore reinforces the ancestry-confound reading of PC1/bio\_winter above, but is not used
+as a source of candidate loci anywhere in this pipeline.
+
 \clearpage
 \section*{\color{Accent}Limitations and recommended follow-up}\label{sec:limitations}
 This analysis should be treated as \textbf{supplementary and explicitly exploratory}, not a
