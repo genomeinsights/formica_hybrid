@@ -1,0 +1,238 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{Accent}{HTML}{21918C}
+\definecolor{Muted}{HTML}{5B6570}
+\definecolor{Warn}{HTML}{B03A2E}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small\color{Muted}Local-score null calibration (confirmatory)}
+\rhead{\small\color{Muted}module\_localscore\_crosscheck}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.5em}\setlength{\parindent}{0pt}
+
+\title{\vspace{-3em}\textbf{\color{Accent}Is BayPass's local-score method calibrated under the null?}\\[0.2em]
+\large A pre-specified, structured-vs-unstructured full-SNP test, and whether an
+LD-aggregated large-replicate design is needed to show it}
+\author{}
+\date{\small Generated \today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\section*{\color{Accent}Motivation and question}
+BayPass ships its own method for turning per-SNP association evidence into outlier
+\emph{regions}: \texttt{compute.local.scores()} (\texttt{baypass\_public/utils/baypass\_utils.R}),
+implementing the local-score approach of Fariello et al.\ (2017) and Bonhomme et al.\ (2019). Its
+appeal is that it reports region-level, not SNP-level, significance directly from a single
+observed scan, without requiring a separate null-calibration step. This document asks two
+questions, pre-specified before running any BayPass job:
+
+\begin{enumerate}
+\item \textbf{Is the method's own significance threshold trustworthy?} If a covariate with
+  \emph{no} real biological signal -- either fully independent of population structure
+  (``unstructured'') or built to respect it the same way the pipeline's real covariates do
+  (``structured'', drawn as $\mathrm{MVN}(0,\Omega)$) -- still produces many ``significant''
+  local-score windows, then the raw \texttt{significant.windows} output cannot be trusted at face
+  value, regardless of which real covariate is being tested.
+\item \textbf{Is a more elaborate design necessary to show this?} A separate, more expensive
+  strand of this pipeline generates very large numbers of null replicates ($10^3$--$10^4$) by
+  working at LD-aggregated (Stage-1/Stage-2 cluster) marker resolution, cheap enough to run at
+  that scale. This document asks whether that machinery is actually \emph{necessary} to
+  demonstrate poor null calibration, or whether a small, full-resolution, directly interpretable
+  design already settles the question.
+\end{enumerate}
+
+\section*{\color{Accent}Design}
+Ten replicate null covariates were drawn as $\mathrm{MVN}(0,\Omega)$ (``structured'', the same
+mechanism used throughout this pipeline's real covariates), using the authoritative population
+covariance matrix already estimated for this dataset
+(\url{module_manuscript_rho05/baypass_stage1/aland_excluded/omega_mat_omega.out}, 19
+populations, Åland excluded). Each structured draw was paired with an \emph{unstructured}
+counterpart: the same 19 realized values, randomly permuted across populations. Pairing this way
+holds the value distribution exactly fixed (identical mean, SD, and value multiset) and isolates
+one variable -- whether the covariate's pattern correlates with $\Omega$ -- as the only difference
+between the two null types (full derivation in \texttt{config/null\_covariate\_design.md}).
+
+Each of the 10 structured/unstructured pairs was run through BayPass on the full genome-wide SNP
+set (1{,}114{,}423 SNPs, \texttt{u\_DIEM.geno}), in two modes mirroring the pipeline's two real
+covariate types: a continuous covariate (IS covariate mode, \texttt{-efile}, BF in deciban units)
+and a binary mitotype-style contrast (\texttt{-contrastfile}, $C2$/$-\log_{10}(p)$) with the same
+7-vs-12 population split as the real mitotype contrast. This gives $10\times2\times2=40$ full-SNP
+BayPass runs, none reusing any output, seed, or draw from the earlier exploratory investigation of
+this question.
+
+\texttt{compute.local.scores()} was then run independently on all 40 outputs with the same
+settings used throughout this pipeline ($\xi=1$, local-score significance threshold $0.01$,
+$\mathrm{MAF}>0.2$, minimum 10{,}000 SNPs per chromosome to be included) -- 1{,}083{,}000--1{,}083{,}700
+of the 1{,}114{,}423 SNPs were retained per run after the internal MAF filter, consistent across all
+40 runs.
+
+\section*{\color{Accent}Result 1: null covariates already produce many \emph{significant} windows}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+ & mean & sd & min & max \\
+\midrule
+continuous, structured   & 4.6   & 3.47  & 0  & 10 \\
+continuous, unstructured & 4.5   & 2.72  & 1  & 8 \\
+mitoC2, structured        & 112.9 & 18.23 & 86 & 147 \\
+mitoC2, unstructured      & 99.9  & 13.75 & 74 & 122 \\
+\bottomrule
+\end{tabular}
+\caption{Significant local-score windows per replicate, genome-wide, across the 10 replicates of
+each null type/mode.}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../Figures/window_counts_structured_vs_unstructured.pdf}
+\caption{Significant window counts per replicate. Lines connect each replicate's paired
+structured/unstructured draw. \emph{Note: axis scales differ between panels by design (free
+y-scales) -- do not compare the two panels' vertical positions directly; only the within-panel
+structured-vs-unstructured contrast and the numbers in the table above are informative. Colour
+distinguishes null type; it is not itself evidence -- see numerical summaries.}}
+\end{figure}
+
+In continuous mode, a covariate with no real signal produces a modest number of false windows
+(under 5, on average). In mitoC2 (contrast) mode, a covariate with no real signal produces
+\textbf{over 100 ``significant'' windows per replicate on average} -- roughly 20--25$\times$ more
+than the continuous mode's false-positive rate, from an identical significance threshold
+($\mathrm{local\text{-}score\ } p<0.01$) applied to an equally fabricated null. This alone
+demonstrates that \texttt{compute.local.scores()}'s raw output is not usable as a trustworthy
+significance call without an explicit null-based correction: a method that would be expected to
+report on the order of a handful of false regions genome-wide under a well-calibrated $p<0.01$
+threshold is instead reporting well over a hundred, for this contrast statistic on this dataset.
+
+The structured-vs-unstructured contrast within each mode is smaller and, at this replicate count,
+not conclusive:
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lrrr}
+\toprule
+mode & mean difference (structured $-$ unstructured) & paired $t$-test $p$ & paired Wilcoxon $p$ \\
+\midrule
+continuous & $+0.1$ windows  & 0.946 & 1.000 \\
+mitoC2     & $+13.0$ windows & 0.078 & 0.064 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Continuous mode shows no detectable difference between the two null types. mitoC2 mode shows a
+directional excess for the structured null (higher in 8 of 10 paired replicates) that is
+suggestive but does not reach conventional significance at $n=10$ ($p\approx 0.06$--$0.08$) --
+reported here as an honest non-significant result, not as evidence either way for whether
+$\Omega$-linked structure specifically (as opposed to an unstructured covariate of the same
+magnitude) inflates local-score detection. What \emph{is} unambiguous is that \emph{both} null
+types, structured and unstructured alike, already produce a large number of false windows in
+mitoC2 mode -- the calibration failure is not specific to population structure.
+
+\section*{\color{Accent}Result 2: a third to half of observed ``significant'' windows are
+recoverable from pure noise}
+
+The same local-score procedure was run on the authoritative observed full-SNP scans already in
+this pipeline (PC1, PC2, two bioclimatic covariates (bio6, bio11), bio\_winter, and the real
+mitotype contrast), and each observed window was checked for physical overlap (same chromosome,
+overlapping coordinate range) against the 20 same-mode null-replicate windows generated above (20
+continuous or 20 mitoC2 null runs, as appropriate to the observed covariate being checked).
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lrrr}
+\toprule
+observed covariate & significant windows & overlap $\geq$1 null replicate & fraction \\
+\midrule
+PC1        & 7  & 3  & 42.9\% \\
+PC2        & 6  & 2  & 33.3\% \\
+bio6       & 7  & 2  & 28.6\% \\
+bio11      & 6  & 0  & 0.0\% \\
+bio\_winter & 7  & 2  & 28.6\% \\
+\midrule
+\emph{continuous, combined} & 33 & 9 & 27.3\% \\
+\midrule
+mitoC2     & 95 & 49 & 51.6\% \\
+\bottomrule
+\end{tabular}
+\caption{Observed local-score windows that physically overlap at least one window independently
+generated by a same-mode null replicate carrying no real signal.}
+\end{table}
+
+Roughly a quarter to a third of the observed continuous covariates' ``significant'' windows, and
+just over half of the observed mitotype contrast's ``significant'' windows, occupy the same
+physical genome locations as windows produced by pure-noise null replicates. Physical overlap does
+not prove any individual observed window is itself a false positive -- a real signal and a null
+artifact can coincidentally occupy the same low-recombination, LD-dense region, which is precisely
+where both real and spurious local-score signal are known to concentrate. But it does mean that,
+for a large fraction of the pipeline's reported ``significant'' local-score regions, \emph{the
+observed result alone cannot distinguish a real association from a false positive that a
+completely uninformative covariate would have produced anyway} at the same location.
+
+\section*{\color{Accent}Answering the motivating question: is LD-aggregation necessary?}
+No -- not to establish that \texttt{compute.local.scores()}'s raw significance output cannot be
+trusted for this dataset. A modest, directly interpretable design -- 10 replicates, full SNP
+resolution, no clustering or marker reduction, $\sim$2 hours of BayPass compute per run -- already
+shows unambiguously that:
+\begin{itemize}
+\item a covariate with zero real signal produces well over 100 ``significant'' windows per
+  replicate in the mitoC2/contrast mode, an order of magnitude more than in continuous mode, under
+  an identical nominal threshold;
+\item this failure holds for both structured and unstructured nulls, so it is not solely an
+  artifact of population-structure correlation;
+\item roughly a third to half of the pipeline's actual reported ``significant'' windows sit on top
+  of locations where a null replicate independently produced a false positive.
+\end{itemize}
+Those three facts are sufficient, on their own, to conclude that local-score windows must be
+interpreted through an explicit null comparison rather than at face value -- which is exactly what
+this document set out to test, and did not require the LD-aggregated, large-$N$ (Stage-1/Stage-2,
+$10^3$--$10^4$-replicate) machinery to show.
+
+That said, this result does \emph{not} make the LD-aggregation approach pointless for other,
+different purposes it was designed for: (i) building an actual calibrated empirical threshold or
+FDR correction (this document establishes that raw significance is miscalibrated, but does not
+itself produce a corrected threshold); (ii) explaining \emph{why} false positives cluster where
+they do -- the companion Stage-2 LD-cluster redundancy analysis addresses that mechanistic
+question directly, which a 10-replicate full-SNP design is not suited to answer at the
+resolution needed. The claim here is narrower and specific to the question posed: LD-aggregation
+is not \emph{necessary} to demonstrate the calibration failure itself.
+
+\section*{\color{Accent}Limitations}
+\begin{itemize}
+\item $n=10$ replicates per null type is enough to see the calibration failure's magnitude clearly
+  but is under-powered to resolve the structured-vs-unstructured contrast in mitoC2 mode at
+  conventional significance ($p\approx0.06$--$0.08$); that comparison should be read as suggestive,
+  not concluded.
+\item Physical window overlap is a necessary but not sufficient condition for concluding an
+  observed window is itself a false positive; it establishes that the location is null-susceptible,
+  not that the specific observed association is spurious.
+\item This analysis addresses only whether local-score's raw output is trustworthy at face value
+  and whether a small design suffices to show that; it does not attempt to build a corrected
+  significance threshold, is not conditioned on Stage-2 LD-cluster size or recombination rate, and
+  does not draw on the Stage-1 1{,}000-replicate calibration (a separate, not-yet-run strand of
+  this module).
+\end{itemize}
+
+\section*{\color{Accent}Reproducibility}
+All 40 BayPass runs, the null covariate design, the local-score computation, and the
+observed-vs-null overlap check are implemented fresh in this module
+(\texttt{R/01\_generate\_null\_covariates.R}, \texttt{R/03\_compute\_local\_scores\_fullsnp.R},
+\texttt{R/04\_observed\_vs\_null\_overlap.R}), reusing only the pipeline's authoritative inputs
+(population covariance matrix, genotype matrix, observed BayPass scans) -- none of this document's
+numbers are copied from, or dependent on, the earlier exploratory investigation of this question
+(\texttt{module\_localscore\_crosscheck\_exploration/}, kept as read-only reference material).
+
+\end{document}
