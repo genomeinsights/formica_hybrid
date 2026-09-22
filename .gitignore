@@ -109,3 +109,8 @@ manuscript_legacy/
 # module_localscore_crosscheck: raw multi-GB BayPass output (regenerable
 # from R/ scripts + config/; kept on disk, not tracked)
 module_localscore_crosscheck/full_snp_null10/raw/
+
+# module_localscore_crosscheck: per-SNP local-score detail (regenerable
+# from full_snp_null10/raw/ via R/03_compute_local_scores_fullsnp.R; only
+# the compact significant.windows extract is committed)
+module_localscore_crosscheck/full_snp_null10/localscores/
