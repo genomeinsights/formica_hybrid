@@ -128,4 +128,9 @@ that the current founders fail. Files:
 | `make_note_figures.R` | figures for the note |
 | `note_parent_ld/` | the note (LaTeX source, PDF, figures) |
 
+Recommended addition: include ~14,100 near-neutral SNPs (DI <= -90, pooled parental MAF >= 0.15) as a
+calibration anchor — the null must reproduce the empirical background F_ST (~0.05) at these loci before a
+shortfall at ancestry-informative loci counts as evidence. `make_mosaic_founders.R ... DI25+neutral` adds them
+(see section 5 of the note).
+
 Generated founder pools and check outputs go to `out/` (git-ignored).

@@ -28,7 +28,10 @@
 ## plus <OUT_DIR>/provenance.txt.
 ##
 ## Run from the formica_hybrid repo root:
-##   Rscript sim_founder_fix/make_mosaic_founders.R <OUT_DIR> [LAMBDA=1] [N_AQ=50] [N_POL=50] [SEED=1]
+##   Rscript sim_founder_fix/make_mosaic_founders.R <OUT_DIR> [LAMBDA=1] [N_AQ=50] [N_POL=50] [SEED=1] [PANEL=DI25]
+## PANEL = "DI25" (51,612 ancestry-informative SNPs) or "DI25+neutral" (adds ~14,100
+## near-neutral SNPs, DI <= -90 and pooled parental MAF >= 0.15, as a calibration
+## anchor; their IDs are listed in <OUT_DIR>/neutral_markers.txt).
 ## =========================================================================
 source("sim_founder_fix/parent_ld_lib.R")
 args <- commandArgs(trailingOnly = TRUE)
@@ -38,10 +41,12 @@ LAMBDA  <- if (length(args) >= 2) as.numeric(args[2]) else 1
 N_AQ    <- if (length(args) >= 3) as.integer(args[3]) else 50L
 N_POL   <- if (length(args) >= 4) as.integer(args[4]) else 50L
 SEED    <- if (length(args) >= 5) as.integer(args[5]) else 1L
+PANEL   <- if (length(args) >= 6) args[6] else "DI25"
+stopifnot(PANEL %in% c("DI25", "DI25+neutral"))
 dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 set.seed(SEED)
 
-panel <- load_panel(); map <- panel$map; P <- panel$parents
+panel <- load_panel(include_neutral = PANEL == "DI25+neutral"); map <- panel$map; P <- panel$parents
 stopifnot(identical(colnames(P), map$marker))
 chrs <- unique(map$Chr)
 cols <- split(seq_len(nrow(map)), factor(map$Chr, levels = chrs))
@@ -93,9 +98,11 @@ for (k in seq_along(chrs)) {
 }
 writeLines(c(sprintf("generated: %s", format(Sys.time())), sprintf("LAMBDA (switches per cM): %g", LAMBDA),
              sprintf("N_AQ haploid males: %d; N_POL diploid queens: %d; SEED: %d", N_AQ, N_POL, SEED),
-             sprintf("donors: %d aquilonia, %d polyctena empirical parents; %d DI25 SNPs on %d chromosomes",
+             sprintf("donors: %d aquilonia, %d polyctena empirical parents; %d SNPs on %d chromosomes",
                      nrow(donors$aquilonia), nrow(donors$polyctena), nrow(map), length(chrs)),
-             "allele 1 = coded allele of module_di25/data/di25_inputs.rds"),
+             sprintf("panel: %s (%d DI25 + %d near-neutral SNPs)", PANEL, sum(map$class == "DI25"), sum(map$class == "neutral")),
+             "allele 1 = coded allele of the empirical genotype matrices"),
            file.path(OUT_DIR, "provenance.txt"))
+if (PANEL == "DI25+neutral") writeLines(map[class == "neutral", marker], file.path(OUT_DIR, "neutral_markers.txt"))
 cat(sprintf("[mosaic] wrote %d chromosome VCFs (%d aq males, %d pol queens, lambda %g) to %s\n",
             length(chrs), N_AQ, N_POL, LAMBDA, OUT_DIR))

@@ -21,9 +21,28 @@ CM_LABELS <- c("<0.001", "0.001-0.01", "0.01-0.05", "0.05-0.2", "0.2-1", "1-5", 
 CLASS_LEVELS <- c(CM_LABELS, "unlinked", "<5kb same sim cluster", "<5kb different sim cluster")
 
 ## ---- marker panel: all DI25 SNPs, their cM, and the evaluation units --------------
-load_panel <- function() {
+## include_neutral = TRUE adds near-neutral SNPs (DI <= -90 and pooled parental
+## minor-allele frequency >= 0.15; ~14,100 SNPs) from the full genotype matrix, as a
+## calibration anchor: neutral simulations must reproduce the empirical F_ST at these
+## loci (~0.05) before a shortfall at ancestry-informative loci counts as evidence.
+load_panel <- function(include_neutral = FALSE) {
   inp <- readRDS("module_di25/data/di25_inputs.rds")
-  map <- as.data.table(inp$map)[, Pos := as.integer(Pos)]
+  map <- as.data.table(inp$map)[, Pos := as.integer(Pos)][, class := "DI25"]
+  parents <- inp$GTs_par
+  if (include_neutral) {
+    e <- new.env(); load("data/hybrids_and_parents_maf005.Rdata", envir = e)
+    sdp <- e$sample_data_with_parents; m <- as.data.table(e$map_hyb_005)
+    isp <- grepl("_parent$", sdp$Population[match(rownames(e$GTs_with_parents), sdp$Sample_ID)])
+    i <- which(m$DiagnosticIndex <= -90 & !(m$marker %in% map$marker))
+    Gp <- e$GTs_with_parents[isp, i, drop = FALSE]; rm(e)
+    pf <- colMeans(Gp, na.rm = TRUE) / 2; keep <- pmin(pf, 1 - pf) >= 0.15
+    stopifnot("parent IDs differ between the DI25 and full genotype sources" = setequal(rownames(Gp), rownames(parents)))
+    Gp <- Gp[rownames(parents), keep, drop = FALSE]
+    nm <- m[i[keep], .(Chr, Pos = as.integer(Pos), marker)][, class := "neutral"]
+    map <- rbind(map[, .(Chr, Pos, marker, class)], nm)
+    parents <- cbind(parents[, map$marker[map$class == "DI25"], drop = FALSE], Gp)
+    o <- order(as.integer(sub("Chr", "", map$Chr)), map$Pos); map <- map[o]; parents <- parents[, o, drop = FALSE]
+  }
   gm <- fread("data/Frufa_DTOL_PR.ref_genome.recmap"); gm[, Chr := paste0("Chr", sub("chromosome_", "", chr))]
   map[, cM := NA_real_]
   for (ch in intersect(unique(map$Chr), unique(gm$Chr))) {
@@ -39,7 +58,7 @@ load_panel <- function() {
   units[, simcl := gi$group_id[match(unit_marker, gi$mk)]]
   units[, col := match(unit_marker, map$marker)]; stopifnot(!anyNA(units$col))
   units[, cM := map$cM[col]]
-  list(map = map, units = units, parents = inp$GTs_par)
+  list(map = map, units = units, parents = parents)
 }
 
 ## pair structure for the evaluation units (computed once)

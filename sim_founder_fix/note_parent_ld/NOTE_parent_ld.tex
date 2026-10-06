@@ -31,6 +31,7 @@
   \item This matters downstream: in the current replicates, hybrid populations show far higher within-population LD and far longer shared ancestry patterns than the empirical hybrids, and part of this is likely inherited from the founders (Figure~\ref{fig:hybrid}).
   \item A simple alternative that needs no phasing --- building founders as \emph{genotype mosaics} of the 15 empirical parents per species --- reproduces the empirical LD decay, the graded LD of close pairs, allele frequencies and heterozygosity. Both tested switch rates (0.5 and 1 per cM) pass an acceptance test that the current founders fail. We recommend 1 switch per cM.
   \item Generator, acceptance test and figure scripts are in \path{formica_hybrid/sim_founder_fix/}. The founder files are per-chromosome VCFs that SLiM reads directly with \path{readHaplosomesFromVCF}.
+  \item We also recommend adding about 14,100 near-neutral SNPs (parental diagnostic index $\leq-90$) to the simulated panel as a calibration anchor (Section~\ref{sec:anchor}); the generator has an option for this.
   \item This is separate from, and in addition to, the founder-frequency indexing bug in \path{AIMs_for_SLiM.R} (\path{NOTE_for_Beatriz.md}). Mosaic founders copy real genotypes SNP by SNP, so they do not use the AIMs probability files at all.
 \end{itemize}
 
@@ -119,12 +120,23 @@ In the empirical hybrids, ancestry-informative loci are strongly differentiated,
   \item Phase among neighbouring heterozygous sites is random. Heterozygosity at DI25 sites is low (0.05--0.12), so few pairs are affected.
 \end{itemize}
 
+\section{Calibration anchor: near-neutral markers}
+\label{sec:anchor}
+
+The current simulations contain only the 51,612 ancestry-informative DI25 SNPs, so the amount of drift they produce is calibrated only indirectly. Near-neutral SNPs, where the parents barely differ (diagnostic index $\leq-90$), provide a direct anchor: drift and demography act on all loci alike, but ancestry sorting cannot act where the parents do not differ. Empirically these loci are only weakly differentiated among the hybrid populations ($F_{ST}\approx0.05$, mean Nei-type $G=0.044$, versus 0.30 at DI25 units). A neutral model that reproduces this background at near-neutral loci, but not the differentiation at ancestry-informative loci, isolates an ancestry-specific excess; an earlier attempt of Petri's to build such a null over-drifted at these loci ($F_{ST}\approx0.14$), which would have made the comparison too lenient.
+
+Mosaic founders make this straightforward, because they copy whatever markers they are given. With \texttt{PANEL = "DI25+neutral"} the generator adds the 14,093 SNPs with diagnostic index $\leq-90$ and pooled parental minor-allele frequency $\geq0.15$ (65,705 SNPs in total; the near-neutral IDs are written to \path{neutral_markers.txt}). In a test pool, founder allele frequencies at these SNPs reproduced the empirical parental frequencies (\Fp: $r=0.98$, mean absolute difference 0.023; \Fa: $r=0.83$, 0.056, as expected from sampling one allele per haploid male in a pool of 50). For 26 near-neutral SNPs no \Fa\ parent had an observed genotype; the generator then writes allele 0 for all \Fa\ founders at those sites.
+
+Empirically, the near-neutral loci are also informative about the \emph{structure} of differentiation, not only its level: relative to their own (much lower) differentiation, they share their population pattern more between chromosomes and less over linkage distances than the ancestry-informative loci, and within-population LD between them extends to about 0.05~cM rather than 1--5~cM. Simulations should reproduce these near-neutral patterns too.
+
 \section{How to use}
 
 From the \path{formica_hybrid} repository root:
 \begin{verbatim}
-# one founder pool per SLiM run (vary SEED with the run)
-Rscript sim_founder_fix/make_mosaic_founders.R <OUT_DIR> 1 50 50 <SEED>
+# one founder pool per SLiM run (vary SEED with the run);
+# add the near-neutral calibration markers with PANEL = DI25+neutral
+Rscript sim_founder_fix/make_mosaic_founders.R <OUT_DIR> 1 50 50 <SEED> \
+    DI25+neutral
 
 # acceptance test on a founder pool (10 random sets of 15 + 15)
 Rscript sim_founder_fix/check_parent_ld.R vcf <OUT_DIR> 10
