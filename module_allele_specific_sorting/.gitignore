@@ -1,0 +1,4 @@
+# regenerable by R/01_pair_stats.R (~150 MB)
+data/01_pairs_le2Mb.rds
+# LaTeX build output
+doc_manuscript/build/

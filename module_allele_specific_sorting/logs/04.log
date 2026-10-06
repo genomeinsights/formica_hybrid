@@ -1,0 +1,87 @@
+[04] units in BDMI regions (cutoff 13): 5215 / 20807; sorted: 1580
+
+[04] conc_resid: observed scan
+[04] conc_resid: null 10/50
+[04] conc_resid: null 20/50
+[04] conc_resid: null 30/50
+[04] conc_resid: null 40/50
+[04] conc_resid: null 50/50
+[04] conc_resid @ T*=0.80: observed +tail 8,621, -tail 7,532; robust (LOO) +2126 / -1854; max hub 23 vs null max-hub 95% 10
+Key: <thr>
+      thr     pos pos_null_mean  p_pos     neg neg_null_mean  p_neg
+    <num>   <num>         <num>  <num>   <num>         <num>  <num>
+ 1:  0.50 3603166      2.59e+06 0.0196 3551109      2.54e+06 0.0196
+ 2:  0.55 1893047      1.26e+06 0.0196 1849499      1.23e+06 0.0196
+ 3:  0.60  899498      5.49e+05 0.0196  870046      5.31e+05 0.0196
+ 4:  0.65  378419      2.08e+05 0.0196  359832      1.99e+05 0.0196
+ 5:  0.70  135349      6.55e+04 0.0196  126556      6.19e+04 0.0196
+ 6:  0.75   39530      1.62e+04 0.0196   35570      1.51e+04 0.0196
+ 7:  0.80    8621      2.86e+03 0.0196    7532      2.61e+03 0.0196
+ 8:  0.85    1390      3.18e+02 0.0196    1150      2.88e+02 0.0196
+ 9:  0.90     229      3.00e+01 0.0196     232      2.97e+01 0.0196
+10:  0.95      95      6.76e+00 0.0196     105      8.20e+00 0.0196
+   annotation frac_all_units frac_tail_endpoints null_mean null_lo null_hi
+       <char>          <num>               <num>     <num>   <num>   <num>
+1:       bdmi         0.2506               0.266     0.254   0.243   0.265
+2:     sorted         0.0759               0.171     0.139   0.129   0.150
+
+[04] conc_raw: observed scan
+[04] conc_raw: null 10/50
+[04] conc_raw: null 20/50
+[04] conc_raw: null 30/50
+[04] conc_raw: null 40/50
+[04] conc_raw: null 50/50
+[04] conc_raw @ T*=0.80: observed +tail 9,202, -tail 3,097; robust (LOO) +2204 / -693; max hub 23 vs null max-hub 95% 10
+Key: <thr>
+      thr     pos pos_null_mean  p_pos     neg neg_null_mean  p_neg
+    <num>   <num>         <num>  <num>   <num>         <num>  <num>
+ 1:  0.50 4308569      2.59e+06 0.0196 2113181      2.54e+06 1.0000
+ 2:  0.55 2251892      1.26e+06 0.0196 1034483      1.23e+06 1.0000
+ 3:  0.60 1061416      5.53e+05 0.0196  455201      5.34e+05 1.0000
+ 4:  0.65  440347      2.10e+05 0.0196  175814      2.01e+05 1.0000
+ 5:  0.70  153811      6.69e+04 0.0196   57388      6.33e+04 1.0000
+ 6:  0.75   43647      1.69e+04 0.0196   14975      1.56e+04 0.9804
+ 7:  0.80    9202      3.07e+03 0.0196    3097      2.79e+03 0.0196
+ 8:  0.85    1351      3.79e+02 0.0196     603      3.29e+02 0.0196
+ 9:  0.90     220      4.25e+01 0.0196     178      4.02e+01 0.0196
+10:  0.95      82      1.08e+01 0.0196      93      1.26e+01 0.0196
+   annotation frac_all_units frac_tail_endpoints null_mean null_lo null_hi
+       <char>          <num>               <num>     <num>   <num>   <num>
+1:       bdmi         0.2506               0.270     0.257   0.244   0.269
+2:     sorted         0.0759               0.174     0.164   0.153   0.177
+
+[04] r_w_adj: observed scan
+R(71675) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71676) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71677) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71678) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71679) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71680) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71682) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71683) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71684) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+R(71685) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[04] r_w_adj: null 10/50
+[04] r_w_adj: null 20/50
+[04] r_w_adj: null 30/50
+[04] r_w_adj: null 40/50
+[04] r_w_adj: null 50/50
+[04] r_w_adj @ T*=0.35: observed +tail 8,777, -tail 8,408; robust (LOO) +695 / -684; max hub 28 vs null max-hub 95% 22
+Key: <thr>
+      thr     pos pos_null_mean  p_pos     neg neg_null_mean  p_neg
+    <num>   <num>         <num>  <num>   <num>         <num>  <num>
+ 1:  0.15 9849538      8.01e+06 0.0196 9840568      8.00e+06 0.0196
+ 2:  0.20 2672696      1.90e+06 0.0196 2663833      1.90e+06 0.0196
+ 3:  0.25  540859      3.26e+05 0.0196  535864      3.23e+05 0.0196
+ 4:  0.30   79490      3.98e+04 0.0196   78899      3.91e+04 0.0196
+ 5:  0.35    8777      3.57e+03 0.0196    8408      3.43e+03 0.0196
+ 6:  0.40     724      2.93e+02 0.0196     715      2.73e+02 0.0196
+ 7:  0.45      94      4.72e+01 0.0196      93      3.82e+01 0.0196
+ 8:  0.50      25      1.71e+01 0.0392      23      1.22e+01 0.0196
+ 9:  0.55      13      9.06e+00 0.1373      12      6.16e+00 0.0196
+10:  0.60      10      5.74e+00 0.0980       9      3.66e+00 0.0196
+   annotation frac_all_units frac_tail_endpoints null_mean null_lo null_hi
+       <char>          <num>               <num>     <num>   <num>   <num>
+1:       bdmi         0.2506               0.264     0.264   0.252   0.274
+2:     sorted         0.0759               0.147     0.195   0.183   0.206
+[04] done

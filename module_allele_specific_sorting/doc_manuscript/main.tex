@@ -1,0 +1,58 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{figures/}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+\renewcommand{\arraystretch}{1.15}
+\captionsetup{font=small,labelfont=bf}
+
+\newcommand{\Fa}{\textit{F. aquilonia}}
+\newcommand{\Fp}{\textit{F. polyctena}}
+\newcommand{\FST}{\ensuremath{F_{ST}}}
+\newcommand{\rST}{\ensuremath{r_{ST}}}
+\newcommand{\pending}[1]{\textcolor{red}{\textbf{[PENDING: #1]}}}
+
+\title{Supplementary methods and results for allele-specific ancestry sorting:\\ high differentiation without high linkage disequilibrium}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+This document describes the analyses in \texttt{module\_allele\_specific\_sorting}, which ask whether ancestry sorting among the 20 hybrid populations is allele-specific --- producing strong differentiation at individual loci without a corresponding increase in linkage disequilibrium (LD) --- and whether specific unlinked loci show the associations that epistatic selection, such as Bateson--Dobzhansky--Muller incompatibilities (BDMIs), would predict. It contains only empirical analyses; comparisons with the neutral demographic simulations are deferred until the simulations have been rerun with corrected founder frequencies. Like the companion BayPass document, it contains text that can be used directly in the manuscript or revised; its main purpose is to provide material for deciding what to include.
+
+All numbers in the tables are generated from the module's saved outputs by \texttt{R/05\_doc\_tables.R}. Text marked \pending{\ldots} depends on analyses that have not finished.
+
+\tableofcontents
+\clearpage
+
+\section{Supplementary methods}
+\input{sections/methods}
+
+\clearpage
+\section{Supplementary results}
+\input{sections/results}
+
+\clearpage
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
