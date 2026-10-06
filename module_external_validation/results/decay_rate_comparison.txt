@@ -1,0 +1,11 @@
+Per-chromosome decay: original vs external (n = 26 chromosomes)
+                  pearson p_pearson spearman p_spearman
+raw_a              0.6388    0.0004   0.6670     0.0003
+projected_a_pred   0.9999    0.0000   0.9993     0.0000
+raw_c             -0.1411    0.4918   0.3508     0.0789
+chr_size           0.9999    0.0000   0.9993     0.0000
+orig_a_vs_logsize -0.1699    0.4067  -0.3696     0.0639
+ext_a_vs_logsize  -0.1444    0.4815  -0.3080     0.1258
+
+Median a: original 0.00174  external 0.00154  ratio ext/orig 0.875 
+Median a_pred: original 0.00174  external 0.00148 

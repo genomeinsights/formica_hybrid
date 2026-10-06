@@ -1,0 +1,53 @@
+ld_w_095 external: n = 229655 SNPs (NA for 737 ); median 0.049 
+ld_w_095 original (all):  median 0.024 ; on shared SNPs 0.026 (external on shared: 0.049 )
+shared SNPs with finite ld_w in both: 194125 
+
+Per-SNP correlation (all shared):
+ pearson spearman 
+  0.7533   0.3660 
+
+Per-chromosome per-SNP Spearman:
+    chr_n     n spearman pearson
+    <num> <num>    <num>   <num>
+ 1:     1 14061    0.280   0.772
+ 2:     2 16115    0.279   0.769
+ 3:     3 10716    0.242   0.546
+ 4:     4 10330    0.442   0.796
+ 5:     5  9526    0.301   0.575
+ 6:     6  8353    0.263   0.746
+ 7:     7 11052    0.401   0.788
+ 8:     8  7546    0.637   0.761
+ 9:     9 10669    0.369   0.900
+10:    10  7757    0.450   0.775
+11:    11  6088    0.340   0.474
+12:    12  6238    0.253   0.355
+13:    13  7532    0.368   0.729
+14:    14  5913    0.331   0.645
+15:    15  7804    0.401   0.602
+16:    16  6356    0.432   0.570
+17:    17  5029    0.323   0.588
+18:    18  5335    0.277   0.513
+19:    19  4451    0.298   0.875
+20:    20  5769    0.422   0.875
+21:    21  7029    0.203   0.727
+22:    22  4650    0.347   0.764
+23:    24  3337    0.272   0.679
+24:    25  4891    0.346   0.581
+25:    26  3807    0.739   0.849
+26:    27  3771    0.413   0.667
+    chr_n     n spearman pearson
+    <num> <num>    <num>   <num>
+median per-chromosome Spearman: 0.343 
+
+Binned (25 kb, >=5 shared SNPs/bin): 8167 bins;  pearson spearman 
+  0.8023   0.6726 
+
+Binned (100 kb, >=5 shared SNPs/bin): 2448 bins;  pearson spearman 
+  0.8237   0.7968 
+
+Binned (500 kb, >=5 shared SNPs/bin): 550 bins;  pearson spearman 
+  0.8739   0.8838 
+
+Shared SNPs also MAF>=0.1 in the original hybrids (n = 172826 ):
+ pearson spearman 
+  0.7593   0.3860 

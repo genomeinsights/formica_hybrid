@@ -1,0 +1,19 @@
+(a) agreement of ancestry-based orientation (no Polarity used) with the Polarity rule
+         bin     n  agree
+      <fctr> <int>  <num>
+1:   [0,0.2] 15674 0.6440
+2: (0.2,0.4] 13111 0.8730
+3: (0.4,0.6]  6771 0.9787
+4: (0.6,0.8]  1481 0.9980
+5:   (0.8,1]    11 1.0000
+Note: even with a perfect rule the agreement at low |cor| tends to ~50% because the ancestry-based call is itself noise there.
+overall at |cor| > 0.6: 0.998  (n = 1492 )
+
+(b) LD-phase agreement for neighbouring SNP pairs (|r_orig| >= 0.8 & |r_ext| >= 0.6): n pairs = 21394 
+    with Polarity rule applied: 1  | WITHOUT any orientation (raw ALT vs coded): 0.9448 
+    pairs where the two SNPs have DIFFERENT polarity (rule matters): 1 (n = 1180 )
+    pairs where both SNPs have the same polarity: 1 (n = 20214 )
+    non-diagnostic pairs only (both DI <= -25), different polarity: 1 (n = 1136 )
+
+
+(c) AF consistency of tested SNPs (mean ancestry q = 0.367 ): informative SNPs 12 of 25 ; rule closer to predicted AF for 8 ; with AF gap > 0.3 between rule and flip: 2 (all favour the rule: TRUE )

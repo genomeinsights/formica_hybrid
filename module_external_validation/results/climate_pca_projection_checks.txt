@@ -1,0 +1,38 @@
+Reproduction of original site bio values from 30s WorldClim 2.1:
+             bio1 bio2 bio3 bio4 bio5 bio6 bio7 bio8 bio9 bio10 bio11 bio12
+r              NA   NA   NA   NA   NA   NA   NA   NA   NA    NA    NA    NA
+max_abs_diff   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA    NA    NA
+             bio13 bio14 bio15 bio16 bio17 bio18 bio19
+r               NA    NA    NA    NA    NA    NA    NA
+max_abs_diff    NA    NA    NA    NA    NA    NA    NA
+
+cor(PC1)= 0.99999  cor(PC2)= -1 
+
+Original PC range: PC1 -3.9 4.29  PC2 -7.36 3.71 
+    ID_short country latitude   PC1   PC2 outside_orig_range
+      <char>  <char>    <num> <num> <num>             <lgcl>
+ 1:     H115 Finland 61.25414  1.74 -0.53              FALSE
+ 2:     H286 Finland 60.83813  0.63 -1.70              FALSE
+ 3:     H306  Sweden 55.71148 -4.88  3.36               TRUE
+ 4:     H420  Sweden 62.13089  0.84 -1.77              FALSE
+ 5:     H447  Sweden 60.15159  0.82 -1.82              FALSE
+ 6:     H449  Sweden 59.49335  0.97 -2.85              FALSE
+ 7:     H451  Sweden 59.29708 -0.57  1.60              FALSE
+ 8:     H452  Sweden 59.38686 -0.96 -1.18              FALSE
+ 9:     H453  Sweden 59.02227 -1.05  4.62               TRUE
+10:     H462  Sweden 57.70263 -2.32 11.20               TRUE
+11:     H470  Sweden 57.11412 -1.11 14.40               TRUE
+12:     H473  Sweden 57.05368 -3.37  7.15               TRUE
+13:     H476  Sweden 56.49330 -2.34 12.07               TRUE
+14:     H478  Sweden 55.64510 -4.80 -0.29               TRUE
+15:     H482  Sweden 56.48848 -3.38 -0.17              FALSE
+16:     H497  Sweden 58.32249 -0.68 -5.31              FALSE
+17:     H498  Sweden 58.56205 -0.82 -3.37              FALSE
+18:     H504  Sweden 58.99857 -2.65 -3.80              FALSE
+19:     H529 Germany 53.73455 -3.46 -4.39              FALSE
+20:     H538 Germany 51.82010 -3.16 -2.68              FALSE
+21:     H546 Germany 51.66847 -1.64 -0.17              FALSE
+    ID_short country latitude   PC1   PC2 outside_orig_range
+      <char>  <char>    <num> <num> <num>             <lgcl>
+
+variance explained (orig PCA): 0.542 0.317 0.046 

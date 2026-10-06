@@ -1,0 +1,18 @@
+External VCF:  4095053 biallelic SNPs; MAF in the 21 samples >0: 686095  >0.05: 400534  >0.1: 282503  >0.2: 169314 
+Original hybrid SNPs: 1114423  also in external VCF: 443050 
+
+Raw-threshold outlier units, by analysis:
+            analysis n_units best_SNP_in_VCF best_in_VCF_and_MAF21_ge_0.1
+              <char>   <int>           <int>                        <int>
+1:               PC1      73              22                           10
+2:               PC2      28               8                            5
+3:            mitoC2      13               1                            1
+4: coastal_inland_C2      27               6                            4
+5:    heat_tolerance      28               7                            3
+   units_with_any_member_in_VCF
+                          <int>
+1:                           53
+2:                           19
+3:                            7
+4:                           17
+5:                           18

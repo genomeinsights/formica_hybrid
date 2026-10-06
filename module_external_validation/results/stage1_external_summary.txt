@@ -1,0 +1,46 @@
+EXTERNAL (21 inds, MAF>0.1, rho=0.5, slide 100 ):
+  markers in = 230392; clusters = 155665 (67.6% of markers); singletons = 110717; >=5 SNPs = 2330; max cluster = 71; median size = 1; mean size = 1.48 
+ORIGINAL (165 inds, MAF>=0.05, rho=0.5):
+  markers in = 1114423; clusters = 698251 (62.7% of markers); singletons = 498621; >=5 SNPs = 18361; max cluster = 221; median size = 1; mean size = 1.60 
+
+Clusters per chromosome (external):
+       Chr n_clusters n_markers max_size
+    <char>      <int>     <int>    <int>
+ 1:   Chr1      11740     15836       42
+ 2:   Chr2      13349     18098       53
+ 3:   Chr3       9319     12394       34
+ 4:   Chr4       7759     11824       56
+ 5:   Chr5       7926     11006       35
+ 6:   Chr6       6609      9420       32
+ 7:   Chr7       8490     13101       57
+ 8:   Chr8       5537     10144       52
+ 9:   Chr9       8362     12113       60
+10:  Chr10       6471     10324       71
+11:  Chr11       4861      7069       36
+12:  Chr12       4827      6975       12
+13:  Chr13       6124      8949       71
+14:  Chr14       4492      6669       31
+15:  Chr15       6105      9373       40
+16:  Chr16       5106      8261       41
+17:  Chr17       4375      6388       58
+18:  Chr18       4322      6502       63
+19:  Chr19       3424      5071       47
+20:  Chr20       4648      6753       46
+21:  Chr21       5776      8128       33
+22:  Chr22       3403      5315       35
+23:  Chr24       2633      3844       24
+24:  Chr25       4400      7141       35
+25:  Chr26       2641      5176       58
+26:  Chr27       2966      4518       18
+       Chr n_clusters n_markers max_size
+    <char>      <int>     <int>    <int>
+
+Cluster-size distribution (external):
+
+     1      2    3-4    5-9  10-19  20-49    50+ 
+110717  33273   9345   1688    398    226     18 
+
+Physical span of clusters with >=2 SNPs, kb (external vs original):
+            50%     90%      99%
+external 0.7695 68.8593 221.7694
+original 0.2240 14.1971 202.5880

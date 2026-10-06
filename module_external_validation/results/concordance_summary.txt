@@ -1,0 +1,89 @@
+1. Beta_is convention. Units with BF >= 15: sign(Beta_is) x sign(cor(coded-allele pop frequency, covariate))
+   analysis     n frac_negative_product frac_positive_product
+     <char> <int>                 <num>                 <num>
+1:      PC1    73                     1                     0
+2:      PC2    28                     1                     0
+=> Beta_is refers to the NON-coded (dosage-0) allele; k = -1 
+
+2. Concordance of external effect direction with the original association (tested SNP per outlier region)
+      pheno     n concordant  frac p_binom sum_ez p_perm n_nominal
+     <char> <int>      <int> <num>   <num>  <num>  <num>     <int>
+1:      PC1    16          8 0.500   0.598  -1.75  0.659         1
+2: PC1_rint    16          7 0.438   0.773  -3.22  0.806         1
+3:      PC2     9          6 0.667   0.254   2.99  0.208         0
+4: PC2_rint     9          6 0.667   0.254   4.00  0.207         3
+   concordant_among_nominal
+                      <int>
+1:                        0
+2:                        0
+3:                        0
+4:                        2
+
+By tier (raw PC phenotypes):
+    pheno       tier     n concordant
+   <char>     <char> <int>      <int>
+1:    PC1       best     3          1
+2:    PC1 best_other     3          3
+3:    PC1      proxy    10          4
+4:    PC2       best     4          3
+5:    PC2      proxy     5          3
+
+Per SNP (raw PC):
+     pheno  region tested_marker       tier e_orig beta_coded     z      p
+    <char>  <char>        <char>     <char>  <num>      <num> <num>  <num>
+ 1:    PC1 F235850 Chr24:1655516      proxy     -1     1.8400  2.56 0.0190
+ 2:    PC1 F151061 Chr12:6196988      proxy      1     1.0300  1.56 0.1350
+ 3:    PC1 F179211 Chr15:8198592      proxy     -1     1.0300  1.34 0.1960
+ 4:    PC1   F8402 Chr1:12657104      proxy      1    -0.7230 -1.19 0.2480
+ 5:    PC1 F104591  Chr8:5641118       best      1     0.9230  1.17 0.2550
+ 6:    PC1  F49227 Chr3:13995878       best      1    -0.5460 -0.88 0.3900
+ 7:    PC1 F104210  Chr8:6731195 best_other     -1    -0.3190 -0.51 0.6160
+ 8:    PC1  F79833  Chr6:1575624 best_other      1     0.3910  0.48 0.6380
+ 9:    PC1 F114817  Chr9:4515053      proxy      1     0.2930  0.43 0.6700
+10:    PC1 F239732 Chr24:2160084      proxy      1     0.2680  0.35 0.7330
+11:    PC1  F79945  Chr6:1599164 best_other      1     0.2590  0.32 0.7560
+12:    PC1 F175423 Chr15:6258037      proxy     -1     0.2540  0.29 0.7780
+13:    PC1 F172635 Chr14:6663609       best     -1     0.1420  0.17 0.8690
+14:    PC1  F68969  Chr5:8589590      proxy     -1     0.0728  0.10 0.9190
+15:    PC1  F21831  Chr2:7400356      proxy      1    -0.0469 -0.07 0.9410
+16:    PC1 F237397 Chr24:2026560      proxy     -1    -0.0260 -0.04 0.9700
+17:    PC2  F48729 Chr3:13477629       best     -1     4.0200  2.00 0.0605
+18:    PC2 F248840 Chr26:7468405       best     -1    -3.6900 -1.76 0.0952
+19:    PC2  F53302 Chr4:12617168      proxy     -1    -3.4500 -1.45 0.1650
+20:    PC2  F66034  Chr5:2586750       best     -1    -2.0300 -0.98 0.3400
+21:    PC2 F236484 Chr24:1766061      proxy     -1     1.4900  0.79 0.4410
+22:    PC2 F156813 Chr13:5859978       best     -1    -1.5400 -0.78 0.4440
+23:    PC2  F42664  Chr3:6259212      proxy     -1    -1.8300 -0.75 0.4620
+24:    PC2 F125141 Chr10:3834468      proxy      1     0.5570  0.30 0.7650
+25:    PC2 F237443 Chr24:2703641      proxy      1    -0.4090 -0.25 0.8080
+     pheno  region tested_marker       tier e_orig beta_coded     z      p
+    <char>  <char>        <char>     <char>  <num>      <num> <num>  <num>
+    concordant
+        <lgcl>
+ 1:      FALSE
+ 2:       TRUE
+ 3:      FALSE
+ 4:      FALSE
+ 5:       TRUE
+ 6:      FALSE
+ 7:       TRUE
+ 8:       TRUE
+ 9:       TRUE
+10:       TRUE
+11:       TRUE
+12:      FALSE
+13:      FALSE
+14:      FALSE
+15:      FALSE
+16:       TRUE
+17:      FALSE
+18:       TRUE
+19:       TRUE
+20:       TRUE
+21:      FALSE
+22:       TRUE
+23:       TRUE
+24:       TRUE
+25:      FALSE
+    concordant
+        <lgcl>

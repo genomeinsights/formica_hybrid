@@ -1,0 +1,30 @@
+n = 21 individuals; scan SNPs: 218048  GRM markers: 148208 
+GRM: mean diag 1.033  mean off-diag -0.0516  range off-diag -0.131 0.036 
+GRM eigenvalue share, top 5 PCs: 0.067 0.057 0.057 0.055 0.055 
+cor(GRM PC1..3, PC1_climate): 0.66 0.3 0.17 | cor(GRM PC1..3, PC2_climate): -0.24 -0.12 0.01 
+cor(GRM PC1..3, latitude): 0.76 -0.27 0.15 | cor(GRM PC1..3, longitude): 0.43 0.04 -0.13 
+climate PC1 vs PC2 correlation in the 21 samples: -0.37 
+
+EMMAX genome-wide calibration:
+      pheno n_scan n_nan lambda_GC h2_pop_structure frac_p05 frac_p01    min_p
+     <char>  <int> <int>     <num>            <num>    <num>    <num>    <num>
+1:      PC1 217616   432     1.026         1.00e+00   0.0546  0.01235 1.70e-06
+2:      PC2 217616   432     0.993         4.54e-05   0.0407  0.00945 1.03e-07
+3: PC1_rint 217616   432     1.019         1.00e+00   0.0553  0.01235 6.35e-06
+4: PC2_rint 217616   432     1.003         4.54e-05   0.0498  0.01035 2.98e-06
+
+emmax_fast vs emmax() on tested PC1 SNPs: cor(log10 p) = 1 
+
+Tested outlier-region SNPs:
+      pheno n_tested n_p_lt_0.05 expected_if_null_genomewide
+     <char>    <int>       <int>                       <num>
+1:      PC1       16           1                        0.87
+2:      PC2        9           0                        0.37
+3: PC1_rint       16           1                        0.89
+4: PC2_rint        9           3                        0.45
+   median_pct_genomewide  min_p
+                   <num>  <num>
+1:                 0.657 0.0190
+2:                 0.438 0.0605
+3:                 0.750 0.0486
+4:                 0.404 0.0173

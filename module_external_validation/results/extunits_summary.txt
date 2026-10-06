@@ -1,0 +1,43 @@
+Outlier SNPs (members of raw-threshold original units) and their mapping to external Stage-1 units
+   analysis outlier_snps in_external ext_units
+     <char>        <int>       <int>     <int>
+1:      PC1          963         106        39
+2:      PC2          472          70        20
+
+External units with a usable best SNP and a predicted direction (|r_orig| >= 0.5):
+   analysis units regions median_outlier_snps best_is_outlier
+     <char> <int>   <int>               <num>           <int>
+1:      PC2    15       9                   2              14
+2:      PC1    38      18                   2              29
+   median_vote_agreement multi_region_units
+                   <num>              <int>
+1:                     1                  0
+2:                     1                  0
+
+Concordance of external effect direction with the original association (all outlier SNPs -> external units)
+      pheno units regions units_concordant frac_units regions_concordant
+     <char> <int>   <int>            <int>      <num>              <int>
+1:      PC1    38      18               18      0.474                  9
+2:      PC2    15       9               10      0.667                  6
+3: PC1_rint    38      18               15      0.395                  7
+4: PC2_rint    15       9               10      0.667                  6
+   p_regions_binom p_perm_regions units_p05 concordant_among_p05
+             <num>          <num>     <int>                <int>
+1:           0.593          0.439         2                    1
+2:           0.254          0.246         0                    0
+3:           0.881          0.534         2                    1
+4:           0.254          0.261         1                    0
+
+By whether the tested SNP is itself an outlier SNP (raw PC phenotypes):
+    pheno best_is_outlier units concordant  frac
+   <char>          <lgcl> <int>      <int> <num>
+1:    PC1            TRUE    29         13 0.448
+2:    PC1           FALSE     9          5 0.556
+3:    PC2            TRUE    14          9 0.643
+4:    PC2           FALSE     1          1 1.000
+
+By vote agreement >= 0.9 (raw PC phenotypes):
+    pheno high_agree units concordant  frac
+   <char>     <lgcl> <int>      <int> <num>
+1:    PC1       TRUE    38         18 0.474
+2:    PC2       TRUE    15         10 0.667

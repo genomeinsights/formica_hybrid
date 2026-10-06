@@ -1,0 +1,12 @@
+shared SNPs: 184371  strongly differentiated (|d| >= 0.6 ): 37048 
+PC1 variance share: 0.098 PC2: 0.067 
+
+SSE(g=+1) = 130114.5, SSE(g=-1) = 111667.1  (ratio 1.165); on asymmetric SNPs (|pA+pP-1|>0.4, n=0): 0.0 vs 0.0
+mean aquilonia proportion q: g=+1: 0.568  g=-1: 0.367 
+chosen g = -1 ; fraction of SNPs with ALT = coded allele: 0.714 
+q_i (chosen g): 0.18 0.24 0.25 0.26 0.3 0.31 0.31 0.31 0.34 0.35 0.37 0.38 0.38 0.39 0.4 0.41 0.41 0.43 0.43 0.51 0.75 
+cor(ext coded-allele AF, AF predicted from inferred mean ancestry) = 0.292  [with g flipped: -0.471 ]
+
+cor(ancestry q_i, latitude) = 0.76  cor(q_i, climate PC1) = 0.53  cor(q_i, PC2) = -0.25 
+null device 
+          1 
