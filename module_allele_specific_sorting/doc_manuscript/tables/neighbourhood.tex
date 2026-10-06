@@ -1,0 +1,36 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Neighbourhoods of sorted loci versus matched unsorted loci. Values are means over all neighbouring markers in each distance bin; difference: mean over sorted loci of (sorted locus minus the mean of its own matched controls), with 95\% intervals from a bootstrap that resamples the sorted loci's chromosomes and keeps each matched set intact. Within-population LD uses only populations in which both markers segregate. LD-reduced: neighbours are other LD units; unpruned: all DI25 SNPs within 2~Mb, including those in the sorted locus's own LD unit. $n$: sorted loci with at least one neighbour in the bin.}
+\label{tab:neighbourhood}
+\resizebox{\textwidth}{!}{\begin{tabular}{lllrrrr}
+\toprule
+Statistic & Markers & Distance & Sorted & Matched & Difference [95\% CI] & $n$ \\
+\midrule
+Ancestry-profile similarity & LD-reduced units & 0--1kb & 0.437 & 0.494 & -0.057 [-0.088, -0.028] & 278 \\
+ &  & 1--5kb & 0.327 & 0.400 & -0.073 [-0.094, -0.050] & 1021 \\
+ &  & 5--20kb & 0.201 & 0.219 & -0.018 [-0.034, -0.002] & 1419 \\
+ &  & 20--100kb & 0.110 & 0.111 & -0.001 [-0.012, 0.010] & 1533 \\
+ &  & 100--500kb & 0.057 & 0.064 & -0.007 [-0.017, 0.003] & 1546 \\
+ &  & 0.5--2Mb & 0.034 & 0.039 & -0.004 [-0.011, 0.004] & 1551 \\
+ & unpruned SNPs & 0--1kb & 0.663 & 0.735 & -0.073 [-0.104, -0.049] & 695 \\
+ &  & 1--5kb & 0.379 & 0.440 & -0.061 [-0.085, -0.037] & 1155 \\
+ &  & 5--20kb & 0.235 & 0.246 & -0.011 [-0.035, 0.010] & 1476 \\
+ &  & 20--100kb & 0.133 & 0.132 & 0.002 [-0.015, 0.017] & 1549 \\
+ &  & 100--500kb & 0.069 & 0.077 & -0.009 [-0.023, 0.005] & 1552 \\
+ &  & 0.5--2Mb & 0.043 & 0.047 & -0.003 [-0.016, 0.012] & 1552 \\
+Within-population LD & LD-reduced units & 0--1kb & 0.561 & 0.554 & 0.006 [-0.033, 0.040] & 278 \\
+ &  & 1--5kb & 0.375 & 0.404 & -0.029 [-0.051, -0.006] & 1009 \\
+ &  & 5--20kb & 0.206 & 0.202 & 0.004 [-0.013, 0.020] & 1407 \\
+ &  & 20--100kb & 0.081 & 0.078 & 0.003 [-0.007, 0.012] & 1523 \\
+ &  & 100--500kb & 0.027 & 0.026 & 0.001 [-0.004, 0.008] & 1539 \\
+ &  & 0.5--2Mb & 0.005 & 0.007 & -0.002 [-0.004, 0.000] & 1544 \\
+ & unpruned SNPs & 0--1kb & 0.726 & 0.752 & -0.026 [-0.057, -0.000] & 685 \\
+ &  & 1--5kb & 0.422 & 0.443 & -0.020 [-0.042, 0.001] & 1142 \\
+ &  & 5--20kb & 0.239 & 0.227 & 0.012 [-0.011, 0.031] & 1463 \\
+ &  & 20--100kb & 0.105 & 0.096 & 0.009 [-0.004, 0.020] & 1542 \\
+ &  & 100--500kb & 0.037 & 0.038 & -0.001 [-0.008, 0.006] & 1545 \\
+ &  & 0.5--2Mb & 0.006 & 0.012 & -0.006 [-0.012, -0.002] & 1545 \\
+\bottomrule
+\end{tabular}}
+\end{table}

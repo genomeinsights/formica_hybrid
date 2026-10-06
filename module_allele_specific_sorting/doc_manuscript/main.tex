@@ -30,20 +30,24 @@
 \newcommand{\rST}{\ensuremath{r_{ST}}}
 \newcommand{\pending}[1]{\textcolor{red}{\textbf{[PENDING: #1]}}}
 
-\title{Supplementary methods and results for allele-specific ancestry sorting:\\ high differentiation without high linkage disequilibrium}
+\title{Supplementary methods and results for locus-specific ancestry sorting:\\ high differentiation without correspondingly high linkage disequilibrium}
 \author{}
 \date{}
 
 \begin{document}
 \maketitle
 
-This document describes the analyses in \texttt{module\_allele\_specific\_sorting}, which ask whether ancestry sorting among the 20 hybrid populations is allele-specific --- producing strong differentiation at individual loci without a corresponding increase in linkage disequilibrium (LD) --- and whether specific unlinked loci show the associations that epistatic selection, such as Bateson--Dobzhansky--Muller incompatibilities (BDMIs), would predict. It contains only empirical analyses; comparisons with the neutral demographic simulations are deferred until the simulations have been rerun with corrected founder frequencies. Like the companion BayPass document, it contains text that can be used directly in the manuscript or revised; its main purpose is to provide material for deciding what to include.
+This document describes the analyses in \texttt{module\_allele\_specific\_sorting}. They ask whether the strong differentiation among the 20 hybrid populations at ancestry-informative loci is accompanied by correspondingly strong linkage disequilibrium (LD), and whether directionally sorted loci share their sorting with nearby markers more than equally differentiated unsorted loci do. Only empirical analyses are included; comparisons with the neutral demographic simulations are deferred until the simulations have been rerun with corrected founder frequencies. Without those comparisons, the results establish an empirical pattern, not its cause. Like the companion BayPass document, the text can be used directly or revised; its main purpose is to support decisions about what to include in the manuscript.
 
-All numbers in the tables are generated from the module's saved outputs by \texttt{R/05\_doc\_tables.R}. Text marked \pending{\ldots} depends on analyses that have not finished.
+All numbers in the tables are generated from the module's saved outputs by \texttt{R/05\_doc\_tables.R}. Text marked \pending{\ldots} depends on analyses that have not been run.
 
 \tableofcontents
 \clearpage
 
+\section{Summary for the main text}
+\input{sections/summary}
+
+\clearpage
 \section{Supplementary methods}
 \input{sections/methods}
 

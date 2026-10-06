@@ -165,50 +165,11 @@ among_pop_Z <- function(M) {
 }
 
 ## ---------------------------------------------------------------------------
-## chromosome-block bootstrap of a ratio of sums from per-chromosome aggregates
-##   agg: data.table with columns Chr, <group cols>, s (sum), n (count)
-##   returns mean = sum(s)/sum(n) with 95% CI from resampling chromosomes
+## chromosome-block bootstrap: B resamples of the chromosomes, returned as draw
+## counts per chromosome (weights), in the order of `chrs`
 ## ---------------------------------------------------------------------------
-block_boot <- function(agg, by, B = 2000, seed = 1) {
+chrom_draws <- function(chrs, B = 2000L, seed = 1L) {
   set.seed(seed)
-  chrs <- sort(unique(agg$Chr))
-  draws <- replicate(B, sample(chrs, length(chrs), replace = TRUE), simplify = FALSE)
-  agg[, {
-    s <- tapply(s, Chr, sum)[chrs]; n <- tapply(n, Chr, sum)[chrs]
-    s[is.na(s)] <- 0; n[is.na(n)] <- 0
-    bt <- vapply(draws, function(d) sum(s[d]) / sum(n[d]), numeric(1))
-    list(mean = sum(s) / sum(n), lo = quantile(bt, 0.025, na.rm = TRUE),
-         hi = quantile(bt, 0.975, na.rm = TRUE), n_pairs = sum(n))
-  }, by = by]
-}
-
-## ---------------------------------------------------------------------------
-## colleague's BDMI candidate regions (nodes, not edges), module_di25 helpers
-## ---------------------------------------------------------------------------
-BDMI_DIR <- "data/liftoff_Frufa_DTOL_PR"
-merge_iv <- function(s, e) {
-  o <- order(s); s <- s[o]; e <- e[o]
-  cs <- s[1L]; ce <- e[1L]; outS <- numeric(0); outE <- numeric(0)
-  for (i in seq_along(s)[-1L]) {
-    if (s[i] <= ce) ce <- max(ce, e[i])
-    else { outS <- c(outS, cs); outE <- c(outE, ce); cs <- s[i]; ce <- e[i] }
-  }
-  list(s = c(outS, cs), e = c(outE, ce))
-}
-in_intervals <- function(qpos, iv) {
-  if (!length(iv$s)) return(logical(length(qpos)))
-  brk <- as.vector(rbind(iv$s, iv$e))
-  (findInterval(qpos, brk) %% 2L) == 1L
-}
-bdmi_membership <- function(u, cutoff_k = 13L) {
-  f <- list.files(BDMI_DIR, pattern = sprintf("^bdmi_candidates\\.cutoff_%d_.*\\.bed$", cutoff_k), full.names = TRUE)
-  stopifnot(length(f) == 1L)
-  bed <- fread(f, header = FALSE, col.names = c("chr", "start", "end"))
-  bed[, chr := sub("chromosome_", "Chr", chr)]
-  out <- logical(nrow(u))
-  for (ch in intersect(unique(u$Chr), unique(bed$chr))) {
-    b <- bed[chr == ch]; iv <- merge_iv(b$start, b$end)
-    idx <- which(u$Chr == ch); out[idx] <- in_intervals(u$Pos[idx], iv)
-  }
-  out
+  replicate(B, tabulate(match(sample(chrs, length(chrs), replace = TRUE), chrs), length(chrs)),
+            simplify = FALSE)
 }

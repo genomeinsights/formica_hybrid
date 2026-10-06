@@ -1,87 +1,97 @@
-[04] units in BDMI regions (cutoff 13): 5215 / 20807; sorted: 1580
+[04] 1577 sorted units with covariates; 1552 matched (>=1 control within 1.00 SD caliper), 25 dropped; controls per anchor: 1:8 2:11 3:10 4:10 5:1513
+[04] unmatched anchors (no unsorted unit within the caliper): 25; mean 121 SNPs, mean span 907 kb (matched anchors: 3.2 SNPs, 13.2 kb)
+    group_id    Chr     Pos sort_class    FST recomb_rate n_loci_g span_kb
+      <char> <char>   <int>     <char>  <num>       <num>    <int>   <num>
+ 1:    F6411  Chr16 5190026  aquilonia 0.4167      0.1390       53    5294
+ 2:     F237   Chr1 5289913  polyctena 0.3546      0.0921       14    3135
+ 3:    F7191  Chr17 3548454  aquilonia 0.5835      0.2173     1564    2943
+ 4:   F13464  Chr26 4025813  polyctena 0.7377      0.5773      342    2698
+ 5:    F6410  Chr16 2776445  aquilonia 0.3850      0.1511      148    1915
+ 6:    F4454  Chr13 1637656  aquilonia 0.4227      0.0627      382    1638
+ 7:    F4284  Chr13 2985271  aquilonia 0.8359      8.7441       68    1620
+ 8:   F13695  Chr26 2193790  polyctena 0.0438      1.0397        2    1546
+ 9:    F1621  Chr10 9521860  aquilonia 0.8671     17.6311       35     787
+10:   F16340   Chr5 3972721  polyctena 0.5261      1.3713       40     772
+[04] balance (standardised mean differences):
+      variable                       role mean_anchor mean_all_unsorted
+        <char>                     <char>       <num>             <num>
+1:         FST          matched covariate       0.290             0.254
+2:  log_recomb          matched covariate       1.246             1.337
+3: parent_diff          matched covariate       0.726             0.828
+4: density100k          matched covariate      24.143            25.001
+5:   log2_size haplotype extent (outcome)       0.482             0.427
+6:     span_kb haplotype extent (outcome)      13.157             4.376
+   mean_controls smd_before smd_after
+           <num>      <num>     <num>
+1:         0.287     0.3941    0.0377
+2:         1.259    -0.3236   -0.0440
+3:         0.731    -0.6808   -0.0310
+4:        24.238    -0.0834   -0.0089
+5:         0.435     0.0583    0.0462
+6:        18.491     0.0665   -0.0270
+[04] focal loci: 1552 anchors + 5054 distinct controls
 
-[04] conc_resid: observed scan
-[04] conc_resid: null 10/50
-[04] conc_resid: null 20/50
-[04] conc_resid: null 30/50
-[04] conc_resid: null 40/50
-[04] conc_resid: null 50/50
-[04] conc_resid @ T*=0.80: observed +tail 8,621, -tail 7,532; robust (LOO) +2126 / -1854; max hub 23 vs null max-hub 95% 10
-Key: <thr>
-      thr     pos pos_null_mean  p_pos     neg neg_null_mean  p_neg
-    <num>   <num>         <num>  <num>   <num>         <num>  <num>
- 1:  0.50 3603166      2.59e+06 0.0196 3551109      2.54e+06 0.0196
- 2:  0.55 1893047      1.26e+06 0.0196 1849499      1.23e+06 0.0196
- 3:  0.60  899498      5.49e+05 0.0196  870046      5.31e+05 0.0196
- 4:  0.65  378419      2.08e+05 0.0196  359832      1.99e+05 0.0196
- 5:  0.70  135349      6.55e+04 0.0196  126556      6.19e+04 0.0196
- 6:  0.75   39530      1.62e+04 0.0196   35570      1.51e+04 0.0196
- 7:  0.80    8621      2.86e+03 0.0196    7532      2.61e+03 0.0196
- 8:  0.85    1390      3.18e+02 0.0196    1150      2.88e+02 0.0196
- 9:  0.90     229      3.00e+01 0.0196     232      2.97e+01 0.0196
-10:  0.95      95      6.76e+00 0.0196     105      8.20e+00 0.0196
-   annotation frac_all_units frac_tail_endpoints null_mean null_lo null_hi
-       <char>          <num>               <num>     <num>   <num>   <num>
-1:       bdmi         0.2506               0.266     0.254   0.243   0.265
-2:     sorted         0.0759               0.171     0.139   0.129   0.150
+[04] matched-set differences (anchor - mean of its controls), anchor-chromosome bootstrap:
+          marker_set       stat       bin anchor control
+              <char>     <fctr>    <fctr>  <num>   <num>
+ 1: LD-reduced units similarity     0-1kb 0.4366  0.4936
+ 2: LD-reduced units similarity     1-5kb 0.3269  0.3996
+ 3: LD-reduced units similarity    5-20kb 0.2006  0.2188
+ 4: LD-reduced units similarity  20-100kb 0.1096  0.1108
+ 5: LD-reduced units similarity 100-500kb 0.0574  0.0643
+ 6: LD-reduced units similarity   0.5-2Mb 0.0345  0.0388
+ 7: LD-reduced units   r_w_poly     0-1kb 0.5606  0.5542
+ 8: LD-reduced units   r_w_poly     1-5kb 0.3755  0.4045
+ 9: LD-reduced units   r_w_poly    5-20kb 0.2062  0.2018
+10: LD-reduced units   r_w_poly  20-100kb 0.0812  0.0783
+11: LD-reduced units   r_w_poly 100-500kb 0.0268  0.0256
+12: LD-reduced units   r_w_poly   0.5-2Mb 0.0046  0.0067
+13:    unpruned SNPs similarity     0-1kb 0.6626  0.7353
+14:    unpruned SNPs similarity     1-5kb 0.3789  0.4397
+15:    unpruned SNPs similarity    5-20kb 0.2347  0.2459
+16:    unpruned SNPs similarity  20-100kb 0.1334  0.1319
+17:    unpruned SNPs similarity 100-500kb 0.0688  0.0773
+18:    unpruned SNPs similarity   0.5-2Mb 0.0433  0.0467
+19:    unpruned SNPs   r_w_poly     0-1kb 0.7259  0.7523
+20:    unpruned SNPs   r_w_poly     1-5kb 0.4224  0.4428
+21:    unpruned SNPs   r_w_poly    5-20kb 0.2387  0.2270
+22:    unpruned SNPs   r_w_poly  20-100kb 0.1045  0.0955
+23:    unpruned SNPs   r_w_poly 100-500kb 0.0373  0.0384
+24:    unpruned SNPs   r_w_poly   0.5-2Mb 0.0057  0.0119
+          marker_set       stat       bin anchor control
+              <char>     <fctr>    <fctr>  <num>   <num>
+                         diff n_anchors
+                       <char>     <int>
+ 1: -0.0570 [-0.0884,-0.0280]       278
+ 2: -0.0727 [-0.0940,-0.0496]      1021
+ 3: -0.0182 [-0.0343,-0.0024]      1419
+ 4:  -0.0012 [-0.0125,0.0103]      1533
+ 5:  -0.0069 [-0.0173,0.0028]      1546
+ 6:  -0.0043 [-0.0114,0.0039]      1551
+ 7:   0.0065 [-0.0327,0.0397]       278
+ 8: -0.0290 [-0.0515,-0.0057]      1009
+ 9:   0.0045 [-0.0132,0.0201]      1407
+10:   0.0029 [-0.0075,0.0122]      1523
+11:   0.0012 [-0.0041,0.0076]      1539
+12:  -0.0021 [-0.0044,0.0001]      1544
+13: -0.0727 [-0.1037,-0.0490]       695
+14: -0.0608 [-0.0853,-0.0375]      1155
+15:  -0.0112 [-0.0348,0.0101]      1476
+16:   0.0016 [-0.0154,0.0170]      1549
+17:  -0.0085 [-0.0226,0.0053]      1552
+18:  -0.0034 [-0.0157,0.0123]      1552
+19: -0.0264 [-0.0573,-0.0003]       685
+20:  -0.0205 [-0.0415,0.0011]      1142
+21:   0.0117 [-0.0105,0.0308]      1463
+22:   0.0090 [-0.0037,0.0204]      1542
+23:  -0.0011 [-0.0077,0.0063]      1545
+24: -0.0063 [-0.0115,-0.0019]      1545
+                         diff n_anchors
+                       <char>     <int>
 
-[04] conc_raw: observed scan
-[04] conc_raw: null 10/50
-[04] conc_raw: null 20/50
-[04] conc_raw: null 30/50
-[04] conc_raw: null 40/50
-[04] conc_raw: null 50/50
-[04] conc_raw @ T*=0.80: observed +tail 9,202, -tail 3,097; robust (LOO) +2204 / -693; max hub 23 vs null max-hub 95% 10
-Key: <thr>
-      thr     pos pos_null_mean  p_pos     neg neg_null_mean  p_neg
-    <num>   <num>         <num>  <num>   <num>         <num>  <num>
- 1:  0.50 4308569      2.59e+06 0.0196 2113181      2.54e+06 1.0000
- 2:  0.55 2251892      1.26e+06 0.0196 1034483      1.23e+06 1.0000
- 3:  0.60 1061416      5.53e+05 0.0196  455201      5.34e+05 1.0000
- 4:  0.65  440347      2.10e+05 0.0196  175814      2.01e+05 1.0000
- 5:  0.70  153811      6.69e+04 0.0196   57388      6.33e+04 1.0000
- 6:  0.75   43647      1.69e+04 0.0196   14975      1.56e+04 0.9804
- 7:  0.80    9202      3.07e+03 0.0196    3097      2.79e+03 0.0196
- 8:  0.85    1351      3.79e+02 0.0196     603      3.29e+02 0.0196
- 9:  0.90     220      4.25e+01 0.0196     178      4.02e+01 0.0196
-10:  0.95      82      1.08e+01 0.0196      93      1.26e+01 0.0196
-   annotation frac_all_units frac_tail_endpoints null_mean null_lo null_hi
-       <char>          <num>               <num>     <num>   <num>   <num>
-1:       bdmi         0.2506               0.270     0.257   0.244   0.269
-2:     sorted         0.0759               0.174     0.164   0.153   0.177
-
-[04] r_w_adj: observed scan
-R(71675) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71676) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71677) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71678) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71679) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71680) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71682) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71683) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71684) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-R(71685) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
-[04] r_w_adj: null 10/50
-[04] r_w_adj: null 20/50
-[04] r_w_adj: null 30/50
-[04] r_w_adj: null 40/50
-[04] r_w_adj: null 50/50
-[04] r_w_adj @ T*=0.35: observed +tail 8,777, -tail 8,408; robust (LOO) +695 / -684; max hub 28 vs null max-hub 95% 22
-Key: <thr>
-      thr     pos pos_null_mean  p_pos     neg neg_null_mean  p_neg
-    <num>   <num>         <num>  <num>   <num>         <num>  <num>
- 1:  0.15 9849538      8.01e+06 0.0196 9840568      8.00e+06 0.0196
- 2:  0.20 2672696      1.90e+06 0.0196 2663833      1.90e+06 0.0196
- 3:  0.25  540859      3.26e+05 0.0196  535864      3.23e+05 0.0196
- 4:  0.30   79490      3.98e+04 0.0196   78899      3.91e+04 0.0196
- 5:  0.35    8777      3.57e+03 0.0196    8408      3.43e+03 0.0196
- 6:  0.40     724      2.93e+02 0.0196     715      2.73e+02 0.0196
- 7:  0.45      94      4.72e+01 0.0196      93      3.82e+01 0.0196
- 8:  0.50      25      1.71e+01 0.0392      23      1.22e+01 0.0196
- 9:  0.55      13      9.06e+00 0.1373      12      6.16e+00 0.0196
-10:  0.60      10      5.74e+00 0.0980       9      3.66e+00 0.0196
-   annotation frac_all_units frac_tail_endpoints null_mean null_lo null_hi
-       <char>          <num>               <num>     <num>   <num>   <num>
-1:       bdmi         0.2506               0.264     0.264   0.252   0.274
-2:     sorted         0.0759               0.147     0.195   0.183   0.206
+[04] within-unit haplotype extent (matched):
+        stat anchor control                     diff
+      <fctr>  <num>   <num>                   <char>
+1: log2_size  0.482   0.455     0.027 [-0.044,0.088]
+2:   span_kb 13.157  25.839 -12.682 [-29.734,-0.061]
 [04] done
