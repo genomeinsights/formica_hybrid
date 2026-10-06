@@ -10,15 +10,27 @@ We analysed 165 individuals from 20 hybrid populations. The distance analysis us
 
 \paragraph{Ancestry-profile similarity.} For each pair of markers $i$ and $j$, ancestry-profile similarity $c_{ij}$ is the correlation of their oriented allele-frequency profiles across the 20 populations. A positive value means that the same populations were enriched for \Fa\ ancestry at both loci. We repeated the calculation after removing each population's genome-wide ancestry, estimated from all other chromosomes.
 
-\paragraph{Among-population LD and its differentiation ceiling.} Following the decomposition of LD in subdivided populations by \citet{ohta1982linkage}, the among-population component of LD between two loci, normalised as a correlation, is
+\paragraph{Among-population LD and its differentiation ceiling.} Two loci are in LD among populations when their allele frequencies rise and fall across the same populations. Following the decomposition of LD in subdivided populations by \citet{ohta1982linkage}, this among-population component, normalised as a correlation, is
 \begin{equation}
 r_{ST,ij}=\frac{\operatorname{cov}_k(F_{ik},F_{jk})}{\sqrt{\bar F_i(1-\bar F_i)\,\bar F_j(1-\bar F_j)}}=c_{ij}\sqrt{G_iG_j},
 \qquad G_i=\frac{\operatorname{var}_k(F_{ik})}{\bar F_i(1-\bar F_i)},
 \label{eq:rst}
 \end{equation}
-where $G_i$ is the among-population differentiation of locus $i$ (an unweighted, Nei-type measure computed from population frequencies, distinct from the Weir--Cockerham \FST\ used elsewhere). The product $G_iG_j$ is the \emph{ceiling}: the maximum $r_{ST,ij}^2$, reached if the two loci differentiate the same populations perfectly ($|c_{ij}|=1$). We summarised the \emph{realised fraction} of the ceiling as $\sum r_{ST}^2/\sum G_iG_j$.
+where $G_i$ is the among-population differentiation of locus $i$ (an unweighted, Nei-type measure computed from population frequencies, distinct from the Weir--Cockerham \FST\ used elsewhere). Equation~\eqref{eq:rst} shows that among-population LD has two separate ingredients: how strongly each locus is differentiated ($G_i$, $G_j$), and whether the two loci differentiate the \emph{same} populations in the same direction ($c_{ij}$). Differentiation alone is not enough. Two highly differentiated loci produce strong among-population LD only if their population profiles agree; if each separates a different subset of populations, $c_{ij}$ is close to zero and so is $r_{ST,ij}$, however high their \FST.
 
-\paragraph{Permutation baseline.} With only 20 populations, unrelated profiles still have a non-zero expected squared correlation ($1/19$). We estimated the baseline for each distance class by independently permuting population labels for every unit 500 times. This preserved each unit's allele-frequency profile and differentiation while removing correspondence between loci.
+The product $G_iG_j$ is therefore a \emph{ceiling}: the largest $r_{ST,ij}^2$ the two loci could show given their differentiation, reached only if they partition the populations identically ($|c_{ij}|=1$). For each distance class (all cross-chromosome pairs forming the ``unlinked'' class) we summarised how much of this ceiling is realised as
+\begin{equation}
+R=\frac{\sum r_{ST}^2}{\sum G_iG_j}=\frac{\sum G_iG_j\,c_{ij}^2}{\sum G_iG_j},
+\label{eq:realised}
+\end{equation}
+the differentiation-weighted mean of $c_{ij}^2$. A high $R$ means that differentiated loci share their population partition, so that their differentiation is translated into among-population LD. A shared partition can arise from linkage (nearby loci share their history), from genome-wide population structure (populations differ in overall ancestry, so that every ancestry-informative locus tracks the same gradient), or from selection favouring particular combinations of alleles. A low $R$ means that loci are strongly differentiated but distinguish different populations, so that high differentiation does not raise LD: the signature of locus-specific sorting.
+
+\paragraph{Permutation baseline and the share of the ceiling realised.} $R$ is not zero for unrelated loci: with only 20 populations, two independent profiles have an expected squared correlation of $1/19\approx0.053$. We estimated this baseline, $b$, for each distance class by permuting population labels independently for every unit (500 permutations). This preserves each unit's profile and differentiation, and therefore the ceiling, while removing any correspondence between loci. For cross-chromosome pairs (206.8 million) the permuted sums were computed exactly from per-chromosome $20\times20$ matrices rather than pair by pair. To express the realised fraction on an interpretable scale we rescaled it against the baseline,
+\begin{equation}
+S=\frac{R-b}{1-b},
+\label{eq:share}
+\end{equation}
+the share of the ceiling, beyond chance, that is realised: $S=0$ when loci share their population partitions no more than unrelated loci would, and $S=1$ when all pairs partition the populations identically. Confidence intervals for $S$ were obtained by transforming the bootstrap interval of $R$ with $b$ fixed; the permutation interval of $b$ itself was negligible ($\pm10^{-5}$ for unlinked pairs).
 
 \paragraph{Within-population LD.} We correlated oriented genotypes after centring them within populations and removing variation associated with each individual's genome-wide ancestry, estimated from all other chromosomes. Missing genotypes (2.7\%) were set to the population mean. Because sorted loci are near-fixed in many populations, comparisons of sorted and unsorted loci included only populations in which both markers segregated ($r_w^{\mathrm{poly}}$).
 

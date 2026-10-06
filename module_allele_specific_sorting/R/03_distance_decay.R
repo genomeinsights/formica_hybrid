@@ -9,7 +9,13 @@
 ##                                 partitioned the populations identically
 ##   among LD      mean rST^2      observed among-population LD^2
 ##   realised      sum rST^2 / sum G_i G_j, with its population-label
-##                 permutation baseline (02) and the excess over it
+##                 permutation baseline b (02) and the excess over it
+##   realised_share (realised - b) / (1 - b): the share of the ceiling, beyond
+##                 what 20 unrelated population profiles give by chance, that
+##                 is actually realised (0 = no shared partition beyond chance,
+##                 1 = identical partitions). Interval: bootstrap interval of
+##                 the realised fraction transformed with b fixed (b's own
+##                 permutation interval is negligible, e.g. +-1e-5 unlinked).
 ##   within LD     mean r_w^2, hybrid-index adjusted (the only within-population
 ##                 statistic reported: the unadjusted one is numerically identical)
 ##   concordance   mean signed c, raw and ancestry-residualised, with baseline
@@ -74,13 +80,19 @@ decay <- function(agg, bin_col, labels, base) {
   setnames(b, c("null", "lo", "hi"), c("null_mean", "null_lo", "null_hi"))
   d <- merge(d, b[, bin := factor(bin, levels = c(labels, "unlinked"))], by = c("bin", "qty"), all.x = TRUE)
   d[, excess := mean - null_mean]
+  sh <- d[qty == "realised"][, `:=`(qty = "realised_share",
+                                    mean = (mean - null_mean) / (1 - null_mean),
+                                    lo = (lo - null_mean) / (1 - null_mean),
+                                    hi = (hi - null_mean) / (1 - null_mean),
+                                    null_mean = NA_real_, null_lo = NA_real_, null_hi = NA_real_, excess = NA_real_)]
+  d <- rbind(d, sh)
   setorder(d, qty, bin); d
 }
 res_cm <- decay(aw$cm, "cm_bin", CM_LABELS, bl$cm)
 res_bp <- decay(aw$bp, "bp_bin", BP_LABELS, bl$bp)
 
 cat("\n[03] genetic distance (headline): mean [95% block-bootstrap CI]; permutation baseline; excess\n")
-print(res_cm[qty %in% c("realised", "conc_resid", "within_LD_adj"),
+print(res_cm[qty %in% c("realised", "realised_share", "conc_resid", "within_LD_adj"),
              .(qty, bin, obs = sprintf("%.4f [%.4f,%.4f]", mean, lo, hi),
                baseline = ifelse(is.na(null_mean), "", sprintf("%.4f [%.4f,%.4f]", null_mean, null_lo, null_hi)),
                excess = ifelse(is.na(excess), "", sprintf("%.4f", excess)))])
