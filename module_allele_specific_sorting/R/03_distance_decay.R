@@ -87,7 +87,7 @@ print(res_cm[qty %in% c("realised", "conc_resid", "within_LD_adj"),
 saveRDS(list(cm = res_cm, bp = res_bp, B = B, n_perm = bl$n_perm), file.path(OUT_DATA, "03_decay.rds"))
 
 ## ---- figures -------------------------------------------------------------------
-ld_lab <- c(ceiling = "differentiation ceiling (shared partition)",
+ld_lab <- c(ceiling = "ceiling: maximum among-population LD",
             among_LD = "observed among-population LD",
             within_LD_adj = "within-population LD")
 plot_ld <- function(d, xlab) {
@@ -103,7 +103,7 @@ plot_ld <- function(d, xlab) {
 plot_shared <- function(d, xlab) {
   dd <- d[qty %in% c("realised", "conc_resid")]
   dd[, qty := factor(qty, levels = c("realised", "conc_resid"),
-                     labels = c("fraction of ceiling realised", "ancestry-residualised concordance"))]
+                     labels = c("realised fraction of the ceiling", "ancestry-profile similarity (residualised)"))]
   ggplot(dd, aes(bin, group = qty, colour = qty, fill = qty)) +
     geom_hline(yintercept = 0, colour = "grey60") +
     geom_ribbon(aes(ymin = null_lo, ymax = null_hi), colour = NA, alpha = 0.25) +

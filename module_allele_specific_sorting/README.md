@@ -48,9 +48,10 @@ among-population LD only where loci partition populations the same way.
   both marker sets), equal beyond 20 kb; both-segregating within-pop LD equal or
   slightly lower, never higher; own LD units not larger (span shorter). Pooled
   r_w is diluted at sorted loci — never use it for this comparison.
-- **Unmatched**: 25 sorted loci with no unsorted counterpart are giant LD blocks
-  (mean 121 SNPs, 907 kb; multi-Mb blocks on Chr16, 1, 17, 26) — haplotype-scale
-  sorting the matched test cannot assess.
+- **Unmatched**: 25 sorted loci with no unsorted counterpart within the caliper:
+  11 lie in LD blocks > 100 kb (10 > 500 kb, incl. multi-Mb blocks on Chr16, 1,
+  17, 26), 10 are single-SNP units with extreme covariates (median span 42 kb;
+  the mean of 907 kb is driven by the few multi-Mb blocks). Not testable by matching.
 - **Interpretation**: consistent with locus-specific sorting outside a few large
   blocks; not yet shown to differ from neutral admixture (simulations pending).
 

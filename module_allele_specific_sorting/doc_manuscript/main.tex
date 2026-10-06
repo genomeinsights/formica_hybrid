@@ -7,13 +7,8 @@
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{tabularx}
-\usepackage{array}
 \usepackage{amsmath}
-\usepackage{siunitx}
-\usepackage{xcolor}
 \usepackage{caption}
-\usepackage{subcaption}
 \usepackage{placeins}
 \usepackage{natbib}
 \usepackage[hidelinks]{hyperref}
@@ -28,21 +23,15 @@
 \newcommand{\Fp}{\textit{F. polyctena}}
 \newcommand{\FST}{\ensuremath{F_{ST}}}
 \newcommand{\rST}{\ensuremath{r_{ST}}}
-\newcommand{\pending}[1]{\textcolor{red}{\textbf{[PENDING: #1]}}}
 
-\title{Supplementary methods and results for locus-specific ancestry sorting:\\ high differentiation without correspondingly high linkage disequilibrium}
+\title{Locus-specific ancestry sorting across hybrid populations}
 \author{}
 \date{}
 
 \begin{document}
 \maketitle
 
-This document describes the analyses in \texttt{module\_allele\_specific\_sorting}. They ask whether the strong differentiation among the 20 hybrid populations at ancestry-informative loci is accompanied by correspondingly strong linkage disequilibrium (LD), and whether directionally sorted loci share their sorting with nearby markers more than equally differentiated unsorted loci do. Only empirical analyses are included; comparisons with the neutral demographic simulations are deferred until the simulations have been rerun with corrected founder frequencies. Without those comparisons, the results establish an empirical pattern, not its cause. Like the companion BayPass document, the text can be used directly or revised; its main purpose is to support decisions about what to include in the manuscript.
-
-All numbers in the tables are generated from the module's saved outputs by \texttt{R/05\_doc\_tables.R}. Text marked \pending{\ldots} depends on analyses that have not been run.
-
-\tableofcontents
-\clearpage
+We tested whether strongly differentiated genomic regions show coordinated ancestry sorting across 20 hybrid populations and whether sorted loci are embedded in unusually long ancestry blocks. These empirical analyses describe the observed pattern but do not establish its cause; comparison with neutral simulations remains pending.
 
 \section{Summary for the main text}
 \input{sections/summary}
