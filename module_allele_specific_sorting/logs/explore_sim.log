@@ -1,0 +1,39 @@
+[sim] 50 replicates in 3.0 min
+[sim] median unit F_ST: simulations 0.019 (range over replicates 0.016-0.023); empirical 0.251
+Key: <bin>
+          bin emp_ceiling emp_conc_resid emp_realised emp_realised_share
+       <fctr>       <num>          <num>        <num>              <num>
+1:     <0.001      0.0855        0.33703       0.2133            0.16942
+2: 0.001-0.01      0.0901        0.32974       0.2168            0.17334
+3:  0.01-0.05      0.0928        0.29194       0.1897            0.14474
+4:   0.05-0.2      0.0905        0.22881       0.1475            0.10009
+5:      0.2-1      0.0922        0.10265       0.0843            0.03344
+6:        1-5      0.0915        0.04120       0.0650            0.01302
+7:      >5 cM      0.0910        0.00355       0.0576            0.00530
+8:   unlinked      0.0908       -0.00037       0.0571            0.00468
+   emp_within_LD_adj sim_mean_ceiling sim_mean_conc_resid sim_mean_realised
+               <num>            <num>               <num>             <num>
+1:           0.15569          0.00681            0.763682            0.6899
+2:           0.15909          0.00659            0.737429            0.6502
+3:           0.13726          0.00670            0.721863            0.6224
+4:           0.09191          0.00662            0.676726            0.5562
+5:           0.03858          0.00651            0.565517            0.4114
+6:           0.02467          0.00638            0.399064            0.2433
+7:           0.01001          0.00622            0.049727            0.0652
+8:           0.00808          0.00624            0.000389            0.0584
+   sim_mean_realised_share sim_mean_within_LD_adj
+                     <num>                  <num>
+1:                 0.67253                0.63063
+2:                 0.63078                0.60357
+3:                 0.60134                0.57989
+4:                 0.53155                0.50923
+5:                 0.37869                0.34736
+6:                 0.20127                0.15470
+7:                 0.01323                0.00889
+8:                 0.00607                0.00702
+Warning messages:
+1: Removed 24 rows containing missing values or values outside the scale range
+(`geom_ribbon()`). 
+2: Removed 16 rows containing missing values or values outside the scale range
+(`geom_ribbon()`). 
+[sim] done

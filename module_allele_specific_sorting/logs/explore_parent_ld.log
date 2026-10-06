@@ -1,0 +1,51 @@
+
+[parents] sample summary (empirical; simulated = mean over replicates):
+     species n_ind n_poly    het n_no_het      data
+      <char> <num>  <num>  <num>    <num>    <char>
+1: aquilonia    15   9863 0.0552        0 empirical
+2: polyctena    15  16414 0.1247        0 empirical
+3: aquilonia    15  11298 0.0000       15 simulated
+4: polyctena    15  18643 0.2662        0 simulated
+
+[parents] mean within-species r^2 (empirical vs simulated mean [95% range]):
+Key: <species, scale>
+      species  scale    bin_lab r2_emp                  sim
+       <char> <char>     <char>  <num>               <char>
+ 1: aquilonia     bp      0-5kb  0.207 0.621 [0.613, 0.627]
+ 2: aquilonia     bp     5-20kb  0.119 0.252 [0.245, 0.259]
+ 3: aquilonia     bp   20-100kb  0.084 0.102 [0.098, 0.104]
+ 4: aquilonia     bp  100-500kb  0.080 0.077 [0.076, 0.079]
+ 5: aquilonia     bp    0.5-2Mb  0.079 0.073 [0.072, 0.074]
+ 6: aquilonia     bp     2-10Mb  0.079 0.072 [0.071, 0.073]
+ 7: aquilonia     bp      >10Mb  0.079 0.072 [0.070, 0.074]
+ 8: aquilonia     bp   unlinked  0.079 0.071 [0.071, 0.072]
+ 9: aquilonia     cM     <0.001  0.414 0.686 [0.559, 0.833]
+10: aquilonia     cM 0.001-0.01  0.271 0.564 [0.531, 0.614]
+11: aquilonia     cM  0.01-0.05  0.177 0.487 [0.471, 0.504]
+12: aquilonia     cM   0.05-0.2  0.128 0.362 [0.351, 0.371]
+13: aquilonia     cM      0.2-1  0.094 0.143 [0.139, 0.149]
+14: aquilonia     cM        1-5  0.081 0.083 [0.081, 0.086]
+15: aquilonia     cM      >5 cM  0.079 0.073 [0.072, 0.073]
+16: aquilonia     cM   unlinked  0.079 0.071 [0.071, 0.072]
+17: polyctena     bp      0-5kb  0.247 0.514 [0.511, 0.516]
+18: polyctena     bp     5-20kb  0.121 0.192 [0.190, 0.194]
+19: polyctena     bp   20-100kb  0.097 0.090 [0.088, 0.091]
+20: polyctena     bp  100-500kb  0.088 0.075 [0.074, 0.075]
+21: polyctena     bp    0.5-2Mb  0.086 0.072 [0.072, 0.073]
+22: polyctena     bp     2-10Mb  0.086 0.072 [0.072, 0.072]
+23: polyctena     bp      >10Mb  0.086 0.072 [0.071, 0.072]
+24: polyctena     bp   unlinked  0.086 0.071 [0.071, 0.071]
+25: polyctena     cM     <0.001  0.293 0.441 [0.424, 0.457]
+26: polyctena     cM 0.001-0.01  0.239 0.432 [0.422, 0.443]
+27: polyctena     cM  0.01-0.05  0.216 0.387 [0.382, 0.394]
+28: polyctena     cM   0.05-0.2  0.152 0.275 [0.271, 0.279]
+29: polyctena     cM      0.2-1  0.103 0.116 [0.115, 0.118]
+30: polyctena     cM        1-5  0.091 0.078 [0.077, 0.079]
+31: polyctena     cM      >5 cM  0.086 0.072 [0.072, 0.072]
+32: polyctena     cM   unlinked  0.086 0.071 [0.071, 0.071]
+      species  scale    bin_lab r2_emp                  sim
+       <char> <char>     <char>  <num>               <char>
+Warning message:
+Removed 32 rows containing missing values or values outside the scale range
+(`geom_ribbon()`). 
+[parents] done
