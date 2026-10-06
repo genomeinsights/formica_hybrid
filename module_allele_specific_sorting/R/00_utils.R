@@ -51,6 +51,10 @@ FIX_TH  <- 0.15     # phi = 0.85: population near-fixed if F >= 0.85 (aqu) or F 
 ## distance bins (bp), same breaks as module_population_partitioning
 BP_BREAKS <- c(0, 5e3, 2e4, 1e5, 5e5, 2e6, 1e7, Inf)
 BP_LABELS <- c("0-5kb", "5-20kb", "20-100kb", "100-500kb", "0.5-2Mb", "2-10Mb", ">10Mb")
+## Pairs with IDENTICAL interpolated map positions (dist_cM == 0: both units in
+## a map stretch with no recorded recombination) have an undefined, not a small,
+## genetic distance -- they are typically 5-100 kb apart. They are excluded from
+## the genetic-distance bins (cm_bin = NA) and kept in the physical-distance bins.
 CM_BREAKS <- c(0, 0.001, 0.01, 0.05, 0.2, 1, 5, Inf)
 CM_LABELS <- c("<0.001", "0.001-0.01", "0.01-0.05", "0.05-0.2", "0.2-1", "1-5", ">5 cM")
 

@@ -49,7 +49,8 @@ pairs <- lapply(cols, function(ix) {
   i <- ix[r]; j <- ix[cc]
   list(ut = ut, m = m,
        bp = cut(abs(u$Pos[j] - u$Pos[i]), BP_BREAKS, labels = FALSE, right = FALSE),
-       cm = cut(abs(u$cM_pos[j] - u$cM_pos[i]), CM_BREAKS, labels = FALSE, right = FALSE),
+       cm = { dcm <- abs(u$cM_pos[j] - u$cM_pos[i])
+              b <- cut(dcm, CM_BREAKS, labels = FALSE, right = FALSE); b[which(dcm == 0)] <- NA; b },  # as 01
        gg = g[i] * g[j])
 })
 

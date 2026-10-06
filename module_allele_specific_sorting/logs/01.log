@@ -26,5 +26,6 @@
 [01] Chr25: 541 units, 146070 pairs (93945 <= 2 Mb)
 [01] Chr26: 319 units, 50721 pairs (42412 <= 2 Mb)
 [01] Chr27: 379 units, 71631 pairs (59380 <= 2 Mb)
+[01] within-chromosome pairs with zero map distance (excluded from cM bins only): 21,886
 [01] cross-chromosome pairs: 206,776,551
 [01] done

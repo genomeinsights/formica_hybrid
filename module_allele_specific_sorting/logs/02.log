@@ -1,10 +1,10 @@
 [02] observed sums reproduce 01 exactly (within-chromosome bins and the unlinked shortcut)
-[02] 500 permutations in 1.7 min
+[02] 500 permutations in 1.8 min
 
 [02] realised fraction: observed vs population-label permutation baseline (cM bins):
           bin realised_obs realised_null realised_lo realised_hi
        <fctr>        <num>         <num>       <num>       <num>
-1:     <0.001      0.15307       0.05264     0.05167     0.05358
+1:     <0.001      0.21332       0.05285     0.04062     0.06821
 2: 0.001-0.01      0.21681       0.05258     0.04796     0.05730
 3:  0.01-0.05      0.18968       0.05255     0.05054     0.05454
 4:   0.05-0.2      0.14746       0.05264     0.05160     0.05377
@@ -14,7 +14,7 @@
 8:   unlinked      0.05707       0.05263     0.05262     0.05264
    realised_excess
              <num>
-1:        0.100435
+1:        0.160467
 2:        0.164226
 3:        0.137138
 4:        0.094819

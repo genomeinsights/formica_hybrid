@@ -67,6 +67,7 @@ aggregate_stats <- function(dt, by) {
 ## ---- within-chromosome pairs -------------------------------------------------
 chrs <- unique(u$Chr)
 agg_bp <- agg_cm <- pairs_near <- vector("list", length(chrs))
+n_zero_cM <- 0L
 for (k in seq_along(chrs)) {
   idx <- u[Chr == chrs[k], idx]
   if (length(idx) < 2) next
@@ -76,6 +77,8 @@ for (k in seq_along(chrs)) {
   dt[, dist_cM := abs(u$cM_pos[j] - u$cM_pos[i])]
   dt[, bp_bin := cut(dist_bp, BP_BREAKS, labels = BP_LABELS, right = FALSE)]
   dt[, cm_bin := cut(dist_cM, CM_BREAKS, labels = CM_LABELS, right = FALSE)]
+  dt[dist_cM == 0, cm_bin := NA]                     # undefined genetic distance (00_utils.R)
+  n_zero_cM <<- n_zero_cM + dt[dist_cM == 0, .N]
   agg_bp[[k]] <- aggregate_stats(dt, c("Chr", "bp_bin", "fst_class"))
   agg_cm[[k]] <- aggregate_stats(dt[!is.na(cm_bin)], c("Chr", "cm_bin", "fst_class"))
   pairs_near[[k]] <- dt[dist_bp <= PAIR_TABLE_MAXD,
@@ -84,7 +87,9 @@ for (k in seq_along(chrs)) {
               chrs[k], length(idx), nrow(dt), nrow(pairs_near[[k]])))
   rm(dt); invisible(gc())
 }
-agg_within <- list(bp = rbindlist(agg_bp), cm = rbindlist(agg_cm), fst_breaks = fst_br)
+agg_within <- list(bp = rbindlist(agg_bp), cm = rbindlist(agg_cm), fst_breaks = fst_br, n_zero_cM = n_zero_cM)
+cat(sprintf("[01] within-chromosome pairs with zero map distance (excluded from cM bins only): %s\n",
+            format(n_zero_cM, big.mark = ",")))
 
 ## ---- cross-chromosome pairs (unlinked reference) -----------------------------
 agg_cross <- list()
