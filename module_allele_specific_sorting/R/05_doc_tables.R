@@ -66,7 +66,7 @@ t_um <- c("\\begin{table}[htbp]", "\\centering", "\\small",
 write_tex(t_um, "unmatched.tex")
 
 ## ---- figures -------------------------------------------------------------------------------
-figs <- c("03_decay_cM.pdf", "03_decay_bp.pdf", "04_neighbourhood.pdf", "04_balance.pdf")
+figs <- c("03_decay_cM.pdf", "03_decay_bp.pdf", "04_neighbourhood.pdf", "04_balance.pdf", "06_lowDI_contrast.pdf")
 for (f in figs) {
   src <- file.path(OUT_FIG, f)
   if (!file.exists(src)) stop("missing figure: ", src)

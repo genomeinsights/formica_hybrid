@@ -34,6 +34,20 @@ Because the unpruned analysis included SNPs within each focal locus's own LD clu
 \input{tables/neighbourhood}
 
 \FloatBarrier
+\subsection{Near-neutral loci share their (weak) differentiation more genome-wide}
+
+Near-neutral loci were weakly differentiated (mean $G=0.044$, against 0.30 for ancestry-informative units), so their ceiling was about 20--90 times lower (Figure~\ref{fig:lowdi}a). Relative to this ceiling, their differentiation was organised differently from that of ancestry-informative loci (Figure~\ref{fig:lowdi}b). Over linkage distances they realised a smaller share of the ceiling beyond chance (0.05--0.2~cM: 0.018 [0.006, 0.035] versus 0.100 [0.094, 0.106]; 0.2--1~cM: 0.013 [0.010, 0.017] versus 0.033 [0.031, 0.036]), whereas between chromosomes they realised a larger share (0.0073 [0.0062, 0.0085] versus 0.0047 [0.0044, 0.0050]). This is the pattern expected if near-neutral differentiation reflects population history acting on all loci at once, whereas the differentiation of ancestry-informative loci is largely locus-specific and shared mainly through linkage. Pairs of near-neutral units closer than 0.05~cM were few (130--1,241 per class) and are not interpreted.
+
+Within-population LD between near-neutral markers decayed to background by about 0.05~cM, whereas between ancestry-informative markers it extended to 1--5~cM (Figure~\ref{fig:lowdi}c). Markers that differ between the parental species also carry admixture LD from the ancestry tracts left by hybridisation, which is long-range because it is recent; markers that do not differ between the parents only reflect older, short-range LD from within the parental species. The distance over which ancestry-informative loci share their population patterns therefore matches the scale of ancestry tracts.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{06_lowDI_contrast.pdf}
+  \caption{Ancestry-informative (DI $>-25$) versus near-neutral (DI $\leq-90$) loci, by genetic distance. \textbf{a}, Ceiling (maximum among-population LD, log scale). \textbf{b}, Share of the ceiling realised beyond the population-label permutation baseline. \textbf{c}, Ancestry-adjusted within-population LD (log scale). Error bars: 95\% chromosome-block bootstrap intervals. Near-neutral classes below 0.05~cM contain few pairs (130--1,241).}
+  \label{fig:lowdi}
+\end{figure}
+
+\FloatBarrier
 \subsection{Supplementary figures and tables}
 
 \begin{figure}[htbp]

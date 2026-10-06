@@ -34,6 +34,8 @@ among-population LD only where loci partition populations the same way.
 | `R/03_distance_decay.R` | **headline**: ceiling vs among- vs within-population LD along genetic distance (+ physical as sensitivity), chromosome-block bootstrap, permutation band | `Figures/03_decay_cM.*`, `03_decay_bp.*` |
 | `R/04_sorted_neighbourhood.R` | sorted loci vs matched unsorted loci (K ≤ 5, 1-SD caliper on F_ST, recombination, parental differentiation, density): ancestry-profile similarity and both-segregating within-pop LD to neighbours, for LD-reduced units AND all unpruned SNPs; own-unit size/span; matched-set differences, anchor-chromosome bootstrap with sets intact | `Figures/04_neighbourhood.*`, `04_balance.*` |
 | `R/05_doc_tables.R` | regenerates `doc_manuscript/tables/` and `figures/` from the outputs | — |
+| `R/06_lowDI_contrast.R [N_PERM] [N_CORES]` | internal control: same distance statistics (sign-free) for 9,122 near-neutral full-genome units (DI <= -90, pooled parental MAF >= 0.15), vs DI25 | `Figures/06_lowDI_contrast.*`, `data/06_lowDI.rds` |
+| `R/explore_*.R` | exploratory, not in the document: Figure-1 statistics on the existing (buggy-founder) simulations; parental LD empirical vs simulated; mosaic-founder switch rates | `Figures/explore_*`, `data/explore_*` |
 
 ## Results (2026-10-06)
 
@@ -52,6 +54,11 @@ among-population LD only where loci partition populations the same way.
   11 lie in LD blocks > 100 kb (10 > 500 kb, incl. multi-Mb blocks on Chr16, 1,
   17, 26), 10 are single-SNP units with extreme covariates (median span 42 kb;
   the mean of 907 kb is driven by the few multi-Mb blocks). Not testable by matching.
+- **Near-neutral contrast (06)**: G 0.044 vs 0.30; relative to their ceiling, near-neutral
+  loci share LESS over linkage distances (0.2–1 cM: 0.013 vs 0.033) and MORE between
+  chromosomes (0.0073 vs 0.0047) — population history acts genome-wide, ancestry-informative
+  differentiation is locus-specific. Within-pop LD: near-neutral background by ~0.05 cM,
+  DI25 to 1–5 cM (admixture LD from ancestry tracts). Near-neutral pairs < 0.05 cM too few.
 - **Interpretation**: consistent with locus-specific sorting outside a few large
   blocks; not yet shown to differ from neutral admixture (simulations pending).
 
