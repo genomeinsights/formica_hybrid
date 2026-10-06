@@ -19,7 +19,8 @@
 ##   similarity  correlation of the two oriented 20-population ancestry profiles
 ##   r_w_poly    within-population LD over the populations where BOTH markers
 ##               segregate (pooled r_w is diluted for sorted loci, which are
-##               monomorphic in most populations)
+##               monomorphic in most populations), after regressing out each
+##               individual's leave-one-chromosome-out hybrid index (as r_w_adj in 01)
 ## Two marker sets (audit item 1):
 ##   LD-reduced  neighbours = representative SNPs of OTHER units only
 ##   unpruned    neighbours = ALL 51,612 DI25 SNPs within 2 Mb, including SNPs in
@@ -71,14 +72,31 @@ uc <- match(u$unit_marker, map$marker); stopifnot(!anyNA(uc))
 dd <- abs(P[rownames(Fm), uc] - Fm); dd <- dd[is.finite(dd)]
 stopifnot("SNP-level orientation does not reproduce the unit Fmat" = max(dd) < 1e-8)
 
-## per-population centred genotypes (missing -> 0) and segregation indicators
-Xp <- lapply(hpops, function(p) {
-  X <- G[pop == p, , drop = FALSE] / 2
-  X <- sweep(X, 2, colMeans(X, na.rm = TRUE)); seg <- colSums(X^2, na.rm = TRUE) > 0
-  X[is.na(X)] <- 0
-  list(X = X, seg = seg)
-})
-rm(G); invisible(gc())
+## within-population genotypes for r_w_poly, aligned with 00_utils.R::within_pop_Z(adj = TRUE):
+## (1) x = oriented dosage / 2, centred within each population;
+## (2) for SNPs on chromosome c, regress x (pooled over populations, no intercept) on the
+##     individual's leave-one-chromosome-out hybrid index h_c -- mean oriented dosage over
+##     the UNITS' representative SNPs on all other chromosomes (same construction as 01),
+##     centred within populations -- and keep the residual;
+## (3) missing -> 0. Segregation (the "poly" restriction) is judged on the UNADJUSTED
+##     centred genotypes, so it still means "polymorphic in that population".
+X <- G / 2
+for (p in hpops) { r <- pop == p; X[r, ] <- sweep(X[r, , drop = FALSE], 2, colMeans(X[r, , drop = FALSE], na.rm = TRUE)) }
+seg_by_pop <- lapply(hpops, function(p) colSums(X[pop == p, , drop = FALSE]^2, na.rm = TRUE) > 0)
+Gu <- G[, uc, drop = FALSE] / 2; obs_u <- !is.na(Gu)
+S_all <- rowSums(Gu, na.rm = TRUE); N_all <- rowSums(obs_u)
+for (ch in unique(map$Chr)) {
+  uchr <- which(u$Chr == ch)
+  h <- (S_all - rowSums(Gu[, uchr, drop = FALSE], na.rm = TRUE)) / (N_all - rowSums(obs_u[, uchr, drop = FALSE]))
+  for (p in hpops) { r <- pop == p; h[r] <- h[r] - mean(h[r]) }
+  cols <- map[Chr == ch, col]
+  Xc <- X[, cols, drop = FALSE]; ok <- !is.na(Xc); Xc0 <- Xc; Xc0[!ok] <- 0
+  bb <- colSums(Xc0 * h) / colSums(ok * h^2)
+  X[, cols] <- Xc - outer(h, bb)
+}
+X[is.na(X)] <- 0
+Xp <- lapply(seq_along(hpops), function(k) list(X = X[pop == hpops[k], , drop = FALSE], seg = seg_by_pop[[k]]))
+rm(G, Gu, X); invisible(gc())
 
 ## ---- covariates and matching ------------------------------------------------------
 u[, col := uc]

@@ -40,24 +40,24 @@
  4: LD-reduced units similarity  20-100kb 0.1096  0.1108
  5: LD-reduced units similarity 100-500kb 0.0574  0.0643
  6: LD-reduced units similarity   0.5-2Mb 0.0345  0.0388
- 7: LD-reduced units   r_w_poly     0-1kb 0.5606  0.5542
- 8: LD-reduced units   r_w_poly     1-5kb 0.3755  0.4045
- 9: LD-reduced units   r_w_poly    5-20kb 0.2062  0.2018
-10: LD-reduced units   r_w_poly  20-100kb 0.0812  0.0783
-11: LD-reduced units   r_w_poly 100-500kb 0.0268  0.0256
-12: LD-reduced units   r_w_poly   0.5-2Mb 0.0046  0.0067
+ 7: LD-reduced units   r_w_poly     0-1kb 0.5581  0.5527
+ 8: LD-reduced units   r_w_poly     1-5kb 0.3744  0.4037
+ 9: LD-reduced units   r_w_poly    5-20kb 0.2054  0.2010
+10: LD-reduced units   r_w_poly  20-100kb 0.0807  0.0780
+11: LD-reduced units   r_w_poly 100-500kb 0.0266  0.0253
+12: LD-reduced units   r_w_poly   0.5-2Mb 0.0045  0.0066
 13:    unpruned SNPs similarity     0-1kb 0.6626  0.7353
 14:    unpruned SNPs similarity     1-5kb 0.3789  0.4397
 15:    unpruned SNPs similarity    5-20kb 0.2347  0.2459
 16:    unpruned SNPs similarity  20-100kb 0.1334  0.1319
 17:    unpruned SNPs similarity 100-500kb 0.0688  0.0773
 18:    unpruned SNPs similarity   0.5-2Mb 0.0433  0.0467
-19:    unpruned SNPs   r_w_poly     0-1kb 0.7259  0.7523
-20:    unpruned SNPs   r_w_poly     1-5kb 0.4224  0.4428
-21:    unpruned SNPs   r_w_poly    5-20kb 0.2387  0.2270
-22:    unpruned SNPs   r_w_poly  20-100kb 0.1045  0.0955
-23:    unpruned SNPs   r_w_poly 100-500kb 0.0373  0.0384
-24:    unpruned SNPs   r_w_poly   0.5-2Mb 0.0057  0.0119
+19:    unpruned SNPs   r_w_poly     0-1kb 0.7244  0.7512
+20:    unpruned SNPs   r_w_poly     1-5kb 0.4214  0.4420
+21:    unpruned SNPs   r_w_poly    5-20kb 0.2378  0.2262
+22:    unpruned SNPs   r_w_poly  20-100kb 0.1040  0.0951
+23:    unpruned SNPs   r_w_poly 100-500kb 0.0371  0.0379
+24:    unpruned SNPs   r_w_poly   0.5-2Mb 0.0055  0.0118
           marker_set       stat       bin anchor control
               <char>     <fctr>    <fctr>  <num>   <num>
                          diff n_anchors
@@ -68,23 +68,23 @@
  4:  -0.0012 [-0.0125,0.0103]      1533
  5:  -0.0069 [-0.0173,0.0028]      1546
  6:  -0.0043 [-0.0114,0.0039]      1551
- 7:   0.0065 [-0.0327,0.0397]       278
- 8: -0.0290 [-0.0515,-0.0057]      1009
- 9:   0.0045 [-0.0132,0.0201]      1407
-10:   0.0029 [-0.0075,0.0122]      1523
-11:   0.0012 [-0.0041,0.0076]      1539
-12:  -0.0021 [-0.0044,0.0001]      1544
+ 7:   0.0054 [-0.0334,0.0382]       278
+ 8: -0.0293 [-0.0521,-0.0056]      1009
+ 9:   0.0044 [-0.0136,0.0203]      1407
+10:   0.0027 [-0.0075,0.0119]      1523
+11:   0.0013 [-0.0039,0.0076]      1539
+12:  -0.0021 [-0.0043,0.0000]      1544
 13: -0.0727 [-0.1037,-0.0490]       695
 14: -0.0608 [-0.0853,-0.0375]      1155
 15:  -0.0112 [-0.0348,0.0101]      1476
 16:   0.0016 [-0.0154,0.0170]      1549
 17:  -0.0085 [-0.0226,0.0053]      1552
 18:  -0.0034 [-0.0157,0.0123]      1552
-19: -0.0264 [-0.0573,-0.0003]       685
-20:  -0.0205 [-0.0415,0.0011]      1142
-21:   0.0117 [-0.0105,0.0308]      1463
-22:   0.0090 [-0.0037,0.0204]      1542
-23:  -0.0011 [-0.0077,0.0063]      1545
+19: -0.0268 [-0.0577,-0.0007]       685
+20:  -0.0206 [-0.0418,0.0011]      1142
+21:   0.0116 [-0.0111,0.0308]      1463
+22:   0.0089 [-0.0038,0.0202]      1542
+23:  -0.0008 [-0.0073,0.0065]      1545
 24: -0.0063 [-0.0115,-0.0019]      1545
                          diff n_anchors
                        <char>     <int>
