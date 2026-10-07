@@ -14,7 +14,7 @@
 ##   1/(n_pop - 1), ancestry-adjusted within-population LD -- for DI25 and near-neutral units
 ## Output: data/explore_mosaic_sims.rds, Figures/explore_mosaic_sims_*.png
 ## Run from the formica_hybrid repo root:
-##   Rscript module_allele_specific_sorting/R/explore_mosaic_sims.R <RESULTS_DIR> [N_CORES]
+##   Rscript module_allele_specific_sorting/R/exploratory/explore_mosaic_sims.R <RESULTS_DIR> [N_CORES]
 ## =========================================================================
 source("module_allele_specific_sorting/R/00_utils.R")
 source("moduleA_sorting/R/parallelism_stats.R")          # classify_sort()

@@ -1,6 +1,6 @@
 ## =========================================================================
 ## module_allele_specific_sorting -- shared statistics for empirical vs simulated data
-## (explore_mosaic_sims.R, explore_calib_sims.R). Uses globals defined by the caller:
+## (07_neutral_sim_contrast.R; exploratory/explore_mosaic_sims.R, explore_calib_sims.R). Uses globals defined by the caller:
 ## u25 (DI25 units), sets (list(DI25, neutral) marker tables), sgn (DI25 orientation),
 ## all_markers (marker order for read_sim).
 ## =========================================================================

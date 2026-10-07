@@ -15,6 +15,7 @@
 //  4. Optional CHROMS (default all 26 chromosomes): simulate a subset (must include 1-3,
 //     which carry the inactive DMI loci). Used for the cheaper calibration grid
 //     (run_calib_job.sh). The founder VCFs must hold initialN/2 males and initialN/2 queens.
+//  5. Optional RECSCALE (default 1): multiplies the recombination map during the simulation.
 // =====================================================================================
 ////------------------- Långholmen Formica aquilonia x F. polyctena SLiM model ------------------//// 
 ///
@@ -71,6 +72,8 @@ initialize() {
 	// CALIBRATION: optional chromosome subset (default all 26). Must contain 1-3, which
 	// carry the (here inactive) DMI loci. Fewer chromosomes = proportionally less memory/time.
 	if (!exists("CHROMS")) defineConstant("CHROMS", c(1:22, 24:27));
+	// CALIBRATION: multiply the recombination map (hybrid phase only; founders use the empirical map)
+	if (!exists("RECSCALE")) defineConstant("RECSCALE", 1.0);
 	if (!all(match(1:3, CHROMS) >= 0)) stop("CHROMS must include chromosomes 1, 2 and 3");
 	
 	// max clutch size
@@ -163,7 +166,7 @@ initialize() {
 		initializeChromosome(id, NULL, type = type, symbol = symb);
 		
 		filePath = paste0(recombDir, "ch_", id, ".recmap");
-		initializeRecombinationRateFromFile(filePath, L-1);
+		initializeRecombinationRateFromFile(filePath, L-1, scale=1e-08 * RECSCALE);   // map in cM/Mb
 		
 		// single mutation rate
 		initializeMutationRate(mu); // 3.5 * 10^-9 (rate in Pierre's paper)

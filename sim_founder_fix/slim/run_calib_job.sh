@@ -2,7 +2,7 @@
 # =========================================================================
 # One calibration run of the neutral mosaic-founder model (phased founders).
 #   run_calib_job.sh <SETTING> <RUN> <BASE_DIR>
-# SETTING: a row name of slim/calib_settings.txt (columns: name K initialN).
+# SETTING: a row name of slim/calib_settings.txt (columns: name K initialN [RECSCALE=1]).
 # Each run = one independent hybrid population (own founder pool, no pairing),
 # simulated on chromosomes CHROMS only and sampled at several cycles, so a single
 # run gives every time point of the grid. F_ST is computed later among the runs
@@ -18,8 +18,9 @@ CYCLES="60 125 250 500 1000"
 LAST=1000
 PHASED="$BASE/phased/parents_phased.rds"
 
-read -r _ K INITN < <(awk -v s="$SETTING" '$1 == s' sim_founder_fix/slim/calib_settings.txt)
+read -r _ K INITN RECSCALE < <(awk -v s="$SETTING" '$1 == s' sim_founder_fix/slim/calib_settings.txt)
 [ -n "${INITN:-}" ] || { echo "unknown setting $SETTING"; exit 1; }
+RECSCALE=${RECSCALE:-1}
 SIDX=$(awk -v s="$SETTING" '$1 == s {print NR}' sim_founder_fix/slim/calib_settings.txt)
 SEED=$(( 200000 + SIDX * 1000 + RUN ))
 TAG=$(printf "%s_%02d" "$SETTING" "$RUN")
@@ -36,7 +37,7 @@ OUT="out/calib_$TAG/"; mkdir -p "$OUT"
 SC="c($(echo $CYCLES | tr ' ' ','))"
 start=$(date +%s)
 /usr/bin/time -l slim -d "rep=$SEED" -d "TAG=\"$TAG\"" -d "FOUNDER_SEED=$SEED" \
-     -d "K=$K" -d "initialN=$INITN" -d "CHROMS=$CHROMS" \
+     -d "K=$K" -d "initialN=$INITN" -d "CHROMS=$CHROMS" -d "RECSCALE=$RECSCALE" \
      -d "nCycles=$LAST" -d "sampleCycle=$SC" \
      -d "FDIR=\"$BASE/$POOL/\"" -d "RECDIR=\"$BASE/slim_inputs/recombination_maps/\"" \
      -d "CL=\"$BASE/slim_inputs/climate/climate_rep1.txt\"" -d "folder=\"$BASE/$OUT\"" \

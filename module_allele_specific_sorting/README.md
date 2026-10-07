@@ -35,7 +35,9 @@ among-population LD only where loci partition populations the same way.
 | `R/04_sorted_neighbourhood.R` | sorted loci vs matched unsorted loci (K ≤ 5, 1-SD caliper on F_ST, recombination, parental differentiation, density): ancestry-profile similarity and both-segregating within-pop LD to neighbours, for LD-reduced units AND all unpruned SNPs; own-unit size/span; matched-set differences, anchor-chromosome bootstrap with sets intact | `Figures/04_neighbourhood.*`, `04_balance.*` |
 | `R/05_doc_tables.R` | regenerates `doc_manuscript/tables/` and `figures/` from the outputs | — |
 | `R/06_lowDI_contrast.R [N_PERM] [N_CORES]` | internal control: same distance statistics (sign-free) for 9,122 near-neutral full-genome units (DI <= -90, pooled parental MAF >= 0.15), vs DI25 | `Figures/06_lowDI_contrast.*`, `data/06_lowDI.rds` |
-| `R/explore_*.R` | exploratory, not in the document: Figure-1 statistics on the existing (buggy-founder) simulations; parental LD empirical vs simulated; mosaic-founder switch rates | `Figures/explore_*`, `data/explore_*` |
+| `R/07_neutral_sim_contrast.R [RESULTS_DIR] [N_CORES]` | neutral simulations (`sim_founder_fix/`: SLiM, phased mosaic founders, chromosomes 1-6, grid K x founding number x 60-1000 generations) vs empirical, separately for near-neutral and DI25 units: F_ST, % unit x population monomorphic (n = 9), excess within-pop LD at 0.05-0.2 cM (model limitation) | `Figures/07_neutral_sim.*`, `data/07_neutral_sim.rds`, table via 05 |
+| `R/sim_stats_lib.R` | shared statistics for empirical vs simulated data (W&C F_ST, Figure-1 profile, SLiM VCF reader) | — |
+| `R/exploratory/explore_*.R` | exploratory, not in the document: Figure-1 statistics on the earlier (buggy-founder) simulations; parental LD empirical vs simulated; mosaic-founder switch rates; first mosaic-founder runs; calibration grid profiles; clustering, cluster sizes and candidate-region overlap of sorted units | `Figures/explore_*`, `data/explore_*` |
 
 ## Results (2026-10-06)
 

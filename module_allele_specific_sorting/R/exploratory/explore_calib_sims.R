@@ -10,7 +10,7 @@
 ## distance decay of within-population LD at DI25 units (time since admixture).
 ## Output: data/explore_calib_sims.rds, Figures/explore_calib_sims_*.png
 ## Run from the formica_hybrid repo root:
-##   Rscript module_allele_specific_sorting/R/explore_calib_sims.R <RESULTS_DIR> [N_CORES] [N_PER=10]
+##   Rscript module_allele_specific_sorting/R/exploratory/explore_calib_sims.R <RESULTS_DIR> [N_CORES] [N_PER=10]
 ## =========================================================================
 source("module_allele_specific_sorting/R/00_utils.R")
 source("moduleA_sorting/R/parallelism_stats.R")          # classify_sort()

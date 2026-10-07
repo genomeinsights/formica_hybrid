@@ -15,7 +15,7 @@
 ## CAVEAT: existing replicates carry the founder-frequency bug.
 ## Output: data/explore_parent_ld.rds, Figures/explore_parent_ld.png
 ## Run from the formica_hybrid repo root:
-##   Rscript module_allele_specific_sorting/R/explore_parent_ld.R [N_REPS] [N_CORES]
+##   Rscript module_allele_specific_sorting/R/exploratory/explore_parent_ld.R [N_REPS] [N_CORES]
 ## =========================================================================
 source("module_allele_specific_sorting/R/00_utils.R")
 args <- commandArgs(trailingOnly = TRUE)

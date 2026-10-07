@@ -16,7 +16,7 @@
 ##   realised-fraction baseline from per-unit population-label permutations.
 ## Output: data/explore_sim_decay.rds, Figures/explore_sim_vs_emp_decay_cM.png
 ## Run from the formica_hybrid repo root:
-##   Rscript module_allele_specific_sorting/R/explore_sim_decay.R [N_REPS] [N_CORES] [N_PERM]
+##   Rscript module_allele_specific_sorting/R/exploratory/explore_sim_decay.R [N_REPS] [N_CORES] [N_PERM]
 ## =========================================================================
 source("module_allele_specific_sorting/R/00_utils.R")
 args <- commandArgs(trailingOnly = TRUE)

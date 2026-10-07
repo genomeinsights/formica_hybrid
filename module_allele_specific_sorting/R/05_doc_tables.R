@@ -1,7 +1,7 @@
 ## =========================================================================
 ## module_allele_specific_sorting -- 05: LaTeX tables + figure copies for
-## doc_manuscript/ (numerical authority = the saved outputs of 02-04).
-## Re-run after any of 02-04 is re-run; never edit the generated tables by hand.
+## doc_manuscript/ (numerical authority = the saved outputs of 02-04, 06 and 07).
+## Re-run after any of 02-04, 06 or 07 is re-run; never edit the generated tables by hand.
 ##
 ## Run from the formica_hybrid repo root:
 ##   Rscript module_allele_specific_sorting/R/05_doc_tables.R
@@ -65,8 +65,26 @@ t_um <- c("\\begin{table}[htbp]", "\\centering", "\\small",
           "\\bottomrule", "\\end{tabular}", "\\end{table}")
 write_tex(t_um, "unmatched.tex")
 
+## ---- neutral simulations (07) ----------------------------------------------------------------
+ns <- readRDS(file.path(OUT_DATA, "07_neutral_sim.rds"))
+sm <- ns$summary; best_lab <- sprintf("%s, cycle %d", ns$settings[[ns$best$setting]], ns$best$cycle)
+plab <- c(neutral = "Near-neutral (DI $\\leq-90$)", DI25 = "Ancestry-informative (DI $>-25$)")
+row <- function(pt, emp, bst, lo, hi, d) sprintf(paste0("& %s & %.", d, "f & %.", d, "f & %.", d, "f--%.", d, "f \\\\"),
+                                                 plab[pt], emp, bst, lo, hi)
+t_sim <- c("\\begin{table}[htbp]", "\\centering", "\\small",
+           sprintf("\\caption{Empirical hybrids versus neutral simulations (chromosomes 1--6). Simulations: grid of carrying capacity (6,250 or 12,500) and founding number (100 or 1,000) sampled 60--1,000 simulation cycles after hybridisation (%d grid cells, $\\geq$%d independent populations each). Best fit: the grid cell whose near-neutral $F_{ST}$ is closest to the empirical value (%s). Fixed: unit $\\times$ population combinations monomorphic in a sample of %d individuals. Excess within-population LD: ancestry-adjusted LD at 0.05--0.2~cM minus its between-chromosome level.}",
+                   nrow(ns$cells), min(ns$cells$n_runs), best_lab, ns$n_fix),
+           "\\label{tab:neutralsim}", "\\resizebox{\\textwidth}{!}{\\begin{tabular}{llrrr}", "\\toprule",
+           "Statistic & Loci & Empirical & Best-fitting simulation & Simulation range \\\\", "\\midrule",
+           "$F_{ST}$", sm[c(2, 1), row(partition, emp_fst, best_fst, fst_min, fst_max, 3)], "\\midrule",
+           "Fixed (\\%)", sm[c(2, 1), row(partition, emp_fixed, best_fixed, fix_min, fix_max, 1)], "\\midrule",
+           "Excess LD", sm[c(2, 1), row(partition, emp_ld, best_ld, ld_min, ld_max, 3)],
+           "\\bottomrule", "\\end{tabular}}", "\\end{table}")
+write_tex(t_sim, "neutral_sim.tex")
+
 ## ---- figures -------------------------------------------------------------------------------
-figs <- c("03_decay_cM.pdf", "03_decay_bp.pdf", "04_neighbourhood.pdf", "04_balance.pdf", "06_lowDI_contrast.pdf")
+figs <- c("03_decay_cM.pdf", "03_decay_bp.pdf", "04_neighbourhood.pdf", "04_balance.pdf", "06_lowDI_contrast.pdf",
+          "07_neutral_sim.pdf")
 for (f in figs) {
   src <- file.path(OUT_FIG, f)
   if (!file.exists(src)) stop("missing figure: ", src)

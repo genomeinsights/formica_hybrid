@@ -18,7 +18,7 @@
 ## diversity = mean pairwise genotype identity among founders.
 ## Output: data/explore_mosaic_founders.rds, Figures/explore_mosaic_founders.png
 ## Run from the formica_hybrid repo root:
-##   Rscript module_allele_specific_sorting/R/explore_mosaic_founders.R [N_SETS] [N_CORES]
+##   Rscript module_allele_specific_sorting/R/exploratory/explore_mosaic_founders.R [N_SETS] [N_CORES]
 ## =========================================================================
 source("module_allele_specific_sorting/R/00_utils.R")
 args <- commandArgs(trailingOnly = TRUE)
