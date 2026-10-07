@@ -1,0 +1,1051 @@
+// =====================================================================================
+// MOSAIC-FOUNDER variant of Beatriz Portinha's SpecIAnt_rufa_genome_LDclusters_demo_server.slim
+// (github.com/bcportinha/Replicate-hybrid-evolution, commit c0322fc).
+// Changes (everything else is unchanged):
+//  1. Founders are READ from per-chromosome VCFs (FDIR/founders_ch<id>.vcf, written by
+//     formica_hybrid/sim_founder_fix/make_mosaic_founders.R: 50 haploid F. aquilonia males
+//     then 50 diploid F. polyctena queens) with readHaplosomesFromVCF, instead of being
+//     drawn cluster by cluster from the AIM probability files. All loaded sites are
+//     neutral m10 markers (no m50 QTNs are created, so environmental selection has no
+//     target; with SIGMA_W = 1000 and DMI_W = 1 the model is neutral anyway).
+//  2. Paths and run identifiers are command-line constants (FDIR, RECDIR, CL, folder, TAG)
+//     instead of cluster paths and sim_table.txt.
+//  3. Default sampleCycle = c(11, 125) (Sielva is sampled at 11, all other populations at
+//     125 in the original pipeline) and sampleCycle_full = NULL.
+//  4. Optional CHROMS (default all 26 chromosomes): simulate a subset (must include 1-3,
+//     which carry the inactive DMI loci). Used for the cheaper calibration grid
+//     (run_calib_job.sh). The founder VCFs must hold initialN/2 males and initialN/2 queens.
+// =====================================================================================
+////------------------- Långholmen Formica aquilonia x F. polyctena SLiM model ------------------//// 
+///
+// Keywords: mating systems, haplodiploidy, arrhenotoky, bees, wasps, ants, Hymenoptera
+
+//// ---------------------------------------------//
+/// --------------- Initialize ------------------//
+// ---------------------------------------------//
+
+initialize() {
+	initializeSLiMModelType("nonWF");
+	initializeSLiMOptions(keepPedigrees=T); // enable tracking of male IDs for reproduction
+	initializeSex();
+	
+	// for input //
+	if (!exists("folder")) defineConstant("folder","C:/Users/beacp/Desktop/Work/ant_model_slim/out_tmp"); // out folder	
+	if (!exists("sampleSize")) defineConstant("sampleSize",100); // Sample size for output
+	if (!exists("K")) defineConstant("K",6250); 	// carrying capacity 
+	if (!exists("initialN")) defineConstant("initialN",100); 		// founding number of individuals
+	if (!exists("nCycles")) defineConstant("nCycles",130); 		// number of cycles/years to run
+	if (!exists("sampleCycle_full")) defineConstant("sampleCycle_full", NULL);
+	if (!exists("sampleCycle"))      defineConstant("sampleCycle",      c(11, 125));	
+//	if (!exists("sampleCycle_full")) defineConstant("sampleCycle_full",asInteger(unique(round((1:10)^2/max((1:10)^2)*nCycles)))); 	// when to save full GT output 
+//	if (!exists("sampleCycle")) defineConstant("sampleCycle",asInteger(unique(round((2:20)^2/max((2:20)^2)*nCycles)))); // when to save output	
+	if (!exists("sampleSize")) defineConstant("sampleSize",100); 		// number of individuals sampled
+	if (!exists("rep")) defineConstant("rep",1); 		// replicate number
+	if (!exists("simTable")) defineConstant("simTable", "/scratch/project_2002161/ant_model/SLiM/sim_table.txt");
+	if (!exists("nQTN")) defineConstant("nQTN", 100);    // define the number of QTN that we want to simulate
+	
+	// Inverse of selection intensity; lower values -> stronger selection
+	if (!exists("SIGMA_W")) defineConstant("SIGMA_W",1000); 		// founding number of individuals
+	if (!exists("DMI_intra_W")) defineConstant("DMI_intra_W",1); // effect of intrachromosomal DMI
+	if (!exists("DMI_inter_W")) defineConstant("DMI_inter_W",1); // effect of interchromosomal DMI
+	if (!exists("randomQTN")) defineConstant("randomQTN",T); // effect of interchromosomal DMI - changed to T here
+	if (!exists("CL")) defineConstant("CL","C:/Users/beacp/Desktop/Work/ant_model_slim/climate/climate_rep1.txt"); // climate vectore to use
+	
+	defineConstant("verbose",F);
+	
+	if (!exists("CL"))
+		stop("CLIMATE FILE not provided");
+	
+	defineConstant("climate",asFloat(readFile(CL))); // read in climate vector
+	
+	// save this run's identifier, used to save and restore
+	defineConstant("simID", getSeed());
+	
+	// MOSAIC: run identifiers from the command line (no sim_table.txt)
+	if (!exists("TAG"))    defineConstant("TAG", "mosaic_" + rep);
+	// paired populations (lanR/lanW, bun/grund) share FOUNDER_SEED and the founder pool,
+	// exactly as in the original sim_table.txt (shared founders and first-cycle mating)
+	if (!exists("FOUNDER_SEED")) defineConstant("FOUNDER_SEED", rep);
+	if (!exists("FDIR"))   stop("FDIR (founder VCF directory) not provided");
+	if (!exists("RECDIR")) stop("RECDIR (recombination map directory) not provided");
+	// CALIBRATION: optional chromosome subset (default all 26). Must contain 1-3, which
+	// carry the (here inactive) DMI loci. Fewer chromosomes = proportionally less memory/time.
+	if (!exists("CHROMS")) defineConstant("CHROMS", c(1:22, 24:27));
+	if (!all(match(1:3, CHROMS) >= 0)) stop("CHROMS must include chromosomes 1, 2 and 3");
+	
+	// max clutch size
+	defineConstant("mCS", 150);
+	
+	// mutation rate, assumtion is no new mutations in this time.
+	// defineGlobal("MU", 3.5e-9); Drosophila m. mutation rate
+	defineGlobal("MU", 0.0);
+	
+	// sex ratio of offspring 50:50 M:F ratio
+	defineConstant("P_OFFSPRING_MALE", 0.5);
+	
+	// Define mutation types most are not used but may be useful later
+	initializeMutationType("m1", 0.0, "f", 0.0);         // non-coding 
+	m1.convertToSubstitution = T;
+	m1.hemizygousDominanceCoeff = 1.0;
+	
+	initializeMutationType("m2", 0.0, "f", 0.0);         // synonymous
+	m2.convertToSubstitution = F;
+	m2.hemizygousDominanceCoeff = 1.0;
+	
+	initializeMutationType("m3", 0.0, "g", -0.03, 0.2);  // deleterious
+	m3.convertToSubstitution = F;
+	m3.hemizygousDominanceCoeff = 1.0;
+	
+	initializeMutationType("m4", 0.0, "e", 0.1);         // beneficial
+	m4.convertToSubstitution = F;
+	m4.hemizygousDominanceCoeff = 1.0;
+	
+	initializeMutationType("m5", 0.0, "f", 0.0);  // epistatic mut 1 intra-chromosomal
+	m5.convertToSubstitution = F;
+	m5.hemizygousDominanceCoeff = 1.0;
+	
+	initializeMutationType("m6", 0.0, "f", 0.0);  // epistatic mut 2 intra-chromosomal
+	m6.convertToSubstitution = F;
+	m6.hemizygousDominanceCoeff = 1.0;
+	
+	initializeMutationType("m7", 0.0, "f", 0.0);  // epistatic mut 3 inter-chromosomal
+	m7.convertToSubstitution = F;
+	m7.hemizygousDominanceCoeff = 1.0;
+	
+	initializeMutationType("m8", 0.0, "f", 0.0);  // epistatic mut 4 inter-chromosomal
+	m8.convertToSubstitution = F;
+	m8.hemizygousDominanceCoeff = 1.0;
+	
+	// color mutation types
+	m5.color = "red";
+	m6.color = "red";
+	m7.color = "red";
+	m8.color = "red";
+	
+	// set up ancestry tracking neutral mutations 
+	initializeMutationType("m10", 0.5, "f", 0.0);   // pol marker
+	m10.color = "gold4";
+	m10.convertToSubstitution=F;
+	
+	// set up QTN mutation types, also by ancestry
+	initializeMutationType("m50", 0.5, "f", 0.0);   // pol QTN marker
+	m50.color = "gold1";
+	m50.convertToSubstitution=F;
+	
+	// define type of chrom regions, env selection only happens on mutations in
+	// "gene" regions.
+	initializeGenomicElementType("g1", c(m2), c(1));  // "gene"
+	initializeGenomicElementType("g2", c(m1), 1);     // non-coding
+	
+	// Define 3 chromosomes	
+	setSeed(24061992);
+	
+	// save relevant information for genome architecture
+	IDs = CHROMS;
+//	IDs = 1:3;
+	AUTOSSOMES = rep("A", size(IDs));
+//	AUTOSSOMES = rep("A", 3);
+	CHs = sapply(IDs, "paste0('ch', applyValue);");
+	MUs = rep(MU, size(IDs));
+//	MUs = rep(MU, 3);
+	
+	// chromosome lengths - 1 value per chromosome
+	Ls = c(16449812, 18558483, 15805178, 16666556, 14957794, 10925039, 13372598, 13028660, 10584038, 13832892, 11830133,
+			 11260715, 11449430, 7730741, 10965718, 11699404, 11021207, 8644910, 7297899, 9820556, 10314430, 7671390,
+			 6269374, 13114028, 9969264, 7047176);
+	Ls = Ls[match(IDs, c(1:22, 24:27))];   // CALIBRATION: lengths of the simulated subset
+//	Ls = c(16449812, 18558483, 15805178);
+	
+	recombDir = RECDIR;  // MOSAIC: path to rec map files (ch_<id>.recmap)
+	
+	for (id in IDs, type in AUTOSSOMES, symb in CHs, mu in MUs, L in Ls)
+	{
+		initializeChromosome(id, NULL, type = type, symbol = symb);
+		
+		filePath = paste0(recombDir, "ch_", id, ".recmap");
+		initializeRecombinationRateFromFile(filePath, L-1);
+		
+		// single mutation rate
+		initializeMutationRate(mu); // 3.5 * 10^-9 (rate in Pierre's paper)
+		
+		// Generate random genes along an L-base chromosome
+		// Using the empirical distribution of gene density along the Faqxpol assembly
+		// we get random distributions that follow the empirical ones.
+		base = 0;
+		// ---- draw final non-coding segment (g2) ----
+		final_nc = rdunif(1, 100, 500);
+		// ensure final segment fits
+		if (final_nc >= L) final_nc = L;
+		
+		target_end = L - final_nc;
+		// ---- build chromosome up to target_end ----
+		while (base < target_end)
+		{
+			remaining = target_end - base;
+			if (remaining <= 0){
+				break;}
+			// ---- non-coding region (g2) ----
+			nc_length = min(asInteger(rlnorm(1, meanlog=8.004784023, sdlog=1.615758630)) + 1, 345000);
+			nc_length = min(asInteger(nc_length), asInteger(remaining));
+			
+			initializeGenomicElement(g2, base, base + nc_length - 1);
+			base = base + nc_length;
+			
+			if (base >= target_end){break;}
+			
+			// ---- gene / exon (g1) ----
+			remaining = target_end - base;
+			gene_length = min(asInteger(rlnorm(1, meanlog=7.823642929, sdlog=1.118349949)) + 1, 143000);
+			gene_length = min(asInteger(gene_length), asInteger(remaining));
+			
+			initializeGenomicElement(g1, base, base + gene_length - 1);
+			base = base + gene_length;
+		}
+		// ---- final non-coding segment (g2), guaranteed to end chromosome ----
+		initializeGenomicElement(g2, base, asInteger(L - 1));
+	}
+	
+	
+	
+	
+	// reset seed to random seed pulled at beginning of the run
+	setSeed(simID);
+	print("Seed restored to " + getSeed());
+	
+	// setup output file names with parameters for the run
+	w= paste0("w",SIGMA_W);
+	r = paste0("rep",rep);
+	intra_w = paste0("intraW",DMI_intra_W);
+	inter_w = paste0("interW",DMI_inter_W);
+	pref= paste(w,intra_w,inter_w,r,sep="_");
+	
+	defineConstant("prefix",pref);
+	
+	defineConstant("ANC_FILE", paste0(folder, prefix, ".anc"));
+	writeFile(ANC_FILE, "cycle sex n zQTN sd_zQTN zNtrl sd_zNtrl",  append=F);
+	
+	defineConstant("AF_FILE",paste0(folder, prefix, ".af"));
+	writeFile(AF_FILE, "cycle sex mutID chrom pos af", append=F);
+	
+	// for output //
+	// Remove output files if exists //
+	// Genotypes are saved at sampleCycle in separate files and the cycle is included in the name	
+	if(!isNULL(sampleCycle)){
+		for(ckl in sampleCycle)
+		{
+			tmp = paste0("ckl",ckl,"_",pref);
+			deleteFile(paste0(folder, tmp ,"_M.012"));
+			deleteFile(paste0(folder, tmp ,"_F.012"));
+		}
+	}
+}
+
+//// -----------------------------------------------------------------//
+/// --------------- 0. Execution of first() events ------------------//
+// -----------------------------------------------------------------//
+
+1 first() {
+	
+	// make an initial population with the right genetics
+	// initial coutns based on carrying capacity
+	// mCount = asInteger(K * P_OFFSPRING_MALE);
+	// fCount = K - mCount; // equal sr 
+	
+	// starting with inital number of individuals 
+	mCount = asInteger(initialN * P_OFFSPRING_MALE);
+	fCount = initialN - mCount;  // equal sex ratios 
+	
+	// Bea //
+	sim.addSubpop("p1", mCount, sexRatio=1.0, haploid=T);	// males  (F. aq)
+	sim.addSubpop("p2", fCount, sexRatio=0.0, haploid=F);	// females (F. pol)
+	
+	// chromosome lengths - 1 value per chromosome
+	Ls = c(16449812, 18558483, 15805178, 16666556, 14957794, 10925039, 13372598, 13028660, 10584038, 13832892, 11830133,
+			 11260715, 11449430, 7730741, 10965718, 11699404, 11021207, 8644910, 7297899, 9820556, 10314430, 7671390,
+			 6269374, 13114028, 9969264, 7047176);
+//	Ls = c(16449812, 18558483, 15805178);
+	
+	// add DMI loci (INTRA-chrom) set at position 20% and 60% of chrom length
+	p1.haplosomesForChromosomes(1, includeNulls=F).addNewDrawnMutation(m5, asInteger(floor(Ls[0]*0.2)));
+	p2.haplosomesForChromosomes(1, includeNulls=F).addNewDrawnMutation(m6, asInteger(floor(Ls[0]*0.6)));
+	
+	// add DMI loci (INTER-chrom)set at position 30% of ch2 and 50% of ch3 lengths
+	p1.haplosomesForChromosomes(2, includeNulls=F).addNewDrawnMutation(m7, asInteger(floor(Ls[1]*0.3)));
+	p2.haplosomesForChromosomes(3, includeNulls=F).addNewDrawnMutation(m8, asInteger(floor(Ls[2]*0.5)));
+	
+	
+	// MOSAIC: read the founders from per-chromosome VCFs. Sample order in each VCF:
+	// aq_hap01..50 (haploid; -> p1 males, one haplosome each), then pol_fem01..50
+	// (phased diploid; -> p2 queens, two haplosomes each). One read per chromosome so
+	// that both species share one mutation object per site.
+	chromIDs = CHROMS;
+	for (chrom in chromIDs)
+	{
+		targets = c(p1.haplosomesForChromosomes(chrom, includeNulls=F),
+		            p2.haplosomesForChromosomes(chrom, includeNulls=F));
+		targets.readHaplosomesFromVCF(FDIR + "founders_ch" + chrom + ".vcf", m10);
+	}
+	defineConstant("nAncInf", size(sim.mutationsOfType(m10)));   // loaded marker sites
+	catn("MOSAIC: loaded " + nAncInf + " founder marker sites from " + FDIR);
+	
+	
+	// combine starting populations for mating (merge p1 and p2 into p1 and remove p2)
+	p1.takeMigrants(p2.individuals);
+	p2.removeSubpopulation();
+	p1inds = p1.individuals;
+	p1inds.tag = -1;
+	
+	// HACK! to set contains NULL haplosomes flag
+	sim.addSubpop("p1000", 1, haploid=T);   // cold storage for dead males
+	sim.killIndividuals(p1000.individuals);
+}
+
+// set up mating for reproduction to avoid sim collapse
+first() {
+	
+	if(sim.cycle==3){
+		// kill founder queens to prevent production of pure polyctena males
+		founderQs = p1.subsetIndividuals(sex="F", minAge=2);
+		sim.killIndividuals(founderQs);
+	}
+	
+	// subset queens only
+	queens = p1.subsetIndividuals(sex="F");
+	
+	// assign whether each queen will produce males or females -  draw from distribution and save in first logical tag
+	if(sim.cycle==2){
+		queens.tagL0 = asLogical(rep(0, length(queens))); // all queens produce female offspring in tick 2
+	}else if(sim.cycle==3){
+		queens.tagL0 = asLogical(rep(1, length(queens)));    // all queens produce male offspring in tick 3
+	}else{
+		queens.tagL0=asLogical(rbinom(size(queens),1,P_OFFSPRING_MALE));
+	}
+	
+	// draw the number of offspring each queen will produce from a distribution - save in float tag
+	if(sim.cycle <= 3){
+		queens.tagF = asFloat(rep(3, size(queens)));
+	} else {
+		queens.tagF=asFloat(rnbinom(length(queens), size=0.07554167, prob=0.01824684));
+	}
+	
+	// check how many new queens and new males should be produced
+	expMales = sum(queens.tagF[queens.tagL0==T & queens.tag==1]);
+	expQueens = sum(queens.tagF[queens.tagL0==F & queens.tag==1]);
+	
+	// ensure at least one of both sexes are produces each reproductive cycle
+	while(expMales*expQueens==0 & sim.cycle>3){
+		print("Redrawing offspring settings; tick " + sim.cycle);
+		// redraw offspring sex assignments and clutch sizes
+		queens.tagL0=asLogical(rbinom(length(queens),1,P_OFFSPRING_MALE));
+		queens.tagF=asFloat(rnbinom(length(queens), size=0.07554167, prob=0.01824684));
+		// re-calculate expMales and expQueens
+		expMales = sum(queens.tagF[queens.tagL0==T]);
+		expQueens = sum(queens.tagF[queens.tagL0==F]);
+	}
+	
+	// kill unmated males from previous tick
+	malesUnMated_prev = p1.subsetIndividuals(sex = "M", tag = -1, minAge=1);
+	sim.killIndividuals(malesUnMated_prev);
+}
+
+
+//// -------------------------------------------------------------//
+/// --------------- 1. Generation of offspring ------------------//
+// -------------------------------------------------------------//
+
+// --- 1.1 Call reproduction() callbacks for individuals ---//
+
+reproduction(p1, "F") {
+	// select all old queens
+	oldQueens = subpop.subsetIndividuals(sex="F", minAge=1);
+	
+	// reproduction for each queen based on tags for offspring sex (queen.tagL0 T=male, F = Queen) and number (queen.tagF)
+	for (queen in oldQueens)
+	{
+		// extract current queen's haplosomes
+		gen1 = queen.haploidGenome1;
+		gen2 = queen.haploidGenome2;
+		
+		// extract current queen's clutch size - drawn from distribution
+		clutchSize = asInteger(queen.tagF);
+		
+		// produce male offspring if queen decided to produce males (tagL0) OR queen is
+		// unmated (tag == -1) // T makes males
+		if (queen.tagL0 | queen.tag == -1)
+		{
+			// decided to produce males; make clutchSize haploid males from unfertilized eggs:
+			// produces all male offpsring, number of clutch size
+			patternM = Dictionary();
+			
+			for(chrom in sim.chromosomes.id){
+				// get chromosome index
+				CHROM_i = which(sim.chromosomes.id == chrom);
+				
+				// get chromosome name
+				CHROM_NAME = paste("ch", chrom, sep="");
+				
+				sim.addPatternForRecombinant(CHROM_NAME, patternM, gen1[CHROM_i], gen2[CHROM_i], NULL, NULL, NULL, NULL,
+					"M", randomizeStrands=T);
+			}
+			
+			
+			subpop.addMultiRecombinant(patternM, sex = "M", parent1 = queen, parent2 = NULL,
+				randomizeStrands=T, count = clutchSize);
+		}
+		else  // if (queen.tag != -1)
+		{
+			// decided to make females; make clutchSize diploid females from fertilized eggs:
+			//		- one haplosome comes from recombination of the female's haplosomes
+			//		- the other haplosome comes from the haploid male stored in the spermatheca (p1000)
+			
+			// the female has already chosen a mate; look it up by id
+			// mate = sim.individualsWithPedigreeIDs(queen.tag);
+			mates = queen.getValue(asString(queen.pedigreeID)); // vector of mate pedigreeIDs
+			nMates = size(mates); // number of mates for the current queen
+			
+			// Each egg chooses a mate index
+			// clutchSize = 20;
+			sireChoices = sample(0:(nMates-1), clutchSize, replace=T);
+			
+			// Count offspring per mate
+			offspring_per_mate = tabulate(sireChoices, maxbin=nMates-1); // maxbin ensures output for high non sampled male indices 
+			
+			// reproduce offspring once per mate
+			for( i in seqAlong(offspring_per_mate)){
+				mate = sim.individualsWithPedigreeIDs(mates[i]);
+				
+				patternF = Dictionary();
+				
+				for(chrom in sim.chromosomes.id){
+					// get chromosome index
+					CHROM_i = which(sim.chromosomes.id == chrom);
+					
+					// get chromosome name
+					CHROM_NAME = paste("ch", chrom, sep="");
+					
+					sim.addPatternForRecombinant(CHROM_NAME, patternF, gen1[CHROM_i], gen2[CHROM_i], NULL, mate.haploidGenome1[CHROM_i], NULL, NULL, "F", randomizeStrands=T);
+				}
+				
+				subpop.addMultiRecombinant(patternF, sex = "F", parent1 = queen, parent2 = mate,
+					randomizeStrands=T, count = offspring_per_mate[i]);
+			}
+		}
+	}
+	
+	// disable this callback for this cycle so reproduction ony runs once	
+	self.active = 0;
+}
+
+
+// --- 1.4 Suppress/modify child (modifyChild() callbacks) ---//
+
+// PK //
+// modify child after 10 generations to ensure population has survived
+1:nCycles modifyChild(p1)
+{
+	// set up ancestry proportion and DMI epistatsis for each offspring
+	if(child.sex=="M"){ // if the current child is a new male
+		// assign correct max ancestry based on ploidy
+		max_QTN = nQTN;
+		// Add dmi epistatis for males intra 
+		// DMI effects are based on reduction in survival during development. 
+		// I.E. a value of 1 means there is no fitness effect. and a value of 0 is lethal.
+		if (child.countOfMutationsOfType(m5) & child.countOfMutationsOfType(m6)){
+			w_DMI1 = DMI_intra_W;
+		} else {
+			w_DMI1 = 1.0;
+		}
+		// Add dmi epistatis for males inter
+		if (child.countOfMutationsOfType(m7) & child.countOfMutationsOfType(m8)){
+			w_DMI2 = DMI_inter_W;
+		} else {
+			w_DMI2 = 1.0;
+		}
+	} else{ // if the current child is a new queen
+		// assign correct max ancestry based on ploidy
+		// add dmi epistasis females intra
+		max_QTN = nQTN*2;
+		if ((child.countOfMutationsOfType(m5) == 2) & (child.countOfMutationsOfType(m6) ==2)){
+			w_DMI1 = DMI_intra_W;
+		} else {
+			w_DMI1 = 1.0;
+		}
+		// add dmi epistasis females inter
+		if ((child.countOfMutationsOfType(m7) == 2) & (child.countOfMutationsOfType(m8) == 2)){
+			w_DMI2 = DMI_inter_W;
+		} else {
+			w_DMI2 = 1.0;
+		}
+	}
+	
+	// get environmental value for the current tick
+	
+	t = sim.cycle;
+	
+	theta = climate[t-2];
+	
+	// calculate phenotype as ancestry proportion
+	z = child.countOfMutationsOfType(m50)/max_QTN;
+	
+	// calculate fitness based on ancestry/environment mismatch
+	w_env = exp(-((z - theta)^2) / (2 * SIGMA_W^2));
+	
+	// calculate total fitness with DMI epistasis
+	w = max(w_env, 0.05) * w_DMI1 * w_DMI2;
+	
+	if (runif(1) > w){
+		return F;
+	}else{
+		return T;
+	}
+}
+
+
+//// -----------------------------------------------------------------//
+/// --------------- 2. Execution of early() events ------------------//
+// -----------------------------------------------------------------//
+
+early() {
+	// -------- set tags and mating -------- //
+	///////
+	if(sim.cycle==2){
+		// each new F1 queen in unmated and will produce hybrid males
+		newQueens = p1.subsetIndividuals(sex="F", maxAge = 0);
+		newMales = p1.subsetIndividuals(sex="M", maxAge = 0);
+		newMales.tag = -1;
+	} else if(sim.cycle==3){
+		// mate new males (F1 males) with their mothers to produce both hybrid males and females
+		newMales = p1.subsetIndividuals(sex="M", maxAge = 0);
+		newQueens = p1.subsetIndividuals(sex="F", minAge = 1, maxAge = 1); // these are actually the F1 queens; naming convention is necessary for downstream operations
+		newMales.tag = -1;
+	}else{
+		// normal mating
+		newQueens = p1.subsetIndividuals(sex="F", maxAge = 0);
+		newMales = p1.subsetIndividuals(sex = "M", maxAge = 0);
+		newMales.tag = -1;
+	}
+	
+	// set default tag for new queens
+	newQueens.tag = -1;
+	NnewMales = size(newMales);
+	
+	// share founder mating between paired populations
+	if (sim.cycle == 1) {
+		setSeed(FOUNDER_SEED);
+	}
+	
+	// mating for new queens
+	values = 0:6; // possible number of mates
+	if(sim.cycle ==2){
+		weights = c(0, 49, 38, 15, 7, 3, 1);
+	}else {
+		weights = c(15, 49, 38, 15, 7, 3, 1); // probability of each value (Pamilo 1993)
+	}
+	nmates_all = sample(values, size(newQueens), replace=T, weights=weights);
+	nmates_all[which(nmates_all > NnewMales)] = NnewMales;
+	
+	// if there are no matings in a cycle, force a singular mating
+	if(sum(nmates_all) == 0){
+		nmates_all[sample(0:(size(nmates_all)-1),1)] = 1;
+	}
+	
+	// in cycle two dont mate the queens 
+	if( sim.cycle != 2){
+		for (i in seqAlong(newQueens))
+		{
+			// the female has not yet chosen a mate, so choose one now
+			// check if males were produced 
+			// if no, queen is unmated and will only produce males her entire life
+			// if yes, mate the current new queen with a new male
+			queen = newQueens[i];
+			nmates = nmates_all[i];
+			mate = sample(newMales, nmates, replace=F); // inviduals who the queen has mated with
+			
+			// store: queen pedigreeID → mate pedigreeID
+			queen.setValue(asString(queen.pedigreeID), mate.pedigreeID);
+			
+			// queen.tag = mate.pedigreeID;
+			if(size(queen.getValue(asString(queen.pedigreeID))) >0){
+				queen.tag = 1;
+				mate.tag = 1;
+				// catn("Tag on males " + mate.pedigreeID + " is " + mate.tag);
+			} // queen status is mated
+		}
+	}
+	
+	// color males for visualization
+	malesMated = p1.subsetIndividuals(sex = "M", tag = 1);
+	malesMated.color = "cornflowerblue";
+	
+	malesUnMated = p1.subsetIndividuals(sex = "M", tag = -1);
+	malesUnMated.color = "lightblue";
+	
+	
+	if(verbose){
+		print("n newMales: " + length(newMales) + " on tick " + sim.cycle);
+		print("n newQueens: " + length(newQueens) + " on tick " + sim.cycle);
+		print("current new males: " + length(newMales) + "  current New females: " + length(newQueens));
+		catn("size newmales:" + NnewMales) ;
+		catn("malesMated has size of " + size(malesMated));
+	}
+	
+	//// ----- age and density selection on old + surviving new queens ------ ////
+	if(sim.cycle==1){
+		// density dependent fitness scaling only
+		p1.fitnessScaling = K / size(p1.subsetIndividuals(sex="F"));
+	} else {
+		// life table based individual mortality
+		nOld = size(p1.subsetIndividuals(sex="F", minAge=1));
+		
+		if(verbose) catn("Tick " + sim.cycle + "- Old Qs: " + nOld +  "; New Q penalty: " + 0.925);
+		
+		// age based selection	
+		AS = c(0.96, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95 ,1.0);
+		
+		inds = p1.individuals;
+		ages = inds.age;
+		
+		mortality = AS[ages];
+		survival = 1 - mortality;
+		inds.fitnessScaling = asFloat(survival);
+		
+		// density-dependence, factoring in individual age-based mortality
+		p1.fitnessScaling = K / (size(p1.subsetIndividuals(sex="F")) * mean(survival));
+	}
+	
+	// restore original seed
+	if (sim.cycle == 1) {
+		setSeed(simID);
+	}
+}
+
+//// ------------------------------------------------------------------//
+/// --------------- 4. Selection (incl. survival()) ------------------//
+// ------------------------------------------------------------------//
+
+survival(p1) {
+	// move dying males into cold storage in case they have mated
+	if (individual.sex == "M" & individual.tag == 1)
+		return p1000;
+	return NULL;
+}
+
+// do not comment this bit out, it keeps the males alive
+survival(p1000) {
+	return (individual.tag == 1);
+}
+
+//// ----------------------------------------------------------------//
+/// --------------- 6. Execution of late() events ------------------//
+// ----------------------------------------------------------------//
+
+1:nCycles late() {
+	// cold storage individuals are kept until unreferenced
+	p1000.individuals.tag = 0; // unreferencing all males
+	
+	// gets unique males pedigreeIDs from the mated females in p1 - males that are referenced
+	male_Refs = c(); // empty vector to fill with male reference IDs
+	// cycle through females getting all male IDs they have mated with	
+	for(queen in p1.subsetIndividuals(sex="F", tag=1)){
+		queen_mates = queen.getValue(asString(queen.pedigreeID));
+		male_Refs = c(male_Refs, queen_mates);
+	}
+	male_Refs = unique(male_Refs);
+	
+	// finds referenced males in p1000 (males with alive mates)
+	referencedDeadMales = sim.individualsWithPedigreeIDs(male_Refs, p1000);
+	
+	// set tag of referenced males to 1 to protect them from death in p1000
+	referencedDeadMales.tag = 1;
+	males_toKill = p1000.subsetIndividuals(tag=0);
+	
+	//kill unreferenced males
+	sim.killIndividuals(males_toKill);
+	
+	// color Qs by age
+	ageColors = colors(10, "viridis");
+	p1.individuals.color = ageColors[p1.individuals.age];
+	
+	// color males for visualization
+	malesMated = p1.subsetIndividuals(sex = "M", tag = 1);
+	malesMated.color = "cornflowerblue";
+	
+	malesUnMated = p1.subsetIndividuals(sex = "M", tag = -1);
+	malesUnMated.color = "lightblue";
+	
+	if(verbose){
+		// calc mean matings
+		nmale_Refs = c();
+		for(queen in p1.subsetIndividuals(sex="F", tag=1)){
+			queen_nmates = size(queen.getValue(asString(queen.pedigreeID)));
+			nmale_Refs = c(nmale_Refs, queen_nmates);
+		}
+		catn("mean matings/queen: " + mean(nmale_Refs) + "\n");
+		
+		// calc proportion of unmated queens
+		// calc mean matings
+		queen_tags_mated = size(p1.subsetIndividuals(sex="F", tag=1));
+		queen_tags_unmated = size(p1.subsetIndividuals(sex="F", tag=-1));
+		catn("proportion unmated: " + (queen_tags_unmated/(queen_tags_unmated+queen_tags_mated)) + "\n");
+		
+		// calc female anc proportions
+		anc = p1.subsetIndividuals(sex = "F", maxAge=0).countOfMutationsOfType(m50)/200;
+		catn("F anc prop: " + mean(anc) + "\n");
+		
+		// calc male anc proportions
+		anc = p1000.subsetIndividuals(sex = "M", maxAge=0).countOfMutationsOfType(m50)/100;
+		catn("M anc prop: " + mean(anc) + "\n");
+	}
+}
+
+//// -------------------------------------------------------------------------------------------//
+/// --------------- 7. Tick/cycle count increment, individual age increments ------------------//
+// -------------------------------------------------------------------------------------------//
+
+//------------- OUTPUT -------------//
+
+1 late() {
+	// output a VCF with all pure founder individuals - without unmated males (as they are not founders)
+	// get all mated founder individuals
+	founders = c(p1.subsetIndividuals(sex="F", maxAge=0), p1000.subsetIndividuals(sex="M", maxAge=0));
+	
+	// tag for founders VCF file
+	VCF_founders = paste0(folder, "/pureFounders_ckl", sim.cycle, "_", TAG, ".vcf");
+	founders.outputIndividualsToVCF(filePath=VCF_founders);
+}
+
+sampleCycle late() {
+	// output every 10 cycles and tick 1
+	// get all new mated + unmated males
+	males   = c(p1.subsetIndividuals(sex="M", maxAge=0),p1000.subsetIndividuals(sex="M", maxAge=0));
+	// get new queens
+	females = p1.subsetIndividuals(sex="F", maxAge=0);
+	
+	// get mutations frequencies for each mutation type
+	muts = sim.mutations;
+	// only haplosomes in males
+	haplosomes = males.haplosomesForChromosomes(includeNulls = F);
+	// get mutation frequency in males
+	freqs = haplosomes.mutationFrequenciesInHaplosomes(muts);
+	
+	// output allele frequencies for each mutation type in males
+	for (i in seqAlong(muts)) {
+		mut = muts[i];
+		af  = freqs[i];
+		
+		line = paste(
+			sim.cycle,
+			"M",
+			mut.mutationType.id,
+			mut.chromosome.id,
+			mut.position,
+			freqs[i],
+			sep=" "
+			);
+		writeFile(AF_FILE, line, append=T);
+	}
+	
+	// get haplosomes in females
+	haplosomes = females.haplosomesForChromosomes(includeNulls = F);
+	// get mutation frequencies in females
+	freqs = haplosomes.mutationFrequenciesInHaplosomes(muts);
+	
+	// output mutation frequencies in females
+	for (i in seqAlong(muts)) {
+		mut = muts[i];
+		af  = freqs[i];
+		
+		line = paste(
+			sim.cycle,
+			"F",
+			mut.mutationType.id,
+			mut.chromosome.id,
+			mut.position,
+			freqs[i],
+			sep=" "
+			);
+		
+		writeFile(AF_FILE, line, append=T);
+	}
+}
+
+
+// for outputting 012 genotype matrices //
+sampleCycle late() {
+	if(T){
+		
+		ckl = paste0("ckl",sim.cycle,"_",prefix);
+		// males: mated & unmated //
+		males = c(p1.subsetIndividuals(maxAge=0),p1000.subsetIndividuals(maxAge=0));
+		males = sample(males,min(length(males),sampleSize),F);
+		
+		// output VCF file for sampled males
+		VCF_males = paste0(folder, "/males_ckl", sim.cycle, "_", TAG, ".vcf");
+		males.outputIndividualsToVCF(filePath=VCF_males);
+		
+		// separately by chromosome - concatenated into a single genome for output //
+		h_M = males.haplosomesForChromosomes(includeNulls = F);
+		
+		// new queens
+		females = p1.subsetIndividuals(sex = "F",maxAge=0);
+		females = sample(females,min(length(females),sampleSize),F);
+		
+		// output VCF file for sampled females
+		VCF_females = paste0(folder, "/females_ckl", sim.cycle, "_", TAG, ".vcf");
+		females.outputIndividualsToVCF(filePath=VCF_females);
+		
+		// separately by chromosome - concatenated into a single genome for output //
+		h_F = females.haplosomesForChromosomes();
+		
+		// we are interested in all mutations in any of these individuals
+		h = c(h_M,h_F);
+		
+		// get the unique mutations
+		if(!isNULL(sampleCycle_full)){
+			if(match(sim.cycle,sampleCycle_full)>=0){
+				
+				m = sortBy(unique(h.mutations,preserveOrder=F), "position");
+			
+			}else{
+				
+				m = NULL;
+				for(mutType in c(m5,m6,m7,m8)){
+					
+					m = c(m,sortBy(unique(h.mutationsOfType(mutType),preserveOrder=F), "position"));
+				
+				}
+			}
+		
+		}else{
+			m = NULL;
+			for(mutType in c(m5,m6,m7,m8)){
+				
+				m = c(m,sortBy(unique(h.mutationsOfType(mutType),preserveOrder=F), "position"));
+			
+			}
+		}
+		
+		
+		// First two rows will be chromosome and position //
+		// chromsome
+		
+		writeFile(paste0(folder, ckl  ,"_M.012"), 	paste(m.chromosome.id) , append=T);
+		// position
+		writeFile(paste0(folder, ckl  ,"_M.012"), 	paste(m.position),  append=T);
+		// mutationType
+		writeFile(paste0(folder, ckl  ,"_M.012"), 	paste(m.mutationType.id), append=T);
+		// Cycle through individuals and write haplosome for each, concatenating the chromosomes //
+		
+		for (x in (1:size(males))-1)
+		{
+			hasMuts = (match(m, males[x].haploidGenome1.mutations) >= 0);
+			
+			gts = paste(asInteger(hasMuts), sep=" ");
+			
+			writeFile(paste0(folder, ckl ,"_M.012"), gts , append=T);
+		
+		}
+		
+		// Repeat for females (that have two haplosomes per individual) //
+		
+		// First two rows will be chromosome and position //
+		// chromsome
+		
+		writeFile(paste0(folder, ckl  ,"_F.012"), 	paste(m.chromosome.id),  append=T);
+		// position
+		writeFile(paste0(folder, ckl  ,"_F.012"), 	paste(m.position), append=T);
+		// mutationType
+		writeFile(paste0(folder, ckl  ,"_F.012"), 	paste(m.mutationType.id),  append=T);
+		
+		// Cycle through individuals and write haplosome for each, concatenating the chromosomes //
+		
+		for (x in 1:size(females)-1)
+		{
+			// separately for each haplosome for females
+			hasMuts = (match(m, females[x].haploidGenome1.mutations) >= 0);
+			
+			gts = paste(asInteger(hasMuts), sep=" ");
+			
+			writeFile(paste0(folder, ckl ,"_F.012"), gts , append=T);
+			
+			hasMuts = (match(m, females[x].haploidGenome2.mutations) >= 0);
+			
+			gts = paste(asInteger(hasMuts), sep=" ");
+			
+			writeFile(paste0(folder, ckl ,"_F.012"), gts , append=T);
+		}
+	}
+}
+
+
+sampleCycle late() {
+	
+	// Ancestry for males
+	males= p1000.subsetIndividuals(maxAge=0);
+	
+	n = size(males);
+	if (n  != 0){
+		z = males.countOfMutationsOfType(m10) / nAncInf;  // vector, one per male
+		zNtrl = mean(z);
+		// sd_zNtrl   = sd(z);
+		sd_zNtrl = (size(z) > 1) ? sd(z) else "NA"; // output 0 for adtandard deviation if only one individual present.
+		
+		z = males.countOfMutationsOfType(m50) / nQTN;  // vector, one per male
+		zQTN= mean(z);
+		// sd_zQTN   = sd(z);
+		sd_zQTN  = (size(z) > 1) ? sd(z) else "NA";
+		
+		line = paste(sim.cycle, "M_mat",n, zQTN, sd_zQTN, zNtrl, sd_zNtrl, sep=" ");
+		writeFile(ANC_FILE, line, append=T);
+	
+	}else{
+		
+		line = paste(sim.cycle, "M_mat",0, "NA", "NA", "NA", "NA", sep=" ");
+		writeFile(ANC_FILE, line, append=T);
+	}
+	
+	males= p1.subsetIndividuals(sex = "M");
+	
+	n = size(males);
+	if (n  != 0){
+		z = males.countOfMutationsOfType(m10) / nAncInf;  // vector, one per male
+		zNtrl = mean(z);
+		sd_zNtrl = (size(z) > 1) ? sd(z) else "NA";
+		
+		z = males.countOfMutationsOfType(m50) / nQTN;  // vector, one per male
+		zQTN= mean(z);
+		sd_zQTN  = (size(z) > 1) ? sd(z) else "NA";
+		
+		line = paste(sim.cycle, "M_unmat",n, zQTN, sd_zQTN, zNtrl, sd_zNtrl, sep=" ");
+		writeFile(ANC_FILE, line, append=T);
+	
+	}else{
+		
+		line = paste(sim.cycle, "M_unmat",0, "NA", "NA", "NA", "NA", sep=" ");
+		writeFile(ANC_FILE, line, append=T);
+	}
+	
+	females = p1.subsetIndividuals(sex="F");
+	n = size(females);
+	
+	if (n  != 0){
+		z = females.countOfMutationsOfType(m10) / nAncInf / 2;  // vector, one per male
+		zNtrl = mean(z);
+		sd_zNtrl = (size(z) > 1) ? sd(z) else "NA";
+		
+		z = females.countOfMutationsOfType(m50) / nQTN / 2;  // vector, one per male
+		zQTN= mean(z);
+		sd_zQTN  = (size(z) > 1) ? sd(z) else "NA";
+		
+		line = paste(sim.cycle, "F",n, zQTN, sd_zQTN, zNtrl, sd_zNtrl, sep=" ");
+		writeFile(ANC_FILE, line, append=T);
+	
+	}else{
+		
+		line = paste(sim.cycle, "M",0, "NA", "NA", "NA", "NA", sep=" ");
+		writeFile(ANC_FILE, line, append=T);
+	}
+
+}
+
+
+//// ------------------------------------------------//
+/// --------------- End of script ------------------//
+// ------------------------------------------------//
+
+
+// functions for Ne calculation
+
+//function (float)estimateNe_Heterozygosity(o<Subpopulation>$ subpop,
+//	[No<Chromosome>$ chromosome = NULL])
+//{
+//	if (isNULL(chromosome))
+//	{
+//		if (size(sim.chromosomes) == 1)
+//			chromosome = sim.chromosomes;
+//		else
+//			stop("ERROR: in a multi-chrom model, a chromosome must be supplied.");
+//	}
+//	haplosomes = subpop.haplosomesForChromosomes(chromosome, includeNulls=F);
+//	pi = calcHeterozygosity(haplosomes);
+//	return pi / (4 * MU);
+//}
+
+//
+//function (integer)tabulateFecundity(o<Subpopulation>$ subpop, i$ previous_N)
+//{
+//	parentIDs = subpop.individuals.pedigreeParentIDs;
+//	rescaledParentIDs = parentIDs - min(parentIDs);
+//	return tabulate(rescaledParentIDs, previous_N - 1);
+//}
+//
+//function (float)estimateNe_Inbreeding(o<Subpopulation>$ subpop)
+//{
+//	previous_N = subpop.getValue("previous_N");
+//	k = tabulateFecundity(subpop, previous_N);
+//	return (previous_N * mean(k) - 2) / (mean(k) - 1 + var(k) / mean(k));
+//}
+
+
+
+//
+//modifyChild() {
+//    if(child.sex=="M"){ // if the current child is a new male
+//        // assign correct max ancestry based on ploidy
+//        max_anc = max_hap;
+//
+//        // Add dmi epistatis for males intra 
+//        // DMI effects are based on reduction in survival during development. 
+//        // I.E. a value of 0 means there is no fitness effect. and a value of 1 is lethal.
+//        if (child.countOfMutationsOfType(m5) & child.countOfMutationsOfType(m6)){
+//            DMI1 = DMI_intra;
+//        } else {
+//            DMI1 = 0.0;
+//        }
+//        // Add dmi epistatis for males inter
+//        if (child.countOfMutationsOfType(m7) & child.countOfMutationsOfType(m8)){
+//            DMI2 = DMI_inter;
+//        } else {
+//            DMI2 = 0.0;
+//        }
+//} else{ // if the current child is a new queen
+//        // assign correct max ancestry based on ploidy
+//        max_anc = max_dip;
+//
+//        // add dmi epistasis females intra
+//        if ((child.countOfMutationsOfType(m5) == 2) & (child.countOfMutationsOfType(m6) ==2)){
+//            DMI1 = DMI_intra;
+//        } else {
+//            DMI1 = 1.0;
+//        }
+//        // add dmi epistasis females inter
+//        if ((child.countOfMutationsOfType(m7) == 2) & (child.countOfMutationsOfType(m8) == 2)){
+//            DMI2 = DMI_inter;
+//        } else {
+//            DMI2 = 1.0;
+//        }
+//    }
+//
+//    DMI_surv = sum(c(DMI1,DMI2)); // reduction in survival due to all DMIs
+//
+//    // get proportion of correct ancestry
+//    pheno = child.countOfMutationsOfType(m9)/max_anc; 
+//
+//    // environmental fluctuating based on environment
+//    if(env_mod[sim.cycle] > 0.0){ // selection FOR Aq ancestry
+//        env_surv = survenv_mod[sim.cycle](pheno-1) + 1;
+//    } else if (env_mod[sim.cycle] == 0.0){ // no environmental selection
+//       env_surv =1;
+//    } else if (env_mod[sim.cycle] < 0.0){ // selection AGAINST Aq ancestry
+//        env_surv = survenv_mod(pheno) + 1;
+//    } else {print("Invalid environmental election coeff.", error = T);}
+//
+//    // survival probability of current child according to ancestry proportion and epistatsis
+//    surv_prob = asFloat(env_surv*DMI_surv); // FITNESS FUNCTION
+//    surv_prob = min(c(surv_prob,1.0));
+//    fit = rbinom(1, 1, prob=max(c(0.0, surv_prob)));
+//    if(fit == 0){ // if current child drew a 0 according to its survival probability, it fails to develop
+//        return F; //
+//    }else{
+//        return T;} // if the new child drew a 1 according to its survival prob, it successfully develops
+//}

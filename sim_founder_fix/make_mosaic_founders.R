@@ -18,6 +18,12 @@
 ##                     between the two haplosomes (phase among neighbouring
 ##                     heterozygous sites is random; heterozygosity at DI25 sites is
 ##                     0.05-0.12, so this affects few pairs)
+## PHASED mode (7th argument = parents_phased.rds from phase_parents.R): donors are the
+## Beagle-phased parental haplotype pairs instead. Segments are still drawn per diploid
+## donor (so donor heterozygosity is kept), but an aquilonia male copies one of the
+## donor's two haplotypes (random per segment) and a polyctena queen copies both,
+## in random orientation per segment. Within-segment phase is then the inferred phase,
+## so within-species LD among shared polymorphisms is kept; no missing data (imputed).
 ## Missing donor genotypes (2-3%) are filled, per site, from a random donor of the
 ## same species with an observed genotype.
 ## Allele "1" = the coded allele of the empirical genotype matrices (dosage counts it).
@@ -28,7 +34,7 @@
 ## plus <OUT_DIR>/provenance.txt.
 ##
 ## Run from the formica_hybrid repo root:
-##   Rscript sim_founder_fix/make_mosaic_founders.R <OUT_DIR> [LAMBDA=1] [N_AQ=50] [N_POL=50] [SEED=1] [PANEL=DI25]
+##   Rscript sim_founder_fix/make_mosaic_founders.R <OUT_DIR> [LAMBDA=1] [N_AQ=50] [N_POL=50] [SEED=1] [PANEL=DI25] [PHASED=none]
 ## PANEL = "DI25" (51,612 ancestry-informative SNPs) or "DI25+neutral" (adds ~14,100
 ## near-neutral SNPs, DI <= -90 and pooled parental MAF >= 0.15, as a calibration
 ## anchor; their IDs are listed in <OUT_DIR>/neutral_markers.txt).
@@ -42,6 +48,7 @@ N_AQ    <- if (length(args) >= 3) as.integer(args[3]) else 50L
 N_POL   <- if (length(args) >= 4) as.integer(args[4]) else 50L
 SEED    <- if (length(args) >= 5) as.integer(args[5]) else 1L
 PANEL   <- if (length(args) >= 6) args[6] else "DI25"
+PHASED  <- if (length(args) >= 7 && args[7] != "none") args[7] else NA_character_
 stopifnot(PANEL %in% c("DI25", "DI25+neutral"))
 dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 set.seed(SEED)
@@ -76,14 +83,35 @@ mosaic <- function(D, n_out) {
   }
   out
 }
+if (!is.na(PHASED)) {
+  ph <- readRDS(PHASED); stopifnot(all(map$marker %in% colnames(ph$H)))
+  Hs <- ph$H[, map$marker, drop = FALSE]
+  hsp <- function(rx) { h <- Hs[grepl(rx, rownames(Hs)), , drop = FALSE]
+    stopifnot(nrow(h) %% 2 == 0, all(sub("_h1$", "", rownames(h)[c(TRUE, FALSE)]) == sub("_h2$", "", rownames(h)[c(FALSE, TRUE)]))); h }
+  ## rows 2d-1 / 2d = the two haplotypes of donor d; returns list(h1, h2) of n_out x M
+  mosaic_h <- function(Hd, n_out) {
+    h1 <- h2 <- matrix(NA_integer_, n_out, ncol(Hd)); nd <- nrow(Hd) / 2
+    for (f in seq_len(n_out)) for (ix in cols) {
+      v <- bcm[ix]; lo <- min(v); hi <- max(v)
+      nb <- if (LAMBDA > 0 && hi > lo) rpois(1, LAMBDA * (hi - lo)) else 0L
+      seg <- findInterval(v, sort(runif(nb, lo, hi))) + 1L
+      d <- sample.int(nd, nb + 1L, replace = TRUE); flip <- rbinom(nb + 1L, 1, 0.5)
+      h1[f, ix] <- Hd[cbind((2L * d - 1L + flip)[seg], ix)]
+      h2[f, ix] <- Hd[cbind((2L * d - flip)[seg], ix)]
+    }
+    list(h1 = h1, h2 = h2)
+  }
+  aq_hap <- mosaic_h(hsp("^Faqu"), N_AQ)$h1
+  qq <- mosaic_h(hsp("^Fpol"), N_POL); q1 <- qq$h1; q2 <- qq$h2
+} else {
 A <- mosaic(donors$aquilonia, N_AQ)       # diploid dosages, to be reduced to haploid
 Q <- mosaic(donors$polyctena, N_POL)
-
 aq_hap <- ifelse(A == 0L, 0L, ifelse(A == 2L, 1L, rbinom(length(A), 1, 0.5)))
 dim(aq_hap) <- dim(A)
 q1 <- ifelse(Q == 2L, 1L, ifelse(Q == 0L, 0L, rbinom(length(Q), 1, 0.5))); dim(q1) <- dim(Q)
 q2 <- Q - q1                                    # second haplosome: the remaining allele
 stopifnot(all(q2 %in% 0:1))
+}
 
 aq_names  <- sprintf("aq_hap%02d", seq_len(N_AQ)); pol_names <- sprintf("pol_fem%02d", seq_len(N_POL))
 for (k in seq_along(chrs)) {
@@ -101,6 +129,7 @@ writeLines(c(sprintf("generated: %s", format(Sys.time())), sprintf("LAMBDA (swit
              sprintf("donors: %d aquilonia, %d polyctena empirical parents; %d SNPs on %d chromosomes",
                      nrow(donors$aquilonia), nrow(donors$polyctena), nrow(map), length(chrs)),
              sprintf("panel: %s (%d DI25 + %d near-neutral SNPs)", PANEL, sum(map$class == "DI25"), sum(map$class == "neutral")),
+             sprintf("phase: %s", if (is.na(PHASED)) "random at heterozygous sites" else paste("Beagle-phased parents,", PHASED)),
              "allele 1 = coded allele of the empirical genotype matrices"),
            file.path(OUT_DIR, "provenance.txt"))
 if (PANEL == "DI25+neutral") writeLines(map[class == "neutral", marker], file.path(OUT_DIR, "neutral_markers.txt"))
