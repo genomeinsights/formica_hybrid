@@ -16,7 +16,7 @@ export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH
 CHROMS="c(1:6)"
 CYCLES="60 125 250 500 1000"
 LAST=1000
-PHASED="$BASE/phased/parents_phased.rds"
+PHASED="$BASE/sim_founder_fix/data/parents_phased.rds"
 
 read -r _ K INITN RECSCALE < <(awk -v s="$SETTING" '$1 == s' sim_founder_fix/slim/calib_settings.txt)
 [ -n "${INITN:-}" ] || { echo "unknown setting $SETTING"; exit 1; }

@@ -18,7 +18,9 @@
 ##                     between the two haplosomes (phase among neighbouring
 ##                     heterozygous sites is random; heterozygosity at DI25 sites is
 ##                     0.05-0.12, so this affects few pairs)
-## PHASED mode (7th argument = parents_phased.rds from phase_parents.R): donors are the
+## PHASED mode (7th argument = parents_phased.rds from phase_parents.R; committed as
+## sim_founder_fix/data/parents_phased.rds). Needs ONLY that file (no other project data):
+## donors are the
 ## Beagle-phased parental haplotype pairs instead. Segments are still drawn per diploid
 ## donor (so donor heterozygosity is kept), but an aquilonia male copies one of the
 ## donor's two haplotypes (random per segment) and a polyctena queen copies both,
@@ -53,8 +55,14 @@ stopifnot(PANEL %in% c("DI25", "DI25+neutral"))
 dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 set.seed(SEED)
 
-panel <- load_panel(include_neutral = PANEL == "DI25+neutral"); map <- panel$map; P <- panel$parents
-stopifnot(identical(colnames(P), map$marker))
+if (!is.na(PHASED)) {
+  ## self-contained: the phased file carries its own marker map (Chr, Pos, marker, class, cM)
+  ph <- readRDS(PHASED)
+  map <- as.data.table(ph$map)[class %in% (if (PANEL == "DI25") "DI25" else c("DI25", "neutral"))]
+} else {
+  panel <- load_panel(include_neutral = PANEL == "DI25+neutral"); map <- panel$map; P <- panel$parents
+  stopifnot(identical(colnames(P), map$marker))
+}
 chrs <- unique(map$Chr)
 cols <- split(seq_len(nrow(map)), factor(map$Chr, levels = chrs))
 ## breakpoint coordinate: cM, with off-map SNPs given their nearest mapped neighbour's value
@@ -69,8 +77,8 @@ fill_missing <- function(D) {
   }
   D
 }
-donors <- list(aquilonia = fill_missing(P[grepl("^Faqu", rownames(P)), ]),
-               polyctena = fill_missing(P[grepl("^Fpol", rownames(P)), ]))
+if (is.na(PHASED)) donors <- list(aquilonia = fill_missing(P[grepl("^Faqu", rownames(P)), ]),
+                                  polyctena = fill_missing(P[grepl("^Fpol", rownames(P)), ]))
 
 mosaic <- function(D, n_out) {
   out <- matrix(NA_integer_, n_out, ncol(D))
@@ -84,7 +92,7 @@ mosaic <- function(D, n_out) {
   out
 }
 if (!is.na(PHASED)) {
-  ph <- readRDS(PHASED); stopifnot(all(map$marker %in% colnames(ph$H)))
+  stopifnot(all(map$marker %in% colnames(ph$H)))
   Hs <- ph$H[, map$marker, drop = FALSE]
   hsp <- function(rx) { h <- Hs[grepl(rx, rownames(Hs)), , drop = FALSE]
     stopifnot(nrow(h) %% 2 == 0, all(sub("_h1$", "", rownames(h)[c(TRUE, FALSE)]) == sub("_h2$", "", rownames(h)[c(FALSE, TRUE)]))); h }
@@ -127,7 +135,9 @@ for (k in seq_along(chrs)) {
 writeLines(c(sprintf("generated: %s", format(Sys.time())), sprintf("LAMBDA (switches per cM): %g", LAMBDA),
              sprintf("N_AQ haploid males: %d; N_POL diploid queens: %d; SEED: %d", N_AQ, N_POL, SEED),
              sprintf("donors: %d aquilonia, %d polyctena empirical parents; %d SNPs on %d chromosomes",
-                     nrow(donors$aquilonia), nrow(donors$polyctena), nrow(map), length(chrs)),
+                     if (is.na(PHASED)) nrow(donors$aquilonia) else sum(grepl("^Faqu", rownames(ph$H))) / 2,
+                     if (is.na(PHASED)) nrow(donors$polyctena) else sum(grepl("^Fpol", rownames(ph$H))) / 2,
+                     nrow(map), length(chrs)),
              sprintf("panel: %s (%d DI25 + %d near-neutral SNPs)", PANEL, sum(map$class == "DI25"), sum(map$class == "neutral")),
              sprintf("phase: %s", if (is.na(PHASED)) "random at heterozygous sites" else paste("Beagle-phased parents,", PHASED)),
              "allele 1 = coded allele of the empirical genotype matrices"),
