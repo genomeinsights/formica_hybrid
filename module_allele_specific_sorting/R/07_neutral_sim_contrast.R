@@ -24,8 +24,11 @@
 ##              segregating; minus the between-chromosome level), reported to
 ##              document the model's LD limitation, not used as evidence
 ## Best-fitting cell = the one whose near-neutral F_ST is closest (log ratio) to
-## the empirical value.
-## Output: data/07_neutral_sim.rds, Figures/07_neutral_sim.{pdf,png}
+## the empirical value (main grid only).
+## Robustness: K 6,250 / 1,000 founders with the recombination map scaled x3 and x10
+## during the simulation (RECSCALE; founders keep the empirical map).
+## Output: data/07_neutral_sim.rds, data/07_neutral_sim_cells.tsv (every grid cell,
+## main + scaled), Figures/07_neutral_sim.{pdf,png} (main grid)
 ## Run from the formica_hybrid repo root (after 01 and 06):
 ##   Rscript module_allele_specific_sorting/R/07_neutral_sim_contrast.R [RESULTS_DIR=sim_founder_fix/out/calib] [N_CORES=6]
 ## =========================================================================
@@ -34,8 +37,10 @@ args <- commandArgs(trailingOnly = TRUE)
 RES_DIR <- if (length(args) >= 1) args[1] else "sim_founder_fix/out/calib"
 N_CORES <- if (length(args) >= 2) as.integer(args[2]) else 6L
 SETTINGS <- c("K6k_N100", "K6k_N1000", "K12k_N100", "K12k_N1000")   # unscaled map
+ROBUST <- c("K6k_N1000_R3", "K6k_N1000_R10")                        # recombination map x3, x10
 SET_LAB <- c(K6k_N100 = "K 6,250, 100 founders", K6k_N1000 = "K 6,250, 1,000 founders",
-             K12k_N100 = "K 12,500, 100 founders", K12k_N1000 = "K 12,500, 1,000 founders")
+             K12k_N100 = "K 12,500, 100 founders", K12k_N1000 = "K 12,500, 1,000 founders",
+             K6k_N1000_R3 = "K 6,250, 1,000 founders, map x3", K6k_N1000_R10 = "K 6,250, 1,000 founders, map x10")
 CHRS <- paste0("Chr", 1:6); N_PER <- 10L; N_FIX <- 9L; MIN_RUNS <- 4L; SEED <- 1L
 
 ## ---- marker sets (chromosomes 1-6) and empirical data --------------------------------------
@@ -77,7 +82,7 @@ fi <- data.table(file = list.files(RES_DIR, "^females_ckl[0-9]+_.*\\.vcf\\.gz$",
 fi[, `:=`(cycle = as.integer(sub(".*ckl([0-9]+)_.*", "\\1", basename(file))),
           setting = sub("^females_ckl[0-9]+_(.*)_[0-9]+\\.vcf\\.gz$", "\\1", basename(file)),
           run = as.integer(sub(".*_([0-9]+)\\.vcf\\.gz$", "\\1", basename(file))))]
-fi <- fi[setting %in% SETTINGS]
+fi <- fi[setting %in% c(SETTINGS, ROBUST)]
 cells <- fi[, .(n_runs = .N), by = .(setting, cycle)][n_runs >= MIN_RUNS][order(setting, cycle)]
 cat(sprintf("[07] %d grid cells (setting x cycle) with >= %d runs\n", nrow(cells), MIN_RUNS))
 RNGkind("L'Ecuyer-CMRG"); set.seed(SEED)
@@ -88,6 +93,14 @@ sim <- rbindlist(parallel::mclapply(seq_len(nrow(cells)), mc.cores = N_CORES, mc
   stats(G[, u25$unit_marker], G[, neu$marker], pop)[, `:=`(setting = cl$setting, cycle = cl$cycle, n_runs = cl$n_runs)]
 }))
 res <- rbind(emp, sim)
+fwrite(dcast(res, setting + cycle + n_runs ~ partition, value.var = c("fst", "pct_fixed", "excess_ld"))[
+  , rec_scale := fifelse(grepl("_R10$", setting), 10, fifelse(grepl("_R3$", setting), 3, 1))],
+  file.path(OUT_DATA, "07_neutral_sim_cells.tsv"), sep = "\t")
+rob <- sim[setting %in% ROBUST]
+cat("\n[07] robustness, scaled recombination map (x3, x10):\n")
+print(rob[, .(fst_min = min(fst), fst_max = max(fst), fix_max = max(pct_fixed), ld_min = min(excess_ld), ld_max = max(excess_ld)),
+          by = partition], digits = 3)
+sim_all <- sim; sim <- sim[setting %in% SETTINGS]                                   # main grid from here on
 
 ## ---- best-fitting cell and grid range ---------------------------------------------------------
 fit <- sim[partition == "neutral", .(setting, cycle, d = abs(log(fst / emp[partition == "neutral", fst])))][which.min(d)]
@@ -98,7 +111,7 @@ summ <- merge(merge(emp[, .(partition, emp_fst = fst, emp_fixed = pct_fixed, emp
                     best[, .(partition, best_fst = fst, best_fixed = pct_fixed, best_ld = excess_ld)], by = "partition"), rng, by = "partition")
 cat(sprintf("\n[07] best-fitting cell (near-neutral F_ST): %s, cycle %d (%d runs)\n", fit$setting, fit$cycle, best$n_runs[1]))
 print(summ, digits = 3)
-saveRDS(list(result = res, summary = summ, best = fit[, .(setting, cycle)], cells = cells, chroms = CHRS,
+saveRDS(list(result = res, summary = summ, robust = rob, best = fit[, .(setting, cycle)], cells = cells[setting %in% SETTINGS], cells_robust = cells[setting %in% ROBUST], chroms = CHRS,
              n_per = N_PER, n_fix = N_FIX, settings = SET_LAB), file.path(OUT_DATA, "07_neutral_sim.rds"))
 
 ## ---- figure: F_ST and % fixed by cycle, per partition ----------------------------------------
